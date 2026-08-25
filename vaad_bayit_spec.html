@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ועד בית עמק השלום — Project Spec</title>
+<style>
+:root{
+  --bg:#f5f7fa;--surface:#fff;--surface2:#f0f4f8;--border:#dde3ed;
+  --text:#1e293b;--muted:#64748b;--primary:#1a3a5c;--accent:#2563eb;
+  --success:#15803d;--warn:#b45309;--danger:#b91c1c;--info:#1d4ed8;
+  --success-bg:#dcfce7;--warn-bg:#fef3c7;--danger-bg:#fee2e2;--info-bg:#dbeafe;
+  --radius:8px;--font:'Segoe UI','Arial Hebrew',Arial,sans-serif;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1521;--surface:#162032;--surface2:#1a2840;--border:#2d3f55;
+  --text:#dde8f5;--muted:#7a92ab;--primary:#7eb3e0;--accent:#60a5fa;
+  --success-bg:#052e16;--warn-bg:#27180a;--danger-bg:#2d0b0b;--info-bg:#0c1e3d;
+}}
+:root[data-theme="dark"]{
+  --bg:#0d1521;--surface:#162032;--surface2:#1a2840;--border:#2d3f55;
+  --text:#dde8f5;--muted:#7a92ab;--primary:#7eb3e0;--accent:#60a5fa;
+  --success-bg:#052e16;--warn-bg:#27180a;--danger-bg:#2d0b0b;--info-bg:#0c1e3d;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.7;direction:rtl}
+.doc-header{background:var(--primary);color:#fff;padding:32px 40px}
+.doc-header h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.doc-header .sub{font-size:13px;opacity:.75}
+.doc-meta{display:flex;gap:28px;margin-top:14px;flex-wrap:wrap}
+.doc-meta span{font-size:12px;opacity:.8}
+.doc-meta strong{opacity:1}
+.toc{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 40px;position:sticky;top:0;z-index:50;display:flex;gap:0;overflow-x:auto}
+.toc a{padding:7px 12px;font-size:12px;color:var(--muted);text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent}
+.toc a:hover{color:var(--text);border-bottom-color:var(--accent)}
+.doc-body{max-width:940px;margin:0 auto;padding:32px 24px 80px}
+section{margin-bottom:36px}
+h2{font-size:17px;font-weight:700;color:var(--primary);padding-bottom:8px;border-bottom:2px solid var(--border);margin-bottom:16px;margin-top:40px}
+h2:first-of-type{margin-top:0}
+h3{font-size:14px;font-weight:700;color:var(--text);margin:20px 0 10px}
+p{margin-bottom:10px;color:var(--text)}
+ul,ol{padding-right:20px;margin-bottom:10px}
+li{margin-bottom:4px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.card-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.card-grid{grid-template-columns:1fr}}
+.tbl-wrap{overflow-x:auto;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--surface2);padding:8px 10px;font-size:12px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border);text-align:right}
+td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+pre{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:12px;line-height:1.6;direction:ltr;text-align:left;margin-bottom:14px}
+code{font-family:'Consolas','Courier New',monospace}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.b-green{background:var(--success-bg);color:var(--success)}
+.b-blue{background:var(--info-bg);color:var(--info)}
+.b-orange{background:var(--warn-bg);color:var(--warn)}
+.b-red{background:var(--danger-bg);color:var(--danger)}
+.b-grey{background:var(--surface2);color:var(--muted)}
+.phase{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:18px;overflow:hidden}
+.phase-header{padding:12px 16px;display:flex;align-items:center;gap:12px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.phase-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;color:#fff}
+.ph0{background:#6366f1}.ph1{background:#0ea5e9}.ph2{background:#10b981}.ph3{background:#f59e0b}.ph4{background:#ef4444}.ph5{background:#8b5cf6}
+.phase-title{font-weight:700;font-size:14px}
+.phase-body{padding:14px 16px}
+.task-list{list-style:none;padding:0}
+.task-list li{padding:5px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:8px;font-size:13px}
+.task-list li:last-child{border-bottom:none}
+.task-owner{margin-right:auto;font-size:11px;padding:1px 7px;border-radius:10px;white-space:nowrap}
+.own-oren{background:#dbeafe;color:#1d4ed8}
+.own-claude{background:#f3e8ff;color:#7c3aed}
+.own-both{background:#dcfce7;color:#15803d}
+.flow{display:flex;flex-direction:column;gap:0;align-items:center;margin:16px 0}
+.flow-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:0}
+.flow-box{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:12px;text-align:center;min-width:120px}
+.flow-box.primary{background:var(--info-bg);border-color:var(--accent)}
+.flow-box.success{background:var(--success-bg);border-color:var(--success)}
+.flow-box.warn{background:var(--warn-bg);border-color:var(--warn)}
+.flow-arrow{text-align:center;color:var(--muted);font-size:18px;line-height:1.2;margin:2px 0}
+.flow-split{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.ini-key{color:#16a34a}.ini-val{color:#2563eb}.ini-comment{color:var(--muted)}
+.chk{list-style:none;padding:0}
+.chk li{padding:5px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:13px}
+.chk li:last-child{border-bottom:none}
+.chk-box{width:16px;height:16px;border:1.5px solid var(--border);border-radius:3px;flex-shrink:0}
+.callout{padding:12px 16px;border-radius:var(--radius);border-right:4px solid;margin-bottom:14px;font-size:13px}
+.callout.info{background:var(--info-bg);border-color:var(--accent)}
+.callout.warn{background:var(--warn-bg);border-color:var(--warn)}
+.callout.success{background:var(--success-bg);border-color:var(--success)}
+.theme-btn{position:fixed;top:14px;left:16px;background:rgba(0,0,0,.15);border:1px solid rgba(0,0,0,.2);color:var(--text);padding:4px 10px;border-radius:12px;cursor:pointer;font-size:11px;z-index:100}
+</style>
+</head>
+<body>
+
+<button class="theme-btn" onclick="toggleTheme()">◐</button>
+
+<div class="doc-header">
+  <h1>ועד בית עמק השלום 84–88 — Dashboard Project Specification</h1>
+  <div class="sub">Software Requirements, Architecture &amp; Implementation Plan</div>
+  <div class="doc-meta">
+    <span><strong>גרסה:</strong> 1.0</span>
+    <span><strong>תאריך:</strong> 23/08/2026</span>
+    <span><strong>מנהל פרויקט:</strong> אורן אלקיים</span>
+    <span><strong>ועד בית:</strong> אורן אלקיים · מיכאל בן אורי</span>
+    <span><strong>סטטוס:</strong> <span class="badge b-blue">תכנון</span></span>
+  </div>
+</div>
+
+<nav class="toc">
+  <a href="#overview">סקירה</a>
+  <a href="#arch">ארכיטקטורה</a>
+  <a href="#data">מקורות נתונים</a>
+  <a href="#dashboard">דשבורד</a>
+  <a href="#config">קונפיגורציה</a>
+  <a href="#phases">שלבי בנייה</a>
+  <a href="#validation">ולידציה</a>
+  <a href="#info">מידע נוסף</a>
+</nav>
+
+<div class="doc-body">
+
+<section id="overview">
+<h2>1. סקירת פרויקט</h2>
+<div class="card-grid">
+  <div class="card">
+    <h3>מטרה</h3>
+    <p>בניית דשבורד פיננסי לועד הבית של עמק השלום 84–88, המציג נתוני הכנסות, הוצאות, גביה ותקשורת עם דיירים — נגיש לכל הדיירים דרך קישור קבוע מכל מכשיר.</p>
+  </div>
+  <div class="card">
+    <h3>עקרונות</h3>
+    <ul>
+      <li>קובץ HTML סטטי — עובד בכל דפדפן ללא שרת</li>
+      <li>כל הנתונים מ-Excel + Google Forms</li>
+      <li>עדכון אוטומטי — ללא התערבות ידנית</li>
+      <li>אפס עלות תפעולית</li>
+      <li>כל הגדרות ב-config.ini</li>
+    </ul>
+  </div>
+</div>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>רכיב</th><th>טכנולוגיה</th><th>מיקום</th><th>הערה</th></tr></thead>
+  <tbody>
+    <tr><td>קובץ נתונים ראשי</td><td>Excel .xlsx</td><td>D:\Claude_projects\Home_tech\data\</td><td>Oren מנהל ידנית</td></tr>
+    <tr><td>קריאות דיירים</td><td>Google Forms → Sheets</td><td>emeqhashalom84@gmail.com</td><td>דיירים מגישים</td></tr>
+    <tr><td>עדכון סטטוס קריאה</td><td>Google Forms → Sheets</td><td>emeqhashalom84@gmail.com</td><td>Oren בלבד</td></tr>
+    <tr><td>תנועות בנק</td><td>Excel export מבנק הפועלים</td><td>D:\...\תנועות בנק\</td><td>Oren מוריד מהאפליקציה</td></tr>
+    <tr><td>סקריפט Python</td><td>Python 3.12</td><td>D:\Claude_projects\Home_tech\</td><td>C:\Python\python.exe</td></tr>
+    <tr><td>פלט HTML</td><td>HTML5 סטטי</td><td>GitHub Pages</td><td>URL קבוע לדיירים</td></tr>
+    <tr><td>הגדרות</td><td>config.ini</td><td>D:\Claude_projects\Home_tech\</td><td>כל פרמטר ניתן לשינוי</td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<section id="arch">
+<h2>2. ארכיטקטורה ותזרים נתונים</h2>
+<div class="flow">
+  <div class="flow-row">
+    <div class="flow-box primary">Excel (נתונים ראשיים)</div>
+    <div class="flow-box primary">Bank Excel (תנועות)</div>
+    <div class="flow-box primary">Google Sheets (קריאות)</div>
+  </div>
+  <div class="flow-arrow">↓ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ↓ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ↓</div>
+  <div class="flow-row">
+    <div class="flow-box warn" style="min-width:320px">Python Script (vaad_bayit_generator.py)<br><small style="color:var(--muted)">watchdog + scheduler — כל 5 דקות</small></div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-split">
+    <div class="flow-box">עדכון Excel<br><small>ריכוז הכנסות + הוצאות</small></div>
+    <div class="flow-box success">HTML סטטי נוצר<br><small>vaad_bayit_dashboard.html</small></div>
+  </div>
+  <div class="flow-arrow" style="align-self:flex-end;margin-left:120px">↓</div>
+  <div class="flow-row">
+    <div class="flow-box success" style="align-self:flex-end">Git Push → GitHub Pages<br><small>URL קבוע לדיירים</small></div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-row">
+    <div class="flow-box primary">דיירים רואים עדכון<br><small>רענון אוטומטי כל 5 דקות</small></div>
+  </div>
+</div>
+<h3>טריגרים לעדכון</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>טריגר</th><th>מה קורה</th><th>השהייה</th></tr></thead>
+  <tbody>
+    <tr><td>שמירת קובץ Excel</td><td>Watchdog מזהה → Python רץ מיד</td><td>&lt; 30 שניות</td></tr>
+    <tr><td>Timer כל 5 דקות</td><td>Python בודק Google Sheets לקריאות חדשות</td><td>עד 5 דקות</td></tr>
+    <tr><td>הורדת Bank Excel לתיקיה</td><td>Watchdog מזהה → Python מעבד ומעדכן</td><td>&lt; 30 שניות</td></tr>
+    <tr><td>רענון דפדפן הדייר</td><td>רואה הגרסה האחרונה שפורסמה</td><td>מיידי</td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<section id="data">
+<h2>3. מקורות נתונים — מבנה Excel</h2>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>גיליון</th><th>תוכן</th><th>עמודות מפתח</th><th>Python</th></tr></thead>
+  <tbody>
+    <tr><td><strong>ריכוז הכנסות 2026 דיירים</strong></td><td>תשלומי דיירים חודשיים</td><td>שם דייר | ינואר–דצמבר | יתרת חוב</td><td>קורא + כותב</td></tr>
+    <tr><td><strong>ריכוז הוצאות 2026</strong></td><td>הוצאות לפי קטגוריה וחודש</td><td>סווג | הוצאה | ינואר–דצמבר | שנתי</td><td>קורא + כותב</td></tr>
+    <tr><td><strong>תנועות חשבון</strong></td><td>לוג תנועות בנק</td><td>תאריך | שם | פעולה | חובה | זכות | יתרה | עבור</td><td>קורא + כותב</td></tr>
+    <tr><td><strong>חישוב תקציב שנתי</strong></td><td>תקציב מתוכנן</td><td>פעילות | עלות | תדירות | סה"כ שנתי</td><td>קורא בלבד</td></tr>
+    <tr><td><strong>פרטי תקשורת דיירים</strong></td><td>פרטי קשר</td><td>שם | בניין | דירה | טלפון | מייל</td><td>קורא בלבד</td></tr>
+    <tr><td><strong>נתוני ספקים</strong></td><td>ספקים ופרטי קשר</td><td>שם ספק | טלפון</td><td>קורא בלבד</td></tr>
+    <tr><td><strong>הודעות</strong> ★ חדש</td><td>הודעות לדיירים</td><td>תאריך | כותרת | תוכן | קטגוריה | פעיל</td><td>קורא בלבד</td></tr>
+    <tr><td><strong>פרטי בניין</strong> ★ חדש</td><td>אנשי קשר + תשלום</td><td>מפתח | ערך</td><td>קורא בלבד</td></tr>
+    <tr><td><strong>מיפוי תנועות</strong> ★ חדש</td><td>מיפוי שם בנק → דייר/הוצאה</td><td>מילת מפתח | סוג | שם | דירה | יום מ | יום עד</td><td>קורא בלבד</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>Google Sheets (קריאות)</h3>
+<div class="card-grid">
+  <div class="card">
+    <h3>טופס דיירים — קריאה חדשה</h3>
+    <ul>
+      <li>שם מלא (טקסט)</li>
+      <li>מספר דירה (dropdown 1–15)</li>
+      <li>קטגוריה (תחזוקה/תאורה/ניקיון/דחוף/כללי)</li>
+      <li>תיאור הבעיה (פסקה)</li>
+      <li>תמונה (העלאת קובץ — אופציונלי)</li>
+    </ul>
+    <div style="margin-top:8px"><span class="badge b-blue">ציבורי</span> קישור מהדשבורד</div>
+  </div>
+  <div class="card">
+    <h3>טופס Oren — עדכון קריאה</h3>
+    <ul>
+      <li>מספר קריאה</li>
+      <li>סטטוס חדש (פתוח/בטיפול/סגור)</li>
+      <li>תגובת הועד (פסקה)</li>
+    </ul>
+    <div style="margin-top:8px"><span class="badge b-orange">פרטי</span> Oren בלבד — שמור בטלפון</div>
+  </div>
+</div>
+</section>
+
+<section id="dashboard">
+<h2>4. סעיפי הדשבורד</h2>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>#</th><th>סעיף</th><th>מקור נתונים</th><th>תצוגה</th><th>INI</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><strong>KPI Tiles (5)</strong></td><td>Excel + תנועות</td><td>יתרה · הכנסות · הוצאות · גביה% · קרן רזרבה</td><td>thresholds.*</td></tr>
+    <tr><td>2</td><td><strong>הודעות לדיירים</strong></td><td>Excel הודעות</td><td>כרטיסים צבעוניים לפי קטגוריה</td><td>show_announcements</td></tr>
+    <tr><td>3</td><td><strong>גרף הכנסות/הוצאות</strong></td><td>Excel הכנסות + הוצאות</td><td>SVG bar chart — 12 חודשים</td><td>—</td></tr>
+    <tr><td>4</td><td><strong>מעקב תקציב</strong></td><td>Excel חישוב תקציב</td><td>פסי התקדמות לפי קטגוריה</td><td>show_budget</td></tr>
+    <tr><td>5</td><td><strong>פילוח הוצאות</strong></td><td>Excel ריכוז הוצאות</td><td>SVG donut chart לפי קטגוריה</td><td>show_expense_chart</td></tr>
+    <tr><td>6</td><td><strong>תשלומי דיירים</strong></td><td>Excel ריכוז הכנסות</td><td>טבלה עם נקודות חודשיות צבעוניות</td><td>—</td></tr>
+    <tr><td>7</td><td><strong>תנועות בנק</strong></td><td>Excel תנועות חשבון</td><td>10 אחרונות + ❓ לא מזוהות</td><td>show_transactions</td></tr>
+    <tr><td>8</td><td><strong>קריאות שירות</strong></td><td>Google Sheets</td><td>טבלה עם סטטוס + תמונה + תגובה</td><td>show_issues</td></tr>
+    <tr><td>9</td><td><strong>אנשי קשר + תשלום</strong></td><td>Excel פרטי בניין</td><td>פרטי קשר + פרטי העברה בנקאית</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>כפתורים מיוחדים</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>כפתור</th><th>מיקום</th><th>פעולה</th><th>גישה</th></tr></thead>
+  <tbody>
+    <tr><td>🔔 דווח על תקלה (FAB)</td><td>קבוע בפינה</td><td>פותח טופס קריאה חדשה</td><td>כל דייר</td></tr>
+    <tr><td>+ הגש קריאה חדשה</td><td>כותרת סעיף קריאות</td><td>פותח טופס קריאה חדשה</td><td>כל דייר</td></tr>
+    <tr><td>🔒 (נסתר)</td><td>לחיצה על "עודכן:" בכותרת</td><td>טופס עדכון קריאה</td><td>Oren בלבד</td></tr>
+    <tr><td>◐ ערכת נושא</td><td>כותרת ראשית</td><td>light / dark</td><td>כולם</td></tr>
+    <tr><td>בחירת שנה</td><td>subnav</td><td>מציג נתוני שנה אחרת</td><td>כולם</td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+
+<section id="config">
+<h2>5. קובץ קונפיגורציה — config.ini</h2>
+<div class="callout info">כל הפרמטרים הניתנים לשינוי מוגדרים כאן. אין צורך לגעת בקוד Python.</div>
+<pre><code># ועד בית עמק השלום — config.ini
+# =====================================
+
+[building]
+name              = ועד בית עמק השלום 84–88
+manager           = אורן אלקיים
+co_manager        = מיכאל בן אורי
+cleaning_company  = Clean Wash
+building_a        = 84
+building_b        = 88
+email             = emeqhashalom84@gmail.com
+
+[rates]
+standard           = 210   # רוב הדירות 2026
+corner             = 170   # דירות קיצוניות 2026
+next_standard      = 280   # רוב הדירות 2027
+next_corner        = 260   # דירות קיצוניות 2027
+
+[thresholds]
+collection_green   = 85    # % — ירוק
+collection_orange  = 70    # % — כתום, מתחת = אדום
+balance_warning    = 2000  # ₪ — יתרה נמוכה
+reserve_target     = 8000  # ₪ — יעד קרן רזרבה
+critical_debt      = 1000  # ₪ — חוב קריטי לדייר
+open_issues_warn   = 3     # מספר קריאות פתוחות לאזהרה
+
+[display]
+auto_refresh_min   = 5
+default_year       = 2026
+show_announcements = true
+show_budget        = true
+show_expense_chart = true
+show_reserve_kpi   = true
+show_issues        = true
+show_transactions  = true
+show_year_selector = true
+
+[paths]
+excel_file         = D:\Claude_projects\Home_tech\data\תזרים כספים 2026.xlsx
+bank_folder        = D:\Claude_projects\Home_tech\data\תנועות בנק\
+output_html        = D:\Claude_projects\Home_tech\vaad_bayit_dashboard.html
+last_processed     = D:\Claude_projects\Home_tech\last_processed.txt
+backup_folder      = D:\Claude_projects\Home_tech\backups\
+
+[google]
+issues_sheet_url   = PASTE_URL_HERE
+admin_sheet_url    = PASTE_URL_HERE
+
+[forms]
+tenant_form_url    = PASTE_URL_HERE
+admin_form_url     = PASTE_URL_HERE
+
+[github]
+repo_url           = PASTE_REPO_HERE
+auto_push          = true</code></pre>
+</section>
+
+<section id="phases">
+<h2>6. תכנית יישום — שלבים</h2>
+
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num ph0">0</div>
+    <div>
+      <div class="phase-title">שלב 0 — הכנות (Prerequisites)</div>
+      <div style="font-size:12px;color:var(--muted)">בעל: Oren · ~45 דקות · תלות: אין</div>
+    </div>
+    <span class="badge b-orange" style="margin-right:auto">ממתין לOren</span>
+  </div>
+  <div class="phase-body">
+    <ul class="task-list">
+      <li><span>יצירת טופס Google — קריאה חדשה (5 שדות)</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>יצירת טופס Google — עדכון קריאה (3 שדות)</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>קישור שני הטפסים ל-Google Sheets + שיתוף כ-Viewer לציבור</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>שליחת שתי כתובות ה-Sheet ל-Claude</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>הוספת גיליון <strong>הודעות</strong> ל-Excel</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>הוספת גיליון <strong>פרטי בניין</strong> ל-Excel</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>הוספת גיליון <strong>מיפוי תנועות</strong> ל-Excel</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>יצירת חשבון GitHub חינמי + שליחת שם משתמש ל-Claude</span><span class="task-owner own-oren">Oren</span></li>
+    </ul>
+    <div class="callout warn" style="margin-top:12px">שלב זה חייב להסתיים לפני שניתן להתחיל שלב 1.</div>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num ph1">1</div>
+    <div>
+      <div class="phase-title">שלב 1 — סקריפט Python ליבה + HTML</div>
+      <div style="font-size:12px;color:var(--muted)">בעל: Claude · ~2 שעות · תלות: שלב 0</div>
+    </div>
+    <span class="badge b-grey">ממתין</span>
+  </div>
+  <div class="phase-body">
+    <ul class="task-list">
+      <li><span>יצירת config.ini עם כל הפרמטרים</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>קריאת Excel — כל הגיליונות (openpyxl)</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>קריאת Google Sheets — קריאות + עדכוני admin (CSV ציבורי)</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>יצירת HTML סטטי מלא — כל 9 סעיפים, SVG charts, RTL</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>Watchdog — מזהה שמירת Excel → מפעיל סקריפט</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>Scheduler — בדיקה כל 5 דקות ל-Google Sheets חדש</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>Git push אוטומטי → GitHub Pages</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>התקנת dependencies: pip install openpyxl watchdog requests</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>הגדרת Windows Task Scheduler לאתחול אוטומטי</span><span class="task-owner own-both">שניהם</span></li>
+    </ul>
+    <h3 style="margin-top:12px">קבצים שיווצרו</h3>
+    <pre><code>D:\Claude_projects\Home_tech\
+├── config.ini                    ← כל ההגדרות
+├── vaad_bayit_generator.py       ← הסקריפט הראשי
+├── last_processed.txt            ← תאריך עיבוד אחרון
+├── backups\                      ← גיבויי Excel לפני כתיבה
+└── vaad_bayit_dashboard.html     ← פלט HTML</code></pre>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num ph2">2</div>
+    <div>
+      <div class="phase-title">שלב 2 — עיבוד Bank Excel + עדכון אוטומטי</div>
+      <div style="font-size:12px;color:var(--muted)">בעל: Claude · ~2 שעות · תלות: שלב 1 עובד</div>
+    </div>
+    <span class="badge b-grey">ממתין</span>
+  </div>
+  <div class="phase-body">
+    <ul class="task-list">
+      <li><span>קריאת Bank Excel מבנק הפועלים</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>מיפוי תנועות → דיירים/הוצאות (keyword + סכום + יום חודש)</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>עדכון ריכוז הכנסות — סימון חודש כשולם</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>עדכון ריכוז הוצאות — הוספת סכום לקטגוריה וחודש</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>עדכון תנועות חשבון — הוספת שורות חדשות בלבד (incremental)</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>❓ תנועות לא מזוהות — באנר אדום + מייל התראה</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>גיבוי Excel לפני כל כתיבה</span><span class="task-owner own-claude">Claude</span></li>
+      <li><span>מילוי גיליון מיפוי תנועות לראשונה</span><span class="task-owner own-oren">Oren</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num ph3">3</div>
+    <div>
+      <div class="phase-title">שלב 3 — בדיקות ולידציה</div>
+      <div style="font-size:12px;color:var(--muted)">בעל: שניהם · ~1 שעה · תלות: שלבים 1+2</div>
+    </div>
+    <span class="badge b-grey">ממתין</span>
+  </div>
+  <div class="phase-body">
+    <ul class="task-list">
+      <li><span>בדיקת כל 9 סעיפי הדשבורד — נתונים תואמים ל-Excel</span><span class="task-owner own-both">שניהם</span></li>
+      <li><span>בדיקת מובייל — iPhone + Android</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>End-to-end: הגשת טופס → הופעה בדשבורד תוך 10 דקות</span><span class="task-owner own-both">שניהם</span></li>
+      <li><span>בדיקת עדכון admin → מתעדכן בדשבורד</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>בדיקת Bank Excel: הורדה → תיקיה → עדכון אוטומטי</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>בדיקת Git push → GitHub Pages מתעדכן</span><span class="task-owner own-both">שניהם</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num ph4">4</div>
+    <div>
+      <div class="phase-title">שלב 4 — Go Live</div>
+      <div style="font-size:12px;color:var(--muted)">בעל: Oren · ~30 דקות · תלות: שלב 3 עבר ולידציה</div>
+    </div>
+    <span class="badge b-grey">ממתין</span>
+  </div>
+  <div class="phase-body">
+    <ul class="task-list">
+      <li><span>מילוי גיליון פרטי בניין — פרטי קשר + בנק אמיתיים</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>עדכון הודעות ראשוניות לדיירים</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>שיתוף GitHub Pages URL עם כל הדיירים (WhatsApp קבוצתי)</span><span class="task-owner own-oren">Oren</span></li>
+      <li><span>שמירת קישור טופס admin בטלפון</span><span class="task-owner own-oren">Oren</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num ph5">5</div>
+    <div>
+      <div class="phase-title">שלב 5 — שיפורים עתידיים (Phase 2)</div>
+      <div style="font-size:12px;color:var(--muted)">עתידי · תלות: Go Live מוצלח</div>
+    </div>
+    <span class="badge b-grey">עתידי</span>
+  </div>
+  <div class="phase-body">
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>פיצ'ר</th><th>ערך</th><th>מורכבות</th></tr></thead>
+      <tbody>
+        <tr><td>תצוגת שנים קודמות (2025, 2024...)</td><td>גבוה</td><td>נמוכה</td></tr>
+        <tr><td>מיתוג שפה EN/HE</td><td>בינוני</td><td>בינונית</td></tr>
+        <tr><td>פילטר "הסטטוס שלי" לפי דירה</td><td>בינוני</td><td>נמוכה</td></tr>
+        <tr><td>Power Automate — התראת Push לטלפון</td><td>גבוה</td><td>בינונית</td></tr>
+        <tr><td>Gmail — שאיבת חשבוניות אוטומטית</td><td>גבוה</td><td>גבוהה</td></tr>
+        <tr><td>פרוטוקולי ישיבות — ארכיון PDF</td><td>בינוני</td><td>נמוכה</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="validation">
+<h2>7. ולידציה ווריפיקציה</h2>
+<div class="card-grid">
+  <div class="card">
+    <h3>ולידציה — נתונים נכונים?</h3>
+    <ul class="chk">
+      <li><span class="chk-box"></span>יתרת KPI תואמת יתרה בנקאית</li>
+      <li><span class="chk-box"></span>סה"כ הכנסות תואם ריכוז הכנסות</li>
+      <li><span class="chk-box"></span>נקודות תשלום תואמות Excel</li>
+      <li><span class="chk-box"></span>גרף חודשי תואם נתוני Excel</li>
+      <li><span class="chk-box"></span>קריאות Google Form מופיעות נכון</li>
+      <li><span class="chk-box"></span>עדכון admin מתעדכן בסטטוס</li>
+      <li><span class="chk-box"></span>תנועות בנק תואמות Excel</li>
+      <li><span class="chk-box"></span>הודעות מ-Excel מוצגות</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>וריפיקציה — המערכת עובדת?</h3>
+    <ul class="chk">
+      <li><span class="chk-box"></span>Watchdog מזהה שמירת Excel</li>
+      <li><span class="chk-box"></span>Python רץ ללא שגיאות</li>
+      <li><span class="chk-box"></span>HTML נוצר סטטי מלא</li>
+      <li><span class="chk-box"></span>Git push → GitHub Pages מתעדכן</li>
+      <li><span class="chk-box"></span>רענון אוטומטי כל 5 דקות</li>
+      <li><span class="chk-box"></span>נטען על iPhone + Android</li>
+      <li><span class="chk-box"></span>Bank Excel מעדכן ריכוז הכנסות/הוצאות</li>
+      <li><span class="chk-box"></span>גיבוי Excel נוצר לפני כתיבה</li>
+    </ul>
+  </div>
+</div>
+<h3>קריטריוני Go-Live</h3>
+<div class="callout success">כל פריטי הולידציה והוריפיקציה סומנו ✓ + End-to-end מוצלח אחד לפחות.</div>
+</section>
+
+<section id="info">
+<h2>8. מידע נוסף</h2>
+<div class="card-grid">
+  <div class="card">
+    <h3>חשבונות</h3>
+    <ul>
+      <li><strong>Gmail ועד:</strong> emeqhashalom84@gmail.com</li>
+      <li><strong>GitHub:</strong> PENDING</li>
+      <li><strong>Python:</strong> C:\Python\python.exe</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>מיקומי קבצים</h3>
+    <ul>
+      <li><strong>Excel:</strong> D:\Claude_projects\Home_tech\data\</li>
+      <li><strong>Python + config:</strong> D:\Claude_projects\Home_tech\</li>
+      <li><strong>תנועות בנק:</strong> D:\Claude_projects\Home_tech\data\תנועות בנק\</li>
+    </ul>
+  </div>
+</div>
+<div class="callout warn">
+  <strong>פריטים פתוחים לפני בנייה:</strong> Google Sheet URLs (2) · שם משתמש GitHub · גיליונות הודעות + פרטי בניין + מיפוי תנועות ב-Excel
+</div>
+</section>
+
+</div>
+
+<script>
+function toggleTheme(){
+  var r=document.documentElement;
+  r.setAttribute('data-theme',r.getAttribute('data-theme')==='dark'?'light':'dark');
+}
+</script>
+</body>
+</html>

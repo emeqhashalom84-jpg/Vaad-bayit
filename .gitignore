@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+backups/
+data/
+last_processed.txt
+*.log

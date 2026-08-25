@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="300">
+<title>ועד בית עמק השלום 84-88 — דשבורד 2026</title>
+<style>
+:root{
+  --bg:#f0f4f8;--surface:#fff;--surface2:#f5f7fa;--border:#dde3ed;
+  --text:#1e293b;--muted:#64748b;--primary:#1a3a5c;--accent:#2563eb;
+  --green:#15803d;--orange:#b45309;--red:#b91c1c;
+  --green-bg:#dcfce7;--orange-bg:#fef3c7;--red-bg:#fee2e2;--blue-bg:#dbeafe;
+  --radius:10px;--font:'Segoe UI','Arial Hebrew',Arial,sans-serif;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1521;--surface:#162032;--surface2:#1a2840;--border:#2d3f55;
+  --text:#dde8f5;--muted:#7a92ab;--primary:#93c5fd;--accent:#60a5fa;
+  --green-bg:#052e16;--orange-bg:#27180a;--red-bg:#2d0b0b;--blue-bg:#0c1e3d;
+}}
+:root[data-theme="dark"]{
+  --bg:#0d1521;--surface:#162032;--surface2:#1a2840;--border:#2d3f55;
+  --text:#dde8f5;--muted:#7a92ab;--primary:#93c5fd;--accent:#60a5fa;
+  --green-bg:#052e16;--orange-bg:#27180a;--red-bg:#2d0b0b;--blue-bg:#0c1e3d;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.6;direction:rtl;min-height:100%;overflow-x:hidden}
+.section{scroll-margin-top:92px}
+a{color:var(--accent)}
+/* Header */
+.hdr{background:var(--primary);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:-webkit-sticky;position:sticky;top:0;z-index:100;width:100%}
+.hdr-title{font-size:17px;font-weight:700;flex:1}
+.hdr-meta{font-size:11px;opacity:.7}
+.hdr-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:20px;cursor:pointer;font-size:12px}
+/* Nav */
+.subnav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:0;overflow-x:auto;position:-webkit-sticky;position:sticky;top:48px;z-index:99;width:100%}
+.subnav a{padding:8px 14px;font-size:12px;color:var(--muted);text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent}
+.subnav a:hover{color:var(--text);border-bottom-color:var(--accent)}
+/* Layout */
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+.section{margin-bottom:28px}
+.section-title{font-size:15px;font-weight:700;color:var(--primary);padding-bottom:8px;border-bottom:2px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section-title small{font-size:11px;font-weight:400;color:var(--muted);margin-right:auto}
+/* KPI Tiles */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:28px}
+@media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;border-top:3px solid var(--border)}
+.kpi.kpi-green{border-top-color:#22c55e}
+.kpi.kpi-orange{border-top-color:#f59e0b}
+.kpi.kpi-red{border-top-color:#ef4444}
+.kpi.kpi-blue{border-top-color:#3b82f6}
+.kpi-label{font-size:11px;color:var(--muted);margin-bottom:6px}
+.kpi-val{font-size:20px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.kpi-bar{height:4px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden}
+.kpi-bar-fill{height:100%;border-radius:2px;transition:width .5s}
+/* Announcements */
+.ann-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.ann-card{background:var(--surface);border:1px solid var(--border);border-right:4px solid;border-radius:var(--radius);padding:14px}
+.ann-card.urgent{border-right-color:#ef4444}
+.ann-card.maintenance{border-right-color:#f59e0b}
+.ann-card.financial{border-right-color:#8b5cf6}
+.ann-card.meeting{border-right-color:#22c55e}
+.ann-card.safety{border-right-color:#1e40af}
+.ann-card.info{border-right-color:#3b82f6}
+.ann-cat{font-size:10px;font-weight:600;text-transform:uppercase;margin-bottom:4px;color:var(--muted)}
+.ann-title{font-weight:600;margin-bottom:4px}
+.ann-content{font-size:12px;color:var(--muted)}
+.ann-date{font-size:10px;color:var(--muted);margin-top:6px}
+/* Charts */
+.chart-row{display:grid;grid-template-columns:3fr 2fr;gap:20px;align-items:start}
+@media(max-width:800px){.chart-row{grid-template-columns:1fr}}
+.chart-box{background:var(--surface);border-radius:var(--radius);padding:10px;display:flex;flex-direction:column}
+.chart-box svg{width:100%;height:auto;display:block}
+.chart-title{font-size:13px;font-weight:700;color:var(--primary);text-align:center;margin-bottom:8px}
+/* Tenant table */
+.tbl-wrap{overflow-x:auto}
+.tr-scroll{max-height:420px;overflow-y:auto;border-radius:6px}
+.tr-scroll thead th{position:sticky;top:0;z-index:1;background:var(--surface2)}
+.th-sort{cursor:pointer;user-select:none}
+.th-sort:hover{color:var(--primary)}
+.tr-search{width:220px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;direction:rtl;margin-bottom:8px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--surface2);padding:7px 8px;font-size:11px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border);text-align:right;white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.dot{font-size:14px;cursor:pointer;display:inline-block;padding:6px 4px;margin:-6px -4px;touch-action:manipulation}
+#dot-popup{position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);max-width:260px;box-shadow:0 4px 16px rgba(0,0,0,.18);pointer-events:none;opacity:0;transition:opacity .15s;line-height:1.5;direction:rtl;text-align:right}
+#dot-popup.show{opacity:1}
+.dot-paid{color:#22c55e}.dot-partial{color:#f59e0b}.dot-empty{color:#e2e8f0}
+.dot-approved{color:#2563eb}.dot-approved-partial{color:#60a5fa}.dot-approved-empty{color:#93c5fd}
+/* Status badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.badge-orange{background:var(--orange-bg);color:var(--orange)}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-credit{background:#d1fae5;color:#065f46}
+.badge-blue{background:var(--blue-bg);color:var(--accent)}
+/* Progress bars */
+.prog-item{margin-bottom:10px}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.prog-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px}
+/* Issues */
+.issues-table td:first-child{font-variant-numeric:tabular-nums;color:var(--muted);font-size:11px}
+/* Contact grid */
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.contact-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.contact-name{font-weight:600;margin-bottom:4px}
+.contact-detail{font-size:12px;color:var(--muted)}
+/* FAB */
+.fab{position:fixed;bottom:24px;left:20px;background:var(--accent);color:#fff;border:none;border-radius:50px;padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:100;text-decoration:none;display:flex;align-items:center;gap:6px}
+.fab:hover{opacity:.9}
+/* Alert banner */
+.alert-banner{background:var(--red-bg);border:1px solid #fca5a5;border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--red)}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-title">ועד בית עמק השלום 84-88</div>
+  <div class="hdr-meta">עודכן: 25/08/2026 17:01 </div>
+  <button class="hdr-btn" onclick="toggleTheme()">◐</button>
+</header>
+
+<nav class="subnav"><a href="#kpis">סיכום</a><a href="#announcements">הודעות</a><a href="#charts">גרפים</a><a href="#tenants">תשלומים</a><a href="#transactions">תנועות</a><a href="#issues">קריאות</a><a href="#contacts">קשר</a></nav>
+
+
+
+<div class="wrap">
+
+<div id="kpis">
+<div class="kpis">
+  <div class="kpi kpi-green">
+    <div class="kpi-label">יתרת חשבון</div>
+    <div class="kpi-val">₪6,418</div>
+    <div class="kpi-sub">תקין</div>
+  </div>
+  <div class="kpi kpi-blue">
+    <div class="kpi-label">הכנסות שנה</div>
+    <div class="kpi-val">₪23,286</div>
+    <div class="kpi-sub">מתחילת 2026</div>
+  </div>
+  <div class="kpi kpi-green">
+    <div class="kpi-label">הוצאות שנה</div>
+    <div class="kpi-val">₪19,163</div>
+    <div class="kpi-sub">מתחילת 2026</div>
+  </div>
+  <div class="kpi kpi-red">
+    <div class="kpi-label">אחוז גביה</div>
+    <div class="kpi-val">60%</div>
+    <div class="kpi-bar"><div class="kpi-bar-fill" style="width:60%;background:#ef4444"></div></div>
+  </div>
+  <div class="kpi kpi-orange">
+    <div class="kpi-label">קרן רזרבה</div>
+    <div class="kpi-val">₪6,418</div>
+    <div class="kpi-sub">יעד: ₪8,000</div>
+    <div class="kpi-bar"><div class="kpi-bar-fill" style="width:80%;background:#f59e0b"></div></div>
+  </div>
+</div></div>
+
+
+<div class="section" id="announcements">
+  <div class="section-title">📢 הודעות לדיירים</div>
+  <div class="ann-grid">
+<div class="ann-card financial">
+  <div class="ann-cat">כספי</div>
+  <div class="ann-title">תשלום ועד בית — ספטמבר 2026</div>
+  <div class="ann-content">נא לשלם דמי ועד בית לחודש ספטמבר עד ה-10 לחודש.
+תשלום בהעברה בנקאית לחשבון הועד.</div>
+  <div class="ann-date">25/08/2026</div>
+</div>
+<div class="ann-card maintenance">
+  <div class="ann-cat">תחזוקה</div>
+  <div class="ann-title">בדיקת מעלית — 01/09/2026</div>
+  <div class="ann-content">בדיקת מעלית שנתית מתוכננת ליום שלישי 1.9.2026 בין השעות 09:00–12:00.
+המעלית לא תפעל בשעות אלו.</div>
+  <div class="ann-date">25/08/2026</div>
+</div>
+<div class="ann-card meeting">
+  <div class="ann-cat">כינוסים</div>
+  <div class="ann-title">ישיבת ועד בית — ספטמבר</div>
+  <div class="ann-content">ישיבת ועד תתקיים ב-10/09/2026 בשעה 19:00 בלובי הבניין.
+נושאים: תקציב 2027, תיקון גג, בחירת חברת ניקיון.</div>
+  <div class="ann-date">25/08/2026</div>
+</div>
+<div class="ann-card info">
+  <div class="ann-cat">מידע</div>
+  <div class="ann-title">תזכורת — חנייה תקינה</div>
+  <div class="ann-content">מתבקשים הדיירים לחנות במקומות המסומנים בלבד.
+רכבים חונים שלא כחוק יגוררו על חשבון הבעלים.</div>
+  <div class="ann-date">25/08/2026</div>
+</div></div>
+</div>
+
+<div class="section" id="charts">
+  <div class="section-title">📊 הכנסות והוצאות 2026</div>
+  <div class="chart-row">
+    <div class="chart-box">
+      <div class="chart-title">הכנסות מול הוצאות חודשי</div>
+      <svg viewBox="0 0 600 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:Segoe UI,Arial;direction:rtl">
+<line x1="72" y1="328.0" x2="586" y2="328.0" stroke="#dde3ed" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="67" y="332.0" text-anchor="end" direction="ltr" font-size="10" fill="#94a3b8">₪0</text>
+<line x1="72" y1="268.8" x2="586" y2="268.8" stroke="#dde3ed" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="67" y="272.8" text-anchor="end" direction="ltr" font-size="10" fill="#94a3b8">₪2,500</text>
+<line x1="72" y1="209.6" x2="586" y2="209.6" stroke="#dde3ed" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="67" y="213.6" text-anchor="end" direction="ltr" font-size="10" fill="#94a3b8">₪5,000</text>
+<line x1="72" y1="150.4" x2="586" y2="150.4" stroke="#dde3ed" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="67" y="154.4" text-anchor="end" direction="ltr" font-size="10" fill="#94a3b8">₪7,500</text>
+<line x1="72" y1="91.2" x2="586" y2="91.2" stroke="#dde3ed" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="67" y="95.2" text-anchor="end" direction="ltr" font-size="10" fill="#94a3b8">₪10,000</text>
+<line x1="72" y1="32.0" x2="586" y2="32.0" stroke="#dde3ed" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="67" y="36.0" text-anchor="end" direction="ltr" font-size="10" fill="#94a3b8">₪12,500</text>
+<rect x="76.3" y="272.1" width="16.3" height="55.9" fill="#22c55e" rx="2" opacity="0.88"/>
+<text x="84.4" y="268.1" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">2,360</text>
+<rect x="94.3" y="326.4" width="16.3" height="1.6" fill="#f87171" rx="2" opacity="0.88"/>
+<text x="102.4" y="322.4" text-anchor="middle" font-size="10" font-weight="700" fill="#b91c1c">67</text>
+<text x="93.4" y="342" text-anchor="middle" font-size="9" fill="#64748b">ינו</text>
+<rect x="119.1" y="269.3" width="16.3" height="58.7" fill="#22c55e" rx="2" opacity="0.88"/>
+<text x="127.3" y="265.3" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">2,480</text>
+<rect x="137.1" y="293.0" width="16.3" height="35.0" fill="#f87171" rx="2" opacity="0.88"/>
+<text x="145.2" y="289.0" text-anchor="middle" font-size="10" font-weight="700" fill="#b91c1c">1,478</text>
+<text x="136.2" y="342" text-anchor="middle" font-size="9" fill="#64748b">פבר</text>
+<rect x="162.0" y="269.3" width="16.3" height="58.7" fill="#22c55e" rx="2" opacity="0.88"/>
+<text x="170.1" y="265.3" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">2,480</text>
+<rect x="179.9" y="288.5" width="16.3" height="39.5" fill="#f87171" rx="2" opacity="0.88"/>
+<text x="188.1" y="284.5" text-anchor="middle" font-size="10" font-weight="700" fill="#b91c1c">1,668</text>
+<text x="179.1" y="342" text-anchor="middle" font-size="9" fill="#64748b">מרץ</text>
+<rect x="204.8" y="271.2" width="16.3" height="56.8" fill="#22c55e" rx="2" opacity="0.88"/>
+<text x="212.9" y="267.2" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">2,397</text>
+<rect x="222.8" y="253.7" width="16.3" height="74.3" fill="#f87171" rx="2" opacity="0.88"/>
+<text x="230.9" y="249.7" text-anchor="middle" font-size="10" font-weight="700" fill="#b91c1c">3,139</text>
+<text x="221.9" y="342" text-anchor="middle" font-size="9" fill="#64748b">אפר</text>
+<rect x="247.6" y="267.3" width="16.3" height="60.7" fill="#22c55e" rx="2" opacity="0.88"/>
+<text x="255.8" y="263.3" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">2,564</text>
+<rect x="265.6" y="277.9" width="16.3" height="50.1" fill="#f87171" rx="2" opacity="0.88"/>
+<text x="273.7" y="273.9" text-anchor="middle" font-size="10" font-weight="700" fill="#b91c1c">2,114</text>
+<text x="264.8" y="342" text-anchor="middle" font-size="9" fill="#64748b">מאי</text>
+<rect x="290.5" y="255.0" width="16.3" height="73.0" fill="#22c55e" rx="2" opacity="0.88"/>
+<text x="298.6" y="251.0" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">3,085</text>
+<rect x="308.4" y="292.5" width="16.3" height="35.5" fill="#f87171" rx="2" opacity="0.88"/>
+<text x="316.6" y="288.5" text-anchor="middle" font-size="10" font-weight="700" fill="#b91c1c">1,500</text>
+<text x="307.6" y="342" text-anchor="middle" font-size="9" fill="#64748b">יוני</text>
+<rect x="333.3" y="217.2" width="16.3" height="110.8" fill="#22c55e" rx="2" opacity="0.88"/>
+<text x="341.4" y="213.2" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">4,680</text>
+<rect x="351.3" y="101.2" width="16.3" height="226.8" fill="#f87171" rx="2" opacity="0.88"/>
+<text x="359.4" y="97.2" text-anchor="middle" font-size="10" font-weight="700" fill="#b91c1c">9,576</text>
+<text x="350.4" y="342" text-anchor="middle" font-size="9" fill="#64748b">יולי</text>
+<rect x="376.1" y="286.1" width="16.3" height="41.9" fill="#22c55e" rx="2" opacity="0.88"/>
+<text x="384.3" y="282.1" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">1,770</text>
+<rect x="394.1" y="326.3" width="16.3" height="1.7" fill="#f87171" rx="2" opacity="0.88"/>
+<text x="402.2" y="322.3" text-anchor="middle" font-size="10" font-weight="700" fill="#b91c1c">72</text>
+<text x="393.2" y="342" text-anchor="middle" font-size="9" fill="#64748b">אוג</text>
+<rect x="419.0" y="313.1" width="16.3" height="14.9" fill="#22c55e" rx="2" opacity="0.88"/>
+<text x="427.1" y="309.1" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">630</text>
+<text x="436.1" y="342" text-anchor="middle" font-size="9" fill="#64748b">ספט</text>
+<rect x="461.8" y="318.1" width="16.3" height="9.9" fill="#22c55e" rx="2" opacity="0.88"/>
+<text x="469.9" y="314.1" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">420</text>
+<text x="478.9" y="342" text-anchor="middle" font-size="9" fill="#64748b">אוק</text>
+<rect x="504.6" y="323.0" width="16.3" height="5.0" fill="#22c55e" rx="2" opacity="0.88"/>
+<text x="512.8" y="319.0" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">210</text>
+<text x="521.8" y="342" text-anchor="middle" font-size="9" fill="#64748b">נוב</text>
+<rect x="547.5" y="323.0" width="16.3" height="5.0" fill="#22c55e" rx="2" opacity="0.88"/>
+<text x="555.6" y="319.0" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">210</text>
+<text x="564.6" y="342" text-anchor="middle" font-size="9" fill="#64748b">דצמ</text>
+<rect x="215" y="360" width="12" height="12" fill="#22c55e" rx="2"/>
+<text x="232" y="370" text-anchor="start" direction="ltr" font-size="11" fill="#475569">הכנסות</text>
+<rect x="305" y="360" width="12" height="12" fill="#f87171" rx="2"/>
+<text x="322" y="370" text-anchor="start" direction="ltr" font-size="11" fill="#475569">הוצאות</text>
+</svg>
+    </div>
+    <div class="chart-box"><div class="chart-title">הוצאות</div><svg viewBox="0 0 640 608" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:Segoe UI,Arial Hebrew,Arial">
+<path d="M 320,250 L 160.1,252.6 A 160,70 0 0 1 320.0,180.0 Z" fill="#101d34" stroke="white" stroke-width="0.4"/>
+<path d="M 320,250 L 320.0,180.0 A 160,70 0 0 1 338.5,319.5 Z" fill="#0e3f47" stroke="white" stroke-width="0.4"/>
+<path d="M 320,250 L 256.9,314.3 A 160,70 0 0 1 160.1,252.6 Z" fill="#64123f" stroke="white" stroke-width="0.4"/>
+<path d="M 320,250 L 262.6,315.3 A 160,70 0 0 1 256.9,314.3 Z" fill="#275966" stroke="white" stroke-width="0.4"/>
+<path d="M 320,250 L 318.0,320.0 A 160,70 0 0 1 262.6,315.3 Z" fill="#3a5924" stroke="white" stroke-width="0.4"/>
+<path d="M 320,250 L 338.5,319.5 A 160,70 0 0 1 318.0,320.0 Z" fill="#7b4119" stroke="white" stroke-width="0.4"/>
+<path d="M 160.1,192.6 A 160,70 0 0 1 320.0,120.0 L 320.0,180.0 A 160,70 0 0 0 160.1,252.6 Z" fill="#152644" stroke="white" stroke-width="0.5"/>
+<path d="M 320.0,120.0 A 160,70 0 0 1 338.5,259.5 L 338.5,319.5 A 160,70 0 0 0 320.0,180.0 Z" fill="#12525d" stroke="white" stroke-width="0.5"/>
+<path d="M 256.9,254.3 A 160,70 0 0 1 160.1,192.6 L 160.1,252.6 A 160,70 0 0 0 256.9,314.3 Z" fill="#831852" stroke="white" stroke-width="0.5"/>
+<path d="M 262.6,255.3 A 160,70 0 0 1 256.9,254.3 L 256.9,314.3 A 160,70 0 0 0 262.6,315.3 Z" fill="#337486" stroke="white" stroke-width="0.5"/>
+<path d="M 318.0,260.0 A 160,70 0 0 1 262.6,255.3 L 262.6,315.3 A 160,70 0 0 0 318.0,320.0 Z" fill="#4c7530" stroke="white" stroke-width="0.5"/>
+<path d="M 338.5,259.5 A 160,70 0 0 1 318.0,260.0 L 318.0,320.0 A 160,70 0 0 0 338.5,319.5 Z" fill="#a15521" stroke="white" stroke-width="0.5"/>
+<path d="M 320,190 L 320.0,120.0 A 160,70 0 0 1 338.5,259.5 Z" fill="#1B7A8A" stroke="white" stroke-width="1.5"/>
+<path d="M 320,190 L 338.5,259.5 A 160,70 0 0 1 318.0,260.0 Z" fill="#ED7D31" stroke="white" stroke-width="1.5"/>
+<path d="M 320,190 L 318.0,260.0 A 160,70 0 0 1 262.6,255.3 Z" fill="#70AD47" stroke="white" stroke-width="1.5"/>
+<path d="M 320,190 L 262.6,255.3 A 160,70 0 0 1 256.9,254.3 Z" fill="#4BACC6" stroke="white" stroke-width="1.5"/>
+<path d="M 320,190 L 256.9,254.3 A 160,70 0 0 1 160.1,192.6 Z" fill="#C2247A" stroke="white" stroke-width="1.5"/>
+<path d="M 320,190 L 160.1,192.6 A 160,70 0 0 1 320.0,120.0 Z" fill="#1F3864" stroke="white" stroke-width="1.5"/>
+<line x1="479.7" y1="185.9" x2="564.6" y2="90.0" stroke="#94a3b8" stroke-width="1.0"/>
+<text x="564.6" y="90.0" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="600" fill="#1e293b">מעליות, 9,227</text>
+<line x1="328.3" y1="292.9" x2="332.7" y2="444.7" stroke="#94a3b8" stroke-width="1.0"/>
+<text x="332.7" y="444.7" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="600" fill="#1e293b">בזק, 393</text>
+<line x1="289.8" y1="291.7" x2="262.4" y2="371.7" stroke="#94a3b8" stroke-width="1.0"/>
+<text x="262.4" y="371.7" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="600" fill="#1e293b">חשמל, 1,081</text>
+<line x1="259.7" y1="287.8" x2="187.2" y2="418.0" stroke="#94a3b8" stroke-width="1.0"/>
+<text x="187.2" y="418.0" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="600" fill="#1e293b">בנק, 116</text>
+<line x1="188.1" y1="262.6" x2="68.6" y2="294.7" stroke="#94a3b8" stroke-width="1.0"/>
+<text x="68.6" y="294.7" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="600" fill="#1e293b">ביטוח, 3,440</text>
+<line x1="204.7" y1="141.4" x2="100.3" y2="90.0" stroke="#94a3b8" stroke-width="1.0"/>
+<text x="100.3" y="90.0" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="600" fill="#1e293b">חריגות, 4,906</text>
+</svg></div>
+  </div>
+</div>
+
+<div class="section" id="budget">
+  <div class="section-title">📋 מעקב תקציב</div>
+  
+<div class="prog-item" style="margin-bottom:16px;padding-bottom:14px;border-bottom:2px solid var(--border)">
+  <div class="prog-label" style="font-size:13px;font-weight:700">
+    <span>סה"כ תקציב שנתי</span>
+    <span style="color:var(--muted)">₪19,163 / ₪35,772</span>
+  </div>
+  <div class="prog-bar" style="height:12px"><div class="prog-fill" style="width:54%;background:#22c55e"></div></div>
+</div>
+<div class="prog-item">
+  <div class="prog-label">
+    <span>בדיקת מעליות דו שנתי</span>
+    <span style="color:var(--muted)">₪706 / ₪1,412 &nbsp;<span style="color:#22c55e;font-weight:600">50%</span></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" style="width:50%;background:#22c55e"></div></div>
+</div>
+<div class="prog-item">
+  <div class="prog-label">
+    <span>עלות חודשית 2 מעליות</span>
+    <span style="color:var(--muted)">₪8,521 / ₪17,160 &nbsp;<span style="color:#22c55e;font-weight:600">50%</span></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" style="width:50%;background:#22c55e"></div></div>
+</div>
+<div class="prog-item">
+  <div class="prog-label">
+    <span>מעיינות העמקים</span>
+    <span style="color:var(--muted)">₪0 / ₪400 &nbsp;<span style="color:#22c55e;font-weight:600">0%</span></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" style="width:0%;background:#22c55e"></div></div>
+</div>
+<div class="prog-item">
+  <div class="prog-label">
+    <span>חשמל מדרגות</span>
+    <span style="color:var(--muted)">₪1,081 / ₪2,700 &nbsp;<span style="color:#22c55e;font-weight:600">40%</span></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" style="width:40%;background:#22c55e"></div></div>
+</div>
+<div class="prog-item">
+  <div class="prog-label">
+    <span>ביטוח מבנה</span>
+    <span style="color:var(--muted)">₪3,440 / ₪2,700 &nbsp;<span style="color:#ef4444;font-weight:600">100%</span></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" style="width:100%;background:#ef4444"></div></div>
+</div>
+<div class="prog-item">
+  <div class="prog-label">
+    <span>נקיון</span>
+    <span style="color:var(--muted)">₪0 / ₪9,600 &nbsp;<span style="color:#22c55e;font-weight:600">0%</span></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" style="width:0%;background:#22c55e"></div></div>
+</div>
+<div class="prog-item">
+  <div class="prog-label">
+    <span>נקיון גג</span>
+    <span style="color:var(--muted)">₪0 / ₪1,200 &nbsp;<span style="color:#22c55e;font-weight:600">0%</span></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" style="width:0%;background:#22c55e"></div></div>
+</div>
+<div class="prog-item">
+  <div class="prog-label">
+    <span>בזק מעליות</span>
+    <span style="color:var(--muted)">₪393 / ₪600 &nbsp;<span style="color:#22c55e;font-weight:600">66%</span></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" style="width:66%;background:#22c55e"></div></div>
+</div>
+<div class="prog-item">
+  <div class="prog-label">
+    <span>עמלות בנק</span>
+    <span style="color:var(--muted)">₪116 / ₪240 &nbsp;<span style="color:#22c55e;font-weight:600">48%</span></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" style="width:48%;background:#22c55e"></div></div>
+</div>
+<div class="prog-item">
+  <div class="prog-label">
+    <span>אחר - לא מתוכנן</span>
+    <span style="color:var(--muted)">₪4,906 / ₪8,000 &nbsp;<span style="color:#22c55e;font-weight:600">61%</span></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" style="width:61%;background:#22c55e"></div></div>
+</div>
+</div>
+
+<div class="section" id="tenants">
+  <div class="section-title">🏠 תשלומי דיירים 2026</div>
+  <div class="tbl-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>שם דייר</th>
+        <th>ינו</th><th>פבר</th><th>מרץ</th><th>אפר</th><th>מאי</th><th>יוני</th><th>יולי</th><th>אוג</th><th>ספט</th><th>אוק</th><th>נוב</th><th>דצמ</th>
+        <th>סה"כ שולם</th>
+        <th>חוב חודשי</th>
+      </tr>
+    </thead>
+    <tbody>
+<tr>
+  <td><strong>שרלי ועינת בסיאנו</strong><br><small style="color:var(--muted)">בניין 84 דירה 1</small></td>
+  <td><span class="dot dot-paid" title="שולם ₪170" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪170" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪170" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪170" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪170" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪170" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪1,020</td>
+  <td><span class="badge badge-orange" title="₪340">₪340</span></td>
+</tr>
+<tr>
+  <td><strong>אורן ואורלי אלקיים</strong><br><small style="color:var(--muted)">בניין 84 דירה 2</small></td>
+  <td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-partial" title="שולם חלקי ₪127 — Oren Elkayam:
+126.8 שולם עבור בזק מכרטיס אשראי פרטי אורן עד לקבלת הוראת קבע של בזק" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">◑</span></td><td><span class="dot dot-paid" title="שולם ₪294" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪1,681</td>
+  <td><span class="badge badge-green" title="ללא חוב">ללא חוב</span></td>
+</tr>
+<tr>
+  <td><strong>חנה פורמן</strong><br><small style="color:var(--muted)">בניין 84 דירה 3</small></td>
+  <td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪1,890</td>
+  <td><span class="badge badge-credit" title="מקדמה ₪210">מקדמה ₪210</span></td>
+</tr>
+<tr>
+  <td><strong>עמרי ושיר יוסוף</strong><br><small style="color:var(--muted)"></small></td>
+  <td><span class="dot dot-approved" title="שולם ₪90 — מאושר ועד" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪1,560</td>
+  <td><span class="badge badge-green" title="ללא חוב">ללא חוב</span></td>
+</tr>
+<tr>
+  <td><strong>מיכאל ומריה בן אורי</strong><br><small style="color:var(--muted)">בניין 86 דירה 1</small></td>
+  <td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪1,680</td>
+  <td><span class="badge badge-red" title="₪0 + ₪1,520 העברה">₪0 + ₪1,520 העברה</span></td>
+</tr>
+<tr>
+  <td><strong>דוד דרס</strong><br><small style="color:var(--muted)">בניין 86 דירה 3</small></td>
+  <td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪2,100</td>
+  <td><span class="badge badge-credit" title="מקדמה ₪420">מקדמה ₪420</span></td>
+</tr>
+<tr>
+  <td><strong>מיכל בצלאל</strong><br><small style="color:var(--muted)">בניין 86 דירה 5</small></td>
+  <td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210 — Oren Elkayam:
+שילמה מעליות + בזק    (עבור שנת 2025 עד יוני (2026 
+ מכרטיס אשראי פרטי" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪1,470</td>
+  <td><span class="badge badge-orange" title="₪210">₪210</span></td>
+</tr>
+<tr>
+  <td><strong>יוני כהן</strong><br><small style="color:var(--muted)">בניין 86 דירה 2</small></td>
+  <td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪1,470</td>
+  <td><span class="badge badge-orange" title="₪210">₪210</span></td>
+</tr>
+<tr>
+  <td><strong>ולדי וטניה גלר</strong><br><small style="color:var(--muted)">בניין 86 דירה 4</small></td>
+  <td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪0</td>
+  <td><span class="badge badge-red" title="₪1,680">₪1,680</span></td>
+</tr>
+<tr>
+  <td><strong>ברכה ואליעזר אוחיון</strong><br><small style="color:var(--muted)">בניין 86 דירה 6</small></td>
+  <td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪1,680</td>
+  <td><span class="badge badge-green" title="ללא חוב">ללא חוב</span></td>
+</tr>
+<tr>
+  <td><strong>ענבל הוכבלד</strong><br><small style="color:var(--muted)">בניין 88 דירה 2</small></td>
+  <td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-approved" title="שולם ₪90 — מאושר ועד" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪1,560</td>
+  <td><span class="badge badge-green" title="ללא חוב">ללא חוב</span></td>
+</tr>
+<tr>
+  <td><strong>נועה קוסטינר</strong><br><small style="color:var(--muted)">בניין 88 דירה 3</small></td>
+  <td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪1,680</td>
+  <td><span class="badge badge-green" title="ללא חוב">ללא חוב</span></td>
+</tr>
+<tr>
+  <td><strong>אנטולי ספקטורוב</strong><br><small style="color:var(--muted)">בניין 88 דירה 4</small></td>
+  <td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td><td><span class="dot dot-paid" title="שולם ₪210" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">●</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪2,520</td>
+  <td><span class="badge badge-credit" title="מקדמה ₪840">מקדמה ₪840</span></td>
+</tr>
+<tr>
+  <td><strong>אדינה גילי וואן אייבאייק</strong><br><small style="color:var(--muted)">בניין 88 דירה 1</small></td>
+  <td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td><td><span class="dot dot-empty" title="לא שולם" onclick="dotTap(this,event)" ontouchend="dotTap(this,event)">○</span></td>
+  <td style="font-variant-numeric:tabular-nums">₪0</td>
+  <td><span class="badge badge-red" title="₪1,360">₪1,360</span></td>
+</tr>
+<tr style="font-weight:600;border-top:2px solid var(--border);background:var(--surface2)">
+  <td>סה"כ</td>
+  <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+  <td style="font-variant-numeric:tabular-nums">₪20,311</td>
+  <td><span class="badge badge-red" title="חוב 2026: ₪3,800 (כולל ₪1,520 העברה מ-2025)">₪5,320 ↑</span></td>
+</tr></tbody>
+  </table>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-top:10px;display:flex;flex-wrap:wrap;gap:18px;align-items:center">
+    <span style="display:flex;gap:12px;align-items:center">
+      <span><span style="color:#22c55e;font-size:15px">●</span> שולם</span>
+      <span><span style="color:#f59e0b;font-size:15px">◑</span> חלקי</span>
+      <span><span style="color:#cbd5e1;font-size:15px">○</span> לא שולם</span>
+      <span><span style="color:#2563eb;font-size:15px">●</span> זיכוי ועד</span>
+    </span>
+    <span style="color:#94a3b8">|</span>
+    <span style="display:flex;gap:6px;align-items:center">
+      <span style="font-size:11px;color:var(--muted)">חוב:</span>
+      <span class="badge badge-credit" style="font-size:10px">מקדמה</span>
+      <span class="badge badge-green" style="font-size:10px">ללא חוב</span>
+      <span class="badge badge-orange" style="font-size:10px">1–3 חודשים</span>
+      <span class="badge badge-red" style="font-size:10px">4+ חודשים</span>
+    </span>
+  </div>
+</div>
+
+<div class="section" id="transactions">
+  <div class="section-title">🏦 תנועות בנק
+    <small>89 תנועות</small>
+  </div>
+  <input type="text" class="tr-search" id="tr-search" placeholder="חיפוש לפי שם / תיאור..." oninput="filterTrans()">
+  <div class="tbl-wrap tr-scroll">
+  <table id="tr-table">
+    <thead><tr>
+      <th class="th-sort" onclick="sortTrans(0)">תאריך ↕</th>
+      <th>שם</th>
+      <th>פעולה</th>
+      <th class="th-sort" onclick="sortTrans(3)">סכום ↕</th>
+      <th class="th-sort" onclick="sortTrans(4)">יתרה ↕</th>
+      <th>עבור</th>
+    </tr></thead>
+    <tbody id="tr-body">
+<tr>
+  <td data-val="19/08/2026">19/08/2026</td>
+  <td>דרס דוד</td>
+  <td>זיכוי מאוצה&quot;ח</td>
+  <td data-val="420.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪420</td>
+  <td data-val="6417.91" style="font-variant-numeric:tabular-nums">₪6,417.91</td>
+  <td style="font-size:11px;color:var(--muted)">ספטמבר אוקטובר 26</td>
+</tr>
+<tr>
+  <td data-val="19/08/2026">19/08/2026</td>
+  <td>חנה פורמן</td>
+  <td>העברה/הפקדה</td>
+  <td data-val="1890.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪1,890</td>
+  <td data-val="5997.91" style="font-variant-numeric:tabular-nums">₪5,997.91</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר - אוגוסט 2026</td>
+</tr>
+<tr>
+  <td data-val="12/08/2026">12/08/2026</td>
+  <td>בן אורי מיכאל ומריה</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="4107.91" style="font-variant-numeric:tabular-nums">₪4,107.91</td>
+  <td style="font-size:11px;color:var(--muted)">אוגוסט 26</td>
+</tr>
+<tr>
+  <td data-val="10/08/2026">10/08/2026</td>
+  <td>בזק מעליות</td>
+  <td>בזק-הוראות קבע</td>
+  <td data-val="-49.14" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪49</td>
+  <td data-val="3897.91" style="font-variant-numeric:tabular-nums">₪3,897.91</td>
+  <td style="font-size:11px;color:var(--muted)">תשלום חשבון עבור חודשיים לאחור - יוני 26</td>
+</tr>
+<tr>
+  <td data-val="10/08/2026">10/08/2026</td>
+  <td>ברכה אוחיון</td>
+  <td>זיכוי מדיסקונט</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="3947.05" style="font-variant-numeric:tabular-nums">₪3,947.05</td>
+  <td style="font-size:11px;color:var(--muted)">אוגוסט 26</td>
+</tr>
+<tr>
+  <td data-val="07/08/2026">07/08/2026</td>
+  <td>עמרי ושיר יוסוב</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="3737.05" style="font-variant-numeric:tabular-nums">₪3,737.05</td>
+  <td style="font-size:11px;color:var(--muted)">אוגוסט 26</td>
+</tr>
+<tr>
+  <td data-val="05/08/2026">05/08/2026</td>
+  <td>אורלי ואורן אלקיים</td>
+  <td>זיכוי מיהב</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="3527.05" style="font-variant-numeric:tabular-nums">₪3,527.05</td>
+  <td style="font-size:11px;color:var(--muted)">אוגוסט 26</td>
+</tr>
+<tr>
+  <td data-val="05/08/2026">05/08/2026</td>
+  <td>מוהנדו פדייה חסוס גרמן</td>
+  <td>הוראת-קבע</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="3317.05" style="font-variant-numeric:tabular-nums">₪3,317.05</td>
+  <td style="font-size:11px;color:var(--muted)">אוגוסט 26</td>
+</tr>
+<tr>
+  <td data-val="03/08/2026">03/08/2026</td>
+  <td>עמלת בנק</td>
+  <td>ע.מפעולות-ישיר</td>
+  <td data-val="-22.75" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪23</td>
+  <td data-val="3107.05" style="font-variant-numeric:tabular-nums">₪3,107.05</td>
+  <td style="font-size:11px;color:var(--muted)">אוגוסט 26</td>
+</tr>
+<tr>
+  <td data-val="02/08/2026">02/08/2026</td>
+  <td>הוכבלד ענבל</td>
+  <td>העברה</td>
+  <td data-val="90.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪90</td>
+  <td data-val="3129.8" style="font-variant-numeric:tabular-nums">₪3,129.80</td>
+  <td style="font-size:11px;color:var(--muted)">אוגוסט 26</td>
+</tr>
+<tr>
+  <td data-val="31/07/2026">31/07/2026</td>
+  <td>מעליות - קונה</td>
+  <td>קונה בע&quot;מ</td>
+  <td data-val="-1429.55" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪1,430</td>
+  <td data-val="3039.8" style="font-variant-numeric:tabular-nums">₪3,039.80</td>
+  <td style="font-size:11px;color:var(--muted)">יולי 26</td>
+</tr>
+<tr>
+  <td data-val="30/07/2026">30/07/2026</td>
+  <td>ביטוח מבנה ביניין</td>
+  <td>העב&#x27; לאחר-נייד</td>
+  <td data-val="-3440.0" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪3,440</td>
+  <td data-val="4469.35" style="font-variant-numeric:tabular-nums">₪4,469.35</td>
+  <td style="font-size:11px;color:var(--muted)">עד סוף יולי 2027</td>
+</tr>
+<tr>
+  <td data-val="29/07/2026">29/07/2026</td>
+  <td>יוני כהן</td>
+  <td>העברה-נייד</td>
+  <td data-val="1470.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪1,470</td>
+  <td data-val="7909.35" style="font-variant-numeric:tabular-nums">₪7,909.35</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר - יולי כולל 26</td>
+</tr>
+<tr>
+  <td data-val="22/07/2026">22/07/2026</td>
+  <td>אורלי ואורן אלקיים</td>
+  <td>זיכוי מיהב</td>
+  <td data-val="420.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪420</td>
+  <td data-val="6439.35" style="font-variant-numeric:tabular-nums">₪6,439.35</td>
+  <td style="font-size:11px;color:var(--muted)">יוני יולי 26</td>
+</tr>
+<tr>
+  <td data-val="17/07/2026">17/07/2026</td>
+  <td>מיכל בצלאל</td>
+  <td>זיכוי מהמזרחי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6019.35" style="font-variant-numeric:tabular-nums">₪ 6,019.35</td>
+  <td style="font-size:11px;color:var(--muted)">יולי 26</td>
+</tr>
+<tr>
+  <td data-val="15/07/2026">15/07/2026</td>
+  <td>מיכל בצלאל</td>
+  <td>זיכוי מהמזרחי</td>
+  <td data-val="2370.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪2,370</td>
+  <td data-val="5809.35" style="font-variant-numeric:tabular-nums">₪5,809.35</td>
+  <td style="font-size:11px;color:var(--muted)">הפרשי ועד 2025 (ביט)</td>
+</tr>
+<tr>
+  <td data-val="14/07/2026">14/07/2026</td>
+  <td>דרס דוד</td>
+  <td>זיכוי מאוצה&quot;ח</td>
+  <td data-val="420.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪420</td>
+  <td data-val="3439.35" style="font-variant-numeric:tabular-nums">₪3,439.35</td>
+  <td style="font-size:11px;color:var(--muted)">יולי אוגוסט 26</td>
+</tr>
+<tr>
+  <td data-val="12/07/2026">12/07/2026</td>
+  <td>בן אורי מיכאל ומריה</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="3019.35" style="font-variant-numeric:tabular-nums">₪3,019.35</td>
+  <td style="font-size:11px;color:var(--muted)">יולי 26</td>
+</tr>
+<tr>
+  <td data-val="10/07/2026">10/07/2026</td>
+  <td>חברת חשמל</td>
+  <td>חברת החשמל ליש</td>
+  <td data-val="-231.24" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪231</td>
+  <td data-val="2809.35" style="font-variant-numeric:tabular-nums">₪2,809.35</td>
+  <td style="font-size:11px;color:var(--muted)">מאי 26 (84)</td>
+</tr>
+<tr>
+  <td data-val="10/07/2026">10/07/2026</td>
+  <td>חברת חשמל</td>
+  <td>חברת החשמל ליש</td>
+  <td data-val="-211.94" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪212</td>
+  <td data-val="3040.59" style="font-variant-numeric:tabular-nums">₪3,040.59</td>
+  <td style="font-size:11px;color:var(--muted)">מאי 26 (88)</td>
+</tr>
+<tr>
+  <td data-val="10/07/2026">10/07/2026</td>
+  <td>בזק מעליות</td>
+  <td>בזק-הוראות קבע</td>
+  <td data-val="-49.14" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪49</td>
+  <td data-val="3252.53" style="font-variant-numeric:tabular-nums">₪3,252.53</td>
+  <td style="font-size:11px;color:var(--muted)">תשלום חשבון עבור חודשיים לאחור  -מאי 26</td>
+</tr>
+<tr>
+  <td data-val="10/07/2026">10/07/2026</td>
+  <td>ברכה אוחיון</td>
+  <td>זיכוי מדיסקונט</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="3301.67" style="font-variant-numeric:tabular-nums">₪3,301.67</td>
+  <td style="font-size:11px;color:var(--muted)">יולי 26</td>
+</tr>
+<tr>
+  <td data-val="07/07/2026">07/07/2026</td>
+  <td>עמרי ושיר יוסוב</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="3091.67" style="font-variant-numeric:tabular-nums">₪3,091.67</td>
+  <td style="font-size:11px;color:var(--muted)">יולי 26</td>
+</tr>
+<tr>
+  <td data-val="05/07/2026">05/07/2026</td>
+  <td>ניקיון ביניין</td>
+  <td>שיק</td>
+  <td data-val="-4200.0" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪4,200</td>
+  <td data-val="2881.67" style="font-variant-numeric:tabular-nums">₪2,881.67</td>
+  <td style="font-size:11px;color:var(--muted)">חוב משנת 2022 לאילן המנקה.</td>
+</tr>
+<tr>
+  <td data-val="05/07/2026">05/07/2026</td>
+  <td>מוהנדו פדייה חסוס גרמן</td>
+  <td>הוראת-קבע</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="7081.67" style="font-variant-numeric:tabular-nums">₪7,081.67</td>
+  <td style="font-size:11px;color:var(--muted)">יולי 26</td>
+</tr>
+<tr>
+  <td data-val="03/07/2026">03/07/2026</td>
+  <td>עמלת בנק</td>
+  <td>ע.מפעולות-ישיר</td>
+  <td data-val="-14.0" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪14</td>
+  <td data-val="6871.67" style="font-variant-numeric:tabular-nums">₪6,871.67</td>
+  <td style="font-size:11px;color:var(--muted)">יולי 26</td>
+</tr>
+<tr>
+  <td data-val="01/07/2026">01/07/2026</td>
+  <td>הוכבלד ענבל</td>
+  <td>העברה/הפקדה</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6885.67" style="font-variant-numeric:tabular-nums">₪6,885.67</td>
+  <td style="font-size:11px;color:var(--muted)">יולי 26</td>
+</tr>
+<tr>
+  <td data-val="30/06/2026">30/06/2026</td>
+  <td>מעליות - קונה</td>
+  <td>קונה בע&quot;מ</td>
+  <td data-val="-1433.65" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪1,434</td>
+  <td data-val="6675.67" style="font-variant-numeric:tabular-nums">₪6,675.67</td>
+  <td style="font-size:11px;color:var(--muted)">יוני 26</td>
+</tr>
+<tr>
+  <td data-val="21/06/2026">21/06/2026</td>
+  <td>אורלי ואורן אלקיים</td>
+  <td>זיכוי מיהב</td>
+  <td data-val="294.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪294</td>
+  <td data-val="8109.32" style="font-variant-numeric:tabular-nums">₪8,109.32</td>
+  <td style="font-size:11px;color:var(--muted)">הפרש תשלומי בזק ע&quot;ח אפריל + מאי תשלום מלא</td>
+</tr>
+<tr>
+  <td data-val="14/06/2026">14/06/2026</td>
+  <td>ועד בית עמק השלום</td>
+  <td>זיכוי</td>
+  <td data-val="604.84" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪605</td>
+  <td data-val="7815.32" style="font-variant-numeric:tabular-nums">₪7,815.32</td>
+  <td style="font-size:11px;color:var(--muted)">סגירת חשבון ועד ישן והעברת ייתרת החשבון</td>
+</tr>
+<tr>
+  <td data-val="12/06/2026">12/06/2026</td>
+  <td>בן אורי מיכאל ומריה</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="7210.48" style="font-variant-numeric:tabular-nums">₪7,210.48</td>
+  <td style="font-size:11px;color:var(--muted)">יוני 26</td>
+</tr>
+<tr>
+  <td data-val="10/06/2026">10/06/2026</td>
+  <td>בזק מעליות</td>
+  <td>בזק-הוראות קבע</td>
+  <td data-val="-49.16" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪49</td>
+  <td data-val="7000.48" style="font-variant-numeric:tabular-nums">₪7,000.48</td>
+  <td style="font-size:11px;color:var(--muted)">תשלום חשבון עבור חודשיים לאחור -אפריל 26</td>
+</tr>
+<tr>
+  <td data-val="10/06/2026">10/06/2026</td>
+  <td>ברכה אוחיון</td>
+  <td>זיכוי מדיסקונט</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="7049.64" style="font-variant-numeric:tabular-nums">₪7,049.64</td>
+  <td style="font-size:11px;color:var(--muted)">יוני 26</td>
+</tr>
+<tr>
+  <td data-val="07/06/2026">07/06/2026</td>
+  <td>עמרי ושיר יוסוב</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6839.64" style="font-variant-numeric:tabular-nums">₪6,839.64</td>
+  <td style="font-size:11px;color:var(--muted)">יוני 26</td>
+</tr>
+<tr>
+  <td data-val="05/06/2026">05/06/2026</td>
+  <td>מוהנדו פדייה חסוס גרמן</td>
+  <td>הוראת-קבע</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6629.64" style="font-variant-numeric:tabular-nums">₪6,629.64</td>
+  <td style="font-size:11px;color:var(--muted)">יוני 26</td>
+</tr>
+<tr>
+  <td data-val="03/06/2026">03/06/2026</td>
+  <td>עמלת בנק</td>
+  <td>ע.מפעולות-ישיר</td>
+  <td data-val="-17.5" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪18</td>
+  <td data-val="6419.64" style="font-variant-numeric:tabular-nums">₪6,419.64</td>
+  <td style="font-size:11px;color:var(--muted)">יוני 26</td>
+</tr>
+<tr>
+  <td data-val="03/06/2026">03/06/2026</td>
+  <td>ספקטרוב אנטולי</td>
+  <td>זיכוי מדיסקונט</td>
+  <td data-val="2520.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪2,520</td>
+  <td data-val="6437.14" style="font-variant-numeric:tabular-nums">₪6,437.14</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר -דצמבר 26</td>
+</tr>
+<tr>
+  <td data-val="01/06/2026">01/06/2026</td>
+  <td>הוכבלד ענבל</td>
+  <td>העברה/הפקדה</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="3917.14" style="font-variant-numeric:tabular-nums">₪3,917.14</td>
+  <td style="font-size:11px;color:var(--muted)">יוני 26</td>
+</tr>
+<tr>
+  <td data-val="31/05/2026">31/05/2026</td>
+  <td>מעליות - קונה</td>
+  <td>קונה בע&quot;מ</td>
+  <td data-val="-1417.25" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪1,417</td>
+  <td data-val="3707.14" style="font-variant-numeric:tabular-nums">₪3,707.14</td>
+  <td style="font-size:11px;color:var(--muted)">מאי 26</td>
+</tr>
+<tr>
+  <td data-val="12/05/2026">12/05/2026</td>
+  <td>בזק מעליות</td>
+  <td>בזק-הוראות קבע</td>
+  <td data-val="-30.11" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪30</td>
+  <td data-val="5124.39" style="font-variant-numeric:tabular-nums">₪5,124.39</td>
+  <td style="font-size:11px;color:var(--muted)">הפרש מתחילת מאי  מינואר עד סוף אפריל שולם ע&quot;י אורן אלקיים אשראי</td>
+</tr>
+<tr>
+  <td data-val="12/05/2026">12/05/2026</td>
+  <td>בן אורי מיכאל ומריה</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5154.5" style="font-variant-numeric:tabular-nums">₪5,154.50</td>
+  <td style="font-size:11px;color:var(--muted)">מאי 26</td>
+</tr>
+<tr>
+  <td data-val="11/05/2026">11/05/2026</td>
+  <td>דרס דוד</td>
+  <td>זיכוי מאוצה&quot;ח</td>
+  <td data-val="420.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪420</td>
+  <td data-val="4944.5" style="font-variant-numeric:tabular-nums">₪4,944.50</td>
+  <td style="font-size:11px;color:var(--muted)">מאי יוני 26</td>
+</tr>
+<tr>
+  <td data-val="10/05/2026">10/05/2026</td>
+  <td>חברת חשמל</td>
+  <td>חברת החשמל ליש</td>
+  <td data-val="-439.83" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪440</td>
+  <td data-val="4524.5" style="font-variant-numeric:tabular-nums">₪4,524.50</td>
+  <td style="font-size:11px;color:var(--muted)">אפריל 26 (84)</td>
+</tr>
+<tr>
+  <td data-val="10/05/2026">10/05/2026</td>
+  <td>חברת חשמל</td>
+  <td>חברת החשמל ליש</td>
+  <td data-val="-197.71" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪198</td>
+  <td data-val="4964.33" style="font-variant-numeric:tabular-nums">₪4,964.33</td>
+  <td style="font-size:11px;color:var(--muted)">מרץ 26 (88)</td>
+</tr>
+<tr>
+  <td data-val="10/05/2026">10/05/2026</td>
+  <td>ברכה אוחיון</td>
+  <td>זיכוי מדיסקונט</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5162.04" style="font-variant-numeric:tabular-nums">₪5,162.04</td>
+  <td style="font-size:11px;color:var(--muted)">מאי 26</td>
+</tr>
+<tr>
+  <td data-val="07/05/2026">07/05/2026</td>
+  <td>עמרי ושיר יוסוב</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="4952.04" style="font-variant-numeric:tabular-nums">₪4,952.04</td>
+  <td style="font-size:11px;color:var(--muted)">מאי 26</td>
+</tr>
+<tr>
+  <td data-val="05/05/2026">05/05/2026</td>
+  <td>בדיקה חצי שנתית 03/26</td>
+  <td>שיק</td>
+  <td data-val="-706.0" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪706</td>
+  <td data-val="4742.04" style="font-variant-numeric:tabular-nums">₪4,742.04</td>
+  <td style="font-size:11px;color:var(--muted)">חצי שנתי 03/26</td>
+</tr>
+<tr>
+  <td data-val="05/05/2026">05/05/2026</td>
+  <td>בדיקה חצי שנתית 09/25</td>
+  <td>שיק</td>
+  <td data-val="-706.0" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪706</td>
+  <td data-val="5448.04" style="font-variant-numeric:tabular-nums">₪5,448.04</td>
+  <td style="font-size:11px;color:var(--muted)">חצי שנתי 09/25</td>
+</tr>
+<tr>
+  <td data-val="05/05/2026">05/05/2026</td>
+  <td>מוהנדו פדייה חסוס גרמן</td>
+  <td>הוראת-קבע</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6154.04" style="font-variant-numeric:tabular-nums">₪6,154.04</td>
+  <td style="font-size:11px;color:var(--muted)">מאי 26</td>
+</tr>
+<tr>
+  <td data-val="04/05/2026">04/05/2026</td>
+  <td>עמלת בנק</td>
+  <td>ע.מפעולות-ישיר</td>
+  <td data-val="-10.5" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪10</td>
+  <td data-val="5944.04" style="font-variant-numeric:tabular-nums">₪5,944.04</td>
+  <td style="font-size:11px;color:var(--muted)">מאי 26</td>
+</tr>
+<tr>
+  <td data-val="03/05/2026">03/05/2026</td>
+  <td>הוכבלד ענבל</td>
+  <td>העברה/הפקדה</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5954.54" style="font-variant-numeric:tabular-nums">₪5,954.54</td>
+  <td style="font-size:11px;color:var(--muted)">מאי 26</td>
+</tr>
+<tr>
+  <td data-val="30/04/2026">30/04/2026</td>
+  <td>מעליות - קונה</td>
+  <td>קונה בע&quot;מ</td>
+  <td data-val="-1411.78" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪1,412</td>
+  <td data-val="5744.54" style="font-variant-numeric:tabular-nums">₪5,744.54</td>
+  <td style="font-size:11px;color:var(--muted)">אפריל 26</td>
+</tr>
+<tr>
+  <td data-val="23/04/2026">23/04/2026</td>
+  <td>בן אורי מיכאל ומריה</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="1000.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪1,000</td>
+  <td data-val="7156.32" style="font-variant-numeric:tabular-nums">₪7,156.32</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר-אפריל (+) 2025</td>
+</tr>
+<tr>
+  <td data-val="19/04/2026">19/04/2026</td>
+  <td>חברת חשמל</td>
+  <td>חברת החשמל ליש</td>
+  <td data-val="-253.39" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪253</td>
+  <td data-val="6156.32" style="font-variant-numeric:tabular-nums">₪6,156.32</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר 26 - (84)</td>
+</tr>
+<tr>
+  <td data-val="12/04/2026">12/04/2026</td>
+  <td>בן אורי מיכאל ומריה</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6409.71" style="font-variant-numeric:tabular-nums">₪6,409.71</td>
+  <td style="font-size:11px;color:var(--muted)">אפריל 26</td>
+</tr>
+<tr>
+  <td data-val="10/04/2026">10/04/2026</td>
+  <td>ברכה אוחיון</td>
+  <td>זיכוי מדיסקונט</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6199.71" style="font-variant-numeric:tabular-nums">₪6,199.71</td>
+  <td style="font-size:11px;color:var(--muted)">אפריל 26</td>
+</tr>
+<tr>
+  <td data-val="07/04/2026">07/04/2026</td>
+  <td>עמרי ושיר יוסוב</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5989.71" style="font-variant-numeric:tabular-nums">₪5,989.71</td>
+  <td style="font-size:11px;color:var(--muted)">אפריל 26</td>
+</tr>
+<tr>
+  <td data-val="05/04/2026">05/04/2026</td>
+  <td>עמלת בנק</td>
+  <td>ע.מפעולות-ישיר</td>
+  <td data-val="-12.25" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪12</td>
+  <td data-val="5779.71" style="font-variant-numeric:tabular-nums">₪5,779.71</td>
+  <td style="font-size:11px;color:var(--muted)">אפריל 26</td>
+</tr>
+<tr>
+  <td data-val="05/04/2026">05/04/2026</td>
+  <td>מוהנדו פדייה חסוס גרמן</td>
+  <td>הוראת-קבע</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5791.96" style="font-variant-numeric:tabular-nums">₪5,791.96</td>
+  <td style="font-size:11px;color:var(--muted)">אפריל 26</td>
+</tr>
+<tr>
+  <td data-val="31/03/2026">31/03/2026</td>
+  <td>מעליות - קונה</td>
+  <td>קונה בע&quot;מ</td>
+  <td data-val="-1409.06" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪1,409</td>
+  <td data-val="5581.96" style="font-variant-numeric:tabular-nums">₪5,581.96</td>
+  <td style="font-size:11px;color:var(--muted)">מרץ 26</td>
+</tr>
+<tr>
+  <td data-val="30/03/2026">30/03/2026</td>
+  <td>הוכבלד ענבל</td>
+  <td>העברה/הפקדה</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6991.02" style="font-variant-numeric:tabular-nums">₪6,991.02</td>
+  <td style="font-size:11px;color:var(--muted)">אפריל 26</td>
+</tr>
+<tr>
+  <td data-val="22/03/2026">22/03/2026</td>
+  <td>דרס דוד</td>
+  <td>זיכוי מאוצה&quot;ח</td>
+  <td data-val="420.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪420</td>
+  <td data-val="6781.02" style="font-variant-numeric:tabular-nums">₪6,781.02</td>
+  <td style="font-size:11px;color:var(--muted)">מרץ אפריל  26</td>
+</tr>
+<tr>
+  <td data-val="19/03/2026">19/03/2026</td>
+  <td>אורלי ואורן אלקיים</td>
+  <td>זיכוי מיהב</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6361.02" style="font-variant-numeric:tabular-nums">₪6,361.02</td>
+  <td style="font-size:11px;color:var(--muted)">מרץ 26</td>
+</tr>
+<tr>
+  <td data-val="12/03/2026">12/03/2026</td>
+  <td>בן אורי מיכאל ומריה</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6151.02" style="font-variant-numeric:tabular-nums">₪6,151.02</td>
+  <td style="font-size:11px;color:var(--muted)">מרץ 26</td>
+</tr>
+<tr>
+  <td data-val="10/03/2026">10/03/2026</td>
+  <td>חברת חשמל</td>
+  <td>חברת החשמל ליש</td>
+  <td data-val="-197.99" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪198</td>
+  <td data-val="5941.02" style="font-variant-numeric:tabular-nums">₪5,941.02</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר 26 (88)</td>
+</tr>
+<tr>
+  <td data-val="10/03/2026">10/03/2026</td>
+  <td>ברכה אוחיון</td>
+  <td>זיכוי מדיסקונט</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6139.01" style="font-variant-numeric:tabular-nums">₪6,139.01</td>
+  <td style="font-size:11px;color:var(--muted)">מרץ 26</td>
+</tr>
+<tr>
+  <td data-val="08/03/2026">08/03/2026</td>
+  <td>עמרי ושיר יוסוב</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5929.01" style="font-variant-numeric:tabular-nums">₪5,929.01</td>
+  <td style="font-size:11px;color:var(--muted)">מרץ 26</td>
+</tr>
+<tr>
+  <td data-val="05/03/2026">05/03/2026</td>
+  <td>מוהנדו פדייה חסוס גרמן</td>
+  <td>הוראת-קבע</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5719.01" style="font-variant-numeric:tabular-nums">₪5,719.01</td>
+  <td style="font-size:11px;color:var(--muted)">מרץ 26</td>
+</tr>
+<tr>
+  <td data-val="04/03/2026">04/03/2026</td>
+  <td>עמלת בנק</td>
+  <td>ע.מפעולות-ישיר</td>
+  <td data-val="-12.25" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪12</td>
+  <td data-val="5509.01" style="font-variant-numeric:tabular-nums">₪5,509.01</td>
+  <td style="font-size:11px;color:var(--muted)">מרץ 26</td>
+</tr>
+<tr>
+  <td data-val="01/03/2026">01/03/2026</td>
+  <td>הוכבלד ענבל</td>
+  <td>העברה/הפקדה</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5521.26" style="font-variant-numeric:tabular-nums">₪5,521.26</td>
+  <td style="font-size:11px;color:var(--muted)">מרץ 26</td>
+</tr>
+<tr>
+  <td data-val="27/02/2026">27/02/2026</td>
+  <td>מעליות - קונה</td>
+  <td>קונה בע&quot;מ</td>
+  <td data-val="-1419.99" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪1,420</td>
+  <td data-val="5311.26" style="font-variant-numeric:tabular-nums">₪5,311.26</td>
+  <td style="font-size:11px;color:var(--muted)">פברואר 26</td>
+</tr>
+<tr>
+  <td data-val="12/02/2026">12/02/2026</td>
+  <td>בן אורי מיכאל ומריה</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6731.25" style="font-variant-numeric:tabular-nums">₪6,731.25</td>
+  <td style="font-size:11px;color:var(--muted)">פברואר 26</td>
+</tr>
+<tr>
+  <td data-val="12/02/2026">12/02/2026</td>
+  <td>אורלי ואורן אלקיים</td>
+  <td>זיכוי מיהב</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6521.25" style="font-variant-numeric:tabular-nums">₪6,521.25</td>
+  <td style="font-size:11px;color:var(--muted)">פברואר 26</td>
+</tr>
+<tr>
+  <td data-val="12/02/2026">12/02/2026</td>
+  <td>אורלי ואורן אלקיים</td>
+  <td>זיכוי מיהב</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6311.25" style="font-variant-numeric:tabular-nums">₪6,311.25</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר 26</td>
+</tr>
+<tr>
+  <td data-val="10/02/2026">10/02/2026</td>
+  <td>ברכה אוחיון</td>
+  <td>זיכוי מדיסקונט</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="6101.25" style="font-variant-numeric:tabular-nums">₪6,101.25</td>
+  <td style="font-size:11px;color:var(--muted)">פברואר 26</td>
+</tr>
+<tr>
+  <td data-val="08/02/2026">08/02/2026</td>
+  <td>עמרי ושיר יוסוב</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5891.25" style="font-variant-numeric:tabular-nums">₪5,891.25</td>
+  <td style="font-size:11px;color:var(--muted)">פברואר 26</td>
+</tr>
+<tr>
+  <td data-val="05/02/2026">05/02/2026</td>
+  <td>מוהנדו פדייה חסוס גרמן</td>
+  <td>הוראת-קבע</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5681.25" style="font-variant-numeric:tabular-nums">₪5,681.25</td>
+  <td style="font-size:11px;color:var(--muted)">פברואר 26</td>
+</tr>
+<tr>
+  <td data-val="03/02/2026">03/02/2026</td>
+  <td>עמלת בנק</td>
+  <td>ע.מפעולות-ישיר</td>
+  <td data-val="-8.75" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪9</td>
+  <td data-val="5471.25" style="font-variant-numeric:tabular-nums">₪5,471.25</td>
+  <td style="font-size:11px;color:var(--muted)">פברואר 26</td>
+</tr>
+<tr>
+  <td data-val="02/02/2026">02/02/2026</td>
+  <td>הוכבלד ענבל</td>
+  <td>העברה/הפקדה</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5480.0" style="font-variant-numeric:tabular-nums">₪5,480.00</td>
+  <td style="font-size:11px;color:var(--muted)">פברואר 26</td>
+</tr>
+<tr>
+  <td data-val="02/02/2026">02/02/2026</td>
+  <td>דרס דוד</td>
+  <td>זיכוי מאוצה&quot;ח</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5270.0" style="font-variant-numeric:tabular-nums">₪5,270.00</td>
+  <td style="font-size:11px;color:var(--muted)">פברואר 26</td>
+</tr>
+<tr>
+  <td data-val="18/01/2026">18/01/2026</td>
+  <td>דרס דוד</td>
+  <td>זיכוי מאוצה&quot;ח</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="5060.0" style="font-variant-numeric:tabular-nums">₪5,060.00</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר 26</td>
+</tr>
+<tr>
+  <td data-val="12/01/2026">12/01/2026</td>
+  <td>בן אורי מיכאל ומריה</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="4850.0" style="font-variant-numeric:tabular-nums">₪4,850.00</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר 26</td>
+</tr>
+<tr>
+  <td data-val="11/01/2026">11/01/2026</td>
+  <td>ברכה אוחיון</td>
+  <td>זיכוי מדיסקונט</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="4640.0" style="font-variant-numeric:tabular-nums">₪4,640.00</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר 26</td>
+</tr>
+<tr>
+  <td data-val="05/01/2026">05/01/2026</td>
+  <td>עמרי ושיר יוסוב</td>
+  <td>זיכוי מלאומי</td>
+  <td data-val="90.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪90</td>
+  <td data-val="4430.0" style="font-variant-numeric:tabular-nums">₪4,430.00</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר 26 (זיכוי מ 2025)</td>
+</tr>
+<tr>
+  <td data-val="05/01/2026">05/01/2026</td>
+  <td>מוהנדו פדייה חסוס גרמן</td>
+  <td>הוראת-קבע</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="4340.0" style="font-variant-numeric:tabular-nums">₪4,340.00</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר 26</td>
+</tr>
+<tr>
+  <td data-val="04/01/2026">04/01/2026</td>
+  <td>עמלת בנק</td>
+  <td>פנקסי שיקים</td>
+  <td data-val="-18.0" style="font-variant-numeric:tabular-nums;color:#ef4444">-₪18</td>
+  <td data-val="4130.0" style="font-variant-numeric:tabular-nums">₪4,130.00</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר 26</td>
+</tr>
+<tr>
+  <td data-val="04/01/2026">04/01/2026</td>
+  <td>אורלי ואורן אלקיים</td>
+  <td>זיכוי מיהב</td>
+  <td data-val="630.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪630</td>
+  <td data-val="4148.0" style="font-variant-numeric:tabular-nums">₪4,148.00</td>
+  <td style="font-size:11px;color:var(--muted)">אוקטובר -דצמבר 2025</td>
+</tr>
+<tr>
+  <td data-val="04/01/2026">04/01/2026</td>
+  <td>עינת ושרלי בסנאיידו</td>
+  <td>העברה-נייד</td>
+  <td data-val="3308.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪3,308</td>
+  <td data-val="3518.0" style="font-variant-numeric:tabular-nums">₪3,518.00</td>
+  <td style="font-size:11px;color:var(--muted)">אוגוסט 25 -יוני 26</td>
+</tr>
+<tr>
+  <td data-val="02/01/2026">02/01/2026</td>
+  <td>הוכבלד ענבל</td>
+  <td>העברה/הפקדה</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums;color:#22c55e">+₪210</td>
+  <td data-val="210.0" style="font-variant-numeric:tabular-nums">₪210.00</td>
+  <td style="font-size:11px;color:var(--muted)">ינואר 26</td>
+</tr></tbody>
+  </table>
+  </div>
+</div>
+
+<div class="section" id="issues">
+  <div class="section-title">🔧 קריאות שירות
+    <small>פתוחות: 0</small>
+    
+  </div>
+  <p style="color:var(--muted);font-size:13px;padding:8px 0">אין קריאות פתוחות · <a href="PASTE_URL_HERE" target="_blank">הגש קריאה חדשה</a></p>
+</div>
+
+<div class="section" id="contacts">
+  <div class="section-title">📞 אנשי קשר</div>
+  <div class="contact-grid"><div class="contact-card">
+  <div class="contact-name">שרלי ועינת בסיאנו</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 84 דירה 1</div>
+  <div class="contact-detail">📞 <a href="tel:0504423303">0504423303</a></div><div class="contact-detail">✉ <a href="mailto:einati75@gmail.com">einati75@gmail.com</a></div>
+</div><div class="contact-card">
+  <div class="contact-name">אורן ואורלי אלקיים</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 84 דירה 2</div>
+  <div class="contact-detail">📞 <a href="tel:0544883429">0544883429</a></div><div class="contact-detail">✉ <a href="mailto:orenelk1@gmail.com">orenelk1@gmail.com</a></div>
+</div><div class="contact-card">
+  <div class="contact-name">חנה פורמן</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 84 דירה 3</div>
+  <div class="contact-detail">📞 <a href="tel:0544366832">0544366832</a></div><div class="contact-detail">✉ <a href="mailto:Chanafu@gmail.com">Chanafu@gmail.com</a></div>
+</div><div class="contact-card">
+  <div class="contact-name">עמרי  ושיר יוסוף</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 84 דירה 4</div>
+  <div class="contact-detail">📞 <a href="tel:0509023903">0509023903</a></div><div class="contact-detail">✉ <a href="mailto:omriyos@gmail.com">omriyos@gmail.com</a></div>
+</div><div class="contact-card">
+  <div class="contact-name">מיכאל ומריה בן אורי</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 86 דירה 1</div>
+  
+</div><div class="contact-card">
+  <div class="contact-name">יוני כהן</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 86 דירה 2</div>
+  
+</div><div class="contact-card">
+  <div class="contact-name">דוד דרס</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 86 דירה 3</div>
+  <div class="contact-detail">📞 <a href="tel:0547367737">0547367737</a></div><div class="contact-detail">✉ <a href="mailto:david.deres@gmail.com">david.deres@gmail.com</a></div>
+</div><div class="contact-card">
+  <div class="contact-name">טניה גלר</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 86 דירה 4</div>
+  <div class="contact-detail">📞 <a href="tel:0527255136">0527255136</a></div><div class="contact-detail">✉ <a href="mailto:gelta4@gmail.com">gelta4@gmail.com</a></div>
+</div><div class="contact-card">
+  <div class="contact-name">מיכל בצלאל</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 86 דירה 5</div>
+  
+</div><div class="contact-card">
+  <div class="contact-name">ברכה ואליעזר אוחיון</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 86 דירה 6</div>
+  <div class="contact-detail">📞 <a href="tel:0506282303">0506282303</a></div><div class="contact-detail">✉ <a href="mailto:bracha177@bezeqint.net">bracha177@bezeqint.net</a></div>
+</div><div class="contact-card">
+  <div class="contact-name">אדינה גילי וואן אייבאייק</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 88 דירה 1</div>
+  <div class="contact-detail">📞 <a href="tel:0523761199">0523761199</a></div><div class="contact-detail">✉ <a href="mailto:Adinagili@gmail.com">Adinagili@gmail.com</a></div>
+</div><div class="contact-card">
+  <div class="contact-name">ענבל הוכבלד</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 88 דירה 2</div>
+  <div class="contact-detail">📞 <a href="tel:0547977211">0547977211</a></div><div class="contact-detail">✉ <a href="mailto:inbal.hochwald@gmail.com">inbal.hochwald@gmail.com</a></div>
+</div><div class="contact-card">
+  <div class="contact-name">נועה קוסטינר</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 88 דירה 3</div>
+  <div class="contact-detail">📞 <a href="tel:0548092004">0548092004</a></div><div class="contact-detail">✉ <a href="mailto:noakostiner@yahoo.com">noakostiner@yahoo.com</a></div>
+</div><div class="contact-card">
+  <div class="contact-name">אנטולי ספקטורוב</div>
+  <div class="contact-detail" style="color:var(--muted)">בניין 88 דירה 4</div>
+  <div class="contact-detail">📞 <a href="tel:0547784253">0547784253</a></div><div class="contact-detail">✉ <a href="mailto:Kruzik@gmail.com">Kruzik@gmail.com</a></div>
+</div></div>
+</div>
+
+</div>
+
+
+
+<div id="dot-popup"></div>
+<script>
+function dotTap(el,e){
+  e.preventDefault();e.stopPropagation();
+  var popup=document.getElementById('dot-popup');
+  var msg=el.getAttribute('title');
+  if(!msg)return;
+  popup.textContent=msg;
+  var t=e.changedTouches&&e.changedTouches[0];
+  var x=t?t.clientX:e.clientX, y=t?t.clientY:e.clientY;
+  var vw=window.innerWidth;
+  var pw=Math.min(260,vw-20);
+  popup.style.maxWidth=pw+'px';
+  var left=x-pw/2;
+  var top=y-56;
+  if(left<8)left=8;
+  if(left+pw>vw-8)left=vw-pw-8;
+  if(top<8)top=y+16;
+  popup.style.left=left+'px';
+  popup.style.top=top+'px';
+  popup.classList.add('show');
+  clearTimeout(window._dotHide);
+  window._dotHide=setTimeout(function(){popup.classList.remove('show');},3500);
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.dot'))document.getElementById('dot-popup').classList.remove('show');
+});
+function toggleTheme(){
+  var r=document.documentElement;
+  r.setAttribute('data-theme',r.getAttribute('data-theme')==='dark'?'light':'dark');
+}
+function filterTrans(){
+  var q=document.getElementById('tr-search').value.trim().toLowerCase();
+  document.querySelectorAll('#tr-body tr').forEach(function(r){
+    r.style.display=(!q||r.textContent.toLowerCase().includes(q))?'':'none';
+  });
+}
+var _tc=-1,_ta=true;
+function sortTrans(c){
+  var tb=document.getElementById('tr-body');
+  if(!tb)return;
+  var rows=Array.from(tb.querySelectorAll('tr'));
+  if(_tc===c){_ta=!_ta;}else{_tc=c;_ta=true;}
+  rows.sort(function(a,b){
+    var av=a.cells[c].getAttribute('data-val')||a.cells[c].textContent.trim();
+    var bv=b.cells[c].getAttribute('data-val')||b.cells[c].textContent.trim();
+    var an=parseFloat(av),bn=parseFloat(bv);
+    if(!isNaN(an)&&!isNaN(bn))return _ta?an-bn:bn-an;
+    return _ta?av.localeCompare(bv,'he'):bv.localeCompare(av,'he');
+  });
+  rows.forEach(function(r){tb.appendChild(r);});
+}
+</script>
+</body>
+</html>
