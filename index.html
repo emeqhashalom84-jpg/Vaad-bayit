@@ -127,7 +127,7 @@ tr:hover td{background:var(--surface2)}
 
 <header class="hdr">
   <div class="hdr-title">ועד בית עמק השלום 84-88</div>
-  <div class="hdr-meta">עודכן: 26/08/2026 17:41 </div>
+  <div class="hdr-meta">עודכן: 26/08/2026 18:14 </div>
   <button class="hdr-btn" onclick="toggleTheme()">◐</button>
 </header>
 
@@ -1261,54 +1261,31 @@ tr:hover td{background:var(--surface2)}
 
 <div class="section" id="issues">
   <div class="section-title">🔧 קריאות שירות
-    <small id="issues-count">פתוחות: 1</small>
+    <small id="issues-count">פתוחות: 0</small>
     <a href="https://forms.gle/E2oejugZRUnAyrhJ8" target="_blank" class="hdr-btn" style="font-size:12px;padding:4px 10px">+ הגש קריאה</a>
   </div>
-  <div id="issues-body"><div class="tbl-wrap"><table class="issues-table"><thead><tr><th>#</th><th>תאריך</th><th>שם</th><th>דירה</th><th>קטגוריה</th><th>תיאור</th><th>סטטוס</th><th>תגובה</th></tr></thead><tbody><tr><td>#1</td><td>8/26/2026 </td><td>אורן אלקיים</td><td>בניין 84 דירה 2</td><td><span class="badge badge-red">מעלית</span></td><td>בלה בלה </td><td><span class="badge badge-red">פתוח</span></td><td style="font-size:11px;color:var(--muted)">בלה בלה</td></tr></tbody></table></div></div>
+  <div id="issues-body"><p style="color:var(--muted);font-size:13px;padding:8px 0">אין קריאות פתוחות · <a href="https://forms.gle/E2oejugZRUnAyrhJ8" target="_blank">הגש קריאה חדשה</a></p></div>
 </div>
 <script>
 (function(){
-  var CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vTXlu7rgEen0MlaU_k0omizQ_9kUZgJ9M49cMiB7tumP__JEfjakPfiVpwN6bXUhQlYcrRGRhL9jQmJ/pub?output=csv&gid=386569253',FF='https://forms.gle/E2oejugZRUnAyrhJ8';
-  if(!CSV)return;
-  function pCSV(t){
-    var rows=[],cur=[],f='',q=false;
-    for(var i=0;i<t.length;i++){
-      var c=t[i],n=t[i+1];
-      if(q){if(c==='"'&&n==='"'){f+='"';i++;}else if(c==='"')q=false;else f+=c;}
-      else{if(c==='"')q=true;else if(c===','){cur.push(f);f='';}else if(c===''&&n==='
-'){cur.push(f);rows.push(cur);cur=[];f='';i++;}else if(c==='
-'||c===''){cur.push(f);rows.push(cur);cur=[];f='';}else f+=c;}
-    }
-    if(f||cur.length){cur.push(f);rows.push(cur);}
-    return rows;
-  }
+  var FF='https://forms.gle/E2oejugZRUnAyrhJ8';
   function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-  function buildHTML(issues,open){
-    if(!issues.length)return'<p style="color:var(--muted);font-size:13px;padding:8px 0">אין קריאות פתוחות · <a href="'+FF+'" target="_blank">הגש קריאה חדשה</a></p>';
-    var h='<div class="tbl-wrap"><table class="issues-table"><thead><tr><th>#</th><th>תאריך</th><th>שם</th><th>דירה</th><th>קטגוריה</th><th>תיאור</th><th>סטטוס</th><th>תגובה</th></tr></thead><tbody>';
-    for(var j=0;j<Math.min(issues.length,20);j++){
-      var is=issues[j],sc=is.status==='סגור'?'badge-green':(is.status==='בטיפול'?'badge-orange':'badge-red');
-      h+='<tr><td>#'+is.id+'</td><td>'+esc(is.date)+'</td><td>'+esc(is.name)+'</td><td>'+esc(is.apt)+'</td><td><span class="badge '+sc+'">'+esc(is.cat)+'</span></td><td>'+esc(is.desc)+'</td><td><span class="badge '+sc+'">'+esc(is.status)+'</span></td><td style="font-size:11px;color:var(--muted)">'+esc(is.resp)+'</td></tr>';
+  function buildHTML(issues){
+    var open=issues.filter(function(x){return x.status!=='סגור';}).length;
+    if(!issues.length)return['<p style="color:var(--muted);font-size:13px;padding:8px 0">אין קריאות פתוחות · <a href="'+FF+'" target="_blank">הגש קריאה חדשה</a></p>',0];
+    var h='<div class="tbl-wrap"><table class="issues-table"><thead><tr><th>#</th><th>תאריך</th><th>שם</th><th>דירה</th><th>קטגוריה</th><th>תיאור</th><th>סטטוס</th><th>תאריך עדכון</th><th>הערות ועד</th></tr></thead><tbody>';
+    var sorted=issues.slice().sort(function(a,b){return b.id-a.id;});
+    for(var j=0;j<Math.min(sorted.length,20);j++){
+      var is=sorted[j],sc=is.status==='סגור'?'badge-green':(is.status==='בטיפול'?'badge-orange':'badge-red');
+      h+='<tr><td>#'+is.id+'</td><td>'+esc(is.date)+'</td><td>'+esc(is.name)+'</td><td>'+esc(is.apt)+'</td><td><span class="badge '+sc+'">'+esc(is.category)+'</span></td><td>'+esc(is.desc)+'</td><td><span class="badge '+sc+'">'+esc(is.status)+'</span></td><td style="font-size:11px;color:var(--muted)">'+esc(is.update_date)+'</td><td style="font-size:11px;color:var(--muted)">'+esc(is.notes)+'</td></tr>';
     }
-    return h+'</tbody></table></div>';
+    return[h+'</tbody></table></div>',open];
   }
-  // Background refresh only — never blocks the page
-  var ctrl=new AbortController(),tid=setTimeout(function(){ctrl.abort();},8000);
-  fetch(CSV,{signal:ctrl.signal}).then(function(r){clearTimeout(tid);return r.text();}).then(function(text){
-    var rows=pCSV(text),issues=[],open=0;
-    for(var i=1;i<rows.length;i++){
-      var row=rows[i];
-      if(row.length<2||!row[0])continue;
-      var b=row[2]||'',a=row[3]||'';
-      var af=(b||a)?('בניין '+b+' דירה '+a).trim():'';
-      var st=(row.length>9&&row[9]&&row[9].trim())?row[9].trim():'פתוח';
-      var dt=(row[0]||'').split(' ')[0];
-      if(st!=='סגור')open++;
-      issues.push({id:i,date:dt,name:row[1]||'',apt:af,cat:row[5]||'',desc:row[4]||'',status:st,resp:row[8]||''});
-    }
-    issues.sort(function(a,b){return b.id-a.id;});
-    document.getElementById('issues-body').innerHTML=buildHTML(issues,open);
-    document.getElementById('issues-count').textContent='פתוחות: '+open;
+  // Fetch from issues.json (same domain — no CORS, always fast)
+  fetch('issues.json?_='+Date.now()).then(function(r){return r.json();}).then(function(issues){
+    var res=buildHTML(issues);
+    document.getElementById('issues-body').innerHTML=res[0];
+    document.getElementById('issues-count').textContent='פתוחות: '+res[1];
   }).catch(function(){});  // silent fail — static content stays
 })();
 </script>
