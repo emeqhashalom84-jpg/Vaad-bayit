@@ -127,7 +127,7 @@ tr:hover td{background:var(--surface2)}
 
 <header class="hdr">
   <div class="hdr-title">ועד בית עמק השלום 84-88</div>
-  <div class="hdr-meta">עודכן: 26/08/2026 18:14 </div>
+  <div class="hdr-meta">עודכן: 27/08/2026 11:32 </div>
   <button class="hdr-btn" onclick="toggleTheme()">◐</button>
 </header>
 
@@ -1261,10 +1261,10 @@ tr:hover td{background:var(--surface2)}
 
 <div class="section" id="issues">
   <div class="section-title">🔧 קריאות שירות
-    <small id="issues-count">פתוחות: 0</small>
+    <small id="issues-count">פתוחות: 1</small>
     <a href="https://forms.gle/E2oejugZRUnAyrhJ8" target="_blank" class="hdr-btn" style="font-size:12px;padding:4px 10px">+ הגש קריאה</a>
   </div>
-  <div id="issues-body"><p style="color:var(--muted);font-size:13px;padding:8px 0">אין קריאות פתוחות · <a href="https://forms.gle/E2oejugZRUnAyrhJ8" target="_blank">הגש קריאה חדשה</a></p></div>
+  <div id="issues-body"><div class="tbl-wrap"><table class="issues-table"><thead><tr><th>#</th><th>תאריך</th><th>שם</th><th>דירה</th><th>קטגוריה</th><th>תיאור</th><th>סטטוס</th><th>תאריך עדכון</th><th>הערות ועד</th></tr></thead><tbody><tr><td>#1</td><td>8/26/2026 </td><td>אורן אלקיים</td><td dir="ltr" style="text-align:right">בניין 84 דירה 2</td><td><span class="badge badge-orange">מעלית</span></td><td>בלה בלה </td><td><span class="badge badge-orange">בטיפול</span></td><td style="font-size:11px;color:var(--muted)"></td><td style="font-size:11px;color:var(--muted)"></td></tr></tbody></table></div></div>
 </div>
 <script>
 (function(){
@@ -1277,7 +1277,7 @@ tr:hover td{background:var(--surface2)}
     var sorted=issues.slice().sort(function(a,b){return b.id-a.id;});
     for(var j=0;j<Math.min(sorted.length,20);j++){
       var is=sorted[j],sc=is.status==='סגור'?'badge-green':(is.status==='בטיפול'?'badge-orange':'badge-red');
-      h+='<tr><td>#'+is.id+'</td><td>'+esc(is.date)+'</td><td>'+esc(is.name)+'</td><td>'+esc(is.apt)+'</td><td><span class="badge '+sc+'">'+esc(is.category)+'</span></td><td>'+esc(is.desc)+'</td><td><span class="badge '+sc+'">'+esc(is.status)+'</span></td><td style="font-size:11px;color:var(--muted)">'+esc(is.update_date)+'</td><td style="font-size:11px;color:var(--muted)">'+esc(is.notes)+'</td></tr>';
+      h+='<tr><td>#'+is.id+'</td><td>'+esc(is.date)+'</td><td>'+esc(is.name)+'</td><td dir="ltr" style="text-align:right">'+esc(is.apt)+'</td><td><span class="badge '+sc+'">'+esc(is.category)+'</span></td><td>'+esc(is.desc)+'</td><td><span class="badge '+sc+'">'+esc(is.status)+'</span></td><td style="font-size:11px;color:var(--muted)">'+esc(is.update_date)+'</td><td style="font-size:11px;color:var(--muted)">'+esc(is.notes)+'</td></tr>';
     }
     return[h+'</tbody></table></div>',open];
   }
