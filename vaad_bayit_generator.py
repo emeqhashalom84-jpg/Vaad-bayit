@@ -506,35 +506,55 @@ import re as _re
 
 def _sheet_to_csv_url(url):
     if not url or 'PASTE' in url: return None
+    # Published URL: /d/e/2PACX-.../pubhtml  →  /d/e/2PACX-.../pub?output=csv&gid=X
+    pub_m = _re.search(r'/d/e/([a-zA-Z0-9-_]+)/pub', url)
+    if pub_m:
+        pub_id = pub_m.group(1)
+        gid_m = _re.search(r'gid=(\d+)', url)
+        gid = gid_m.group(1) if gid_m else '0'
+        return f'https://docs.google.com/spreadsheets/d/e/{pub_id}/pub?output=csv&gid={gid}'
+    # Regular sheet URL: /d/SHEET_ID/
     m = _re.search(r'/d/([a-zA-Z0-9-_]+)', url)
     if not m: return None
     sid = m.group(1)
     gid_m = _re.search(r'gid=(\d+)', url)
     gid = gid_m.group(1) if gid_m else '0'
-    return f'https://docs.google.com/spreadsheets/d/{sid}/export?format=csv&gid={gid}'
+    return f'https://docs.google.com/spreadsheets/d/{sid}/gviz/tq?tqx=out:csv&gid={gid}'
 
 def fetch_issues(issues_url, admin_url):
+    import urllib3; urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     issues = []
     try:
         url = _sheet_to_csv_url(issues_url)
         if not url: return []
-        r = requests.get(url, timeout=10)
+        r = requests.get(url, timeout=10, verify=False)
         r.encoding = 'utf-8'
         reader = csv.reader(io.StringIO(r.text))
         rows = list(reader)
         if not rows: return []
         for i, row in enumerate(rows[1:], start=1):
-            if len(row) < 4: continue
+            if len(row) < 2: continue
+            # Form columns: Timestamp, שם מלא, מספר בית, מספר דירה,
+            #               תיאור התקלה, מיקום, דחיפות, העלאת קובץ, הערות, סטטוס (manual)
+            _building = row[2] if len(row) > 2 else ''
+            _apt      = row[3] if len(row) > 3 else ''
+            _apt_full = f'בניין {_building} דירה {_apt}'.strip() if _building or _apt else ''
+            _status      = row[9].strip()  if len(row) > 9  and row[9].strip()  else 'פתוח'
+            _update_date = row[10].strip() if len(row) > 10 and row[10].strip() else ''
+            _notes       = row[11].strip() if len(row) > 11 and row[11].strip() else ''
             issues.append({
-                'id':       i,
-                'date':     row[0] if len(row) > 0 else '',
-                'name':     row[1] if len(row) > 1 else '',
-                'apt':      row[2] if len(row) > 2 else '',
-                'category': row[3] if len(row) > 3 else '',
-                'desc':     row[4] if len(row) > 4 else '',
-                'photo':    row[5] if len(row) > 5 else '',
-                'status':   'פתוח',
-                'response': '',
+                'id':          i,
+                'date':        row[0] if len(row) > 0 else '',
+                'name':        row[1] if len(row) > 1 else '',
+                'apt':         _apt_full,
+                'category':    row[5] if len(row) > 5 else '',
+                'desc':        row[4] if len(row) > 4 else '',
+                'priority':    row[6] if len(row) > 6 else '',
+                'photo':       row[7] if len(row) > 7 else '',
+                'status':      _status,
+                'response':    row[8] if len(row) > 8 else '',
+                'update_date': _update_date,
+                'notes':       _notes,
             })
     except Exception as e:
         log.warning(f'Could not fetch issues sheet: {e}')
@@ -544,7 +564,7 @@ def fetch_issues(issues_url, admin_url):
     try:
         url2 = _sheet_to_csv_url(admin_url)
         if url2:
-            r2 = requests.get(url2, timeout=10)
+            r2 = requests.get(url2, timeout=10, verify=False)
             r2.encoding = 'utf-8'
             reader2 = csv.reader(io.StringIO(r2.text))
             for row in list(reader2)[1:]:
@@ -926,6 +946,12 @@ tr:hover td{background:var(--surface2)}
 .contact-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
 .contact-name{font-weight:600;margin-bottom:4px}
 .contact-detail{font-size:12px;color:var(--muted)}
+/* Links section */
+.links-grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+.link-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:var(--radius);font-size:14px;font-weight:600;text-decoration:none;transition:opacity .15s}
+.link-btn:hover{opacity:.85}
+.link-btn-red{background:#fee2e2;color:#b91c1c}
+.link-btn-blue{background:#dbeafe;color:#1d4ed8}
 /* FAB */
 .fab{position:fixed;bottom:24px;left:20px;background:var(--accent);color:#fff;border:none;border-radius:50px;padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:100;text-decoration:none;display:flex;align-items:center;gap:6px}
 .fab:hover{opacity:.9}
@@ -944,6 +970,7 @@ def generate_html(data, issues, cfg, updated_at):
     min_credit   = cfg_float(cfg, 'thresholds', 'min_credit_display', 50)
     refresh_min= cfg_int(cfg, 'display', 'auto_refresh_min', 5)
     tenant_form= cfg.get('forms','tenant_form_url', fallback='')
+    fault_form = cfg.get('forms','fault_form_url',  fallback='')
     admin_form = cfg.get('forms','admin_form_url',  fallback='')
     open_warn  = cfg_int(cfg, 'thresholds', 'open_issues_warn', 3)
 
@@ -988,12 +1015,16 @@ def generate_html(data, issues, cfg, updated_at):
     me     = data['monthly_expenses']
     tenants= data['tenants']
 
-    # Recompute collection rate using config rates + corner_tenants list
+    # Recompute collection rate: YTD expected, capped per tenant (advance payers don't inflate rate)
+    _now_month   = datetime.now().month
     _std_rate    = cfg_int(cfg, 'rates', 'standard', 210)
     _cor_rate    = cfg_int(cfg, 'rates', 'corner',   170)
     _cor_names   = [n.strip() for n in cfg.get('rates','corner_tenants',fallback='').split(',') if n.strip()]
+    _MONTH_HE    = ['','ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר']
+    _col_month_name = _MONTH_HE[_now_month] if 1 <= _now_month <= 12 else ''
     if tenants:
-        _exp_annual = 0.0
+        _exp_ytd  = 0.0
+        _eff_paid = 0.0
         for t in tenants:
             _is_corner = any(cn in t['name'] for cn in _cor_names)
             _base = _cor_rate if _is_corner else _std_rate
@@ -1002,11 +1033,13 @@ def generate_html(data, issues, cfg, updated_at):
                 if _apn in t['name']:
                     _appr = _apm
                     break
-            _exp_annual += sum(_appr.get(i, _base) for i in range(12))
-        _tenant_paid = sum(t['total_paid'] for t in tenants)
-        col_pct = round(_tenant_paid / _exp_annual * 100) if _exp_annual else 0
+            _t_ytd = sum(_appr.get(i, _base) for i in range(_now_month))
+            _exp_ytd  += _t_ytd
+            _eff_paid += min(t['total_paid'], _t_ytd)
+        col_pct = round(_eff_paid / _exp_ytd * 100) if _exp_ytd else 0
     else:
         col_pct = round(data['collection_rate'] * 100)
+        _col_month_name = ''
     trans  = data['transactions']
     cats   = data['expense_categories']
     anns   = data['announcements']
@@ -1040,9 +1073,10 @@ def generate_html(data, issues, cfg, updated_at):
     <div class="kpi-sub">מתחילת 2026</div>
   </div>
   <div class="kpi {col_cls}">
-    <div class="kpi-label">אחוז גביה</div>
+    <div class="kpi-label">אחוז גבייה</div>
     <div class="kpi-val">{col_pct:.0f}%</div>
     <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{min(col_pct,100):.0f}%;background:{'#22c55e' if col_pct>=col_green else ('#f59e0b' if col_pct>=col_orange else '#ef4444')}"></div></div>
+    <div class="kpi-sub">מתוך צפוי עד {_col_month_name} 2026</div>
   </div>"""
 
     if show_res:
@@ -1335,41 +1369,54 @@ def generate_html(data, issues, cfg, updated_at):
   </div>
 </div>"""
 
-    # ── Issues ────────────────────────────────────────────────────────────────
+    # ── Issues (static pre-render + background JS refresh) ───────────────────
     iss_html = ''
     if show_iss:
-        form_btn = ''
-        if tenant_form and 'PASTE' not in tenant_form:
-            form_btn = f'<a href="{he(tenant_form)}" target="_blank" class="hdr-btn" style="font-size:12px;padding:4px 10px">+ הגש קריאה</a>'
+        _iss_csv = _sheet_to_csv_url(cfg.get('google','issues_sheet_url', fallback='')) or ''
+        _fl = he(fault_form or '#')
+        # Build static content (always shown immediately)
         if not issues:
-            iss_content = '<p style="color:var(--muted);font-size:13px;padding:8px 0">אין קריאות פתוחות · <a href="' + he(tenant_form or '#') + '" target="_blank">הגש קריאה חדשה</a></p>'
+            _iss_static = f'<p style="color:var(--muted);font-size:13px;padding:8px 0">אין קריאות פתוחות · <a href="{_fl}" target="_blank">הגש קריאה חדשה</a></p>'
         else:
-            iss_rows = ''
+            _iss_rows = ''
             for iss in sorted(issues, key=lambda x: x.get('id',0), reverse=True)[:20]:
                 stat = iss.get('status','פתוח')
-                stat_cls = 'badge-green' if stat == 'סגור' else ('badge-orange' if stat == 'בטיפול' else 'badge-red')
-                iss_rows += f"""
-<tr>
-  <td>#{iss['id']}</td>
-  <td>{he(iss.get('date','')[:10])}</td>
-  <td>{he(iss.get('name',''))}</td>
-  <td>{he(iss.get('apt',''))}</td>
-  <td><span class="badge {stat_cls}">{he(iss.get('category',''))}</span></td>
-  <td>{he(iss.get('desc',''))}</td>
-  <td><span class="badge {stat_cls}">{he(stat)}</span></td>
-  <td style="font-size:11px;color:var(--muted)">{he(iss.get('response',''))}</td>
-</tr>"""
-            iss_content = f"""<div class="tbl-wrap"><table class="issues-table">
-<thead><tr><th>#</th><th>תאריך</th><th>שם</th><th>דירה</th><th>קטגוריה</th><th>תיאור</th><th>סטטוס</th><th>תגובה</th></tr></thead>
-<tbody>{iss_rows}</tbody></table></div>"""
+                sc = 'badge-green' if stat == 'סגור' else ('badge-orange' if stat == 'בטיפול' else 'badge-red')
+                _upd = he(iss.get("update_date",""))
+                _nts = he(iss.get("notes",""))
+                _iss_rows += f'<tr><td>#{iss["id"]}</td><td>{he(iss.get("date","")[:10])}</td><td>{he(iss.get("name",""))}</td><td dir="ltr" style="text-align:right">{he(iss.get("apt",""))}</td><td><span class="badge {sc}">{he(iss.get("category",""))}</span></td><td>{he(iss.get("desc",""))}</td><td><span class="badge {sc}">{he(stat)}</span></td><td style="font-size:11px;color:var(--muted)">{_upd}</td><td style="font-size:11px;color:var(--muted)">{_nts}</td></tr>'
+            _iss_static = f'<div class="tbl-wrap"><table class="issues-table"><thead><tr><th>#</th><th>תאריך</th><th>שם</th><th>דירה</th><th>קטגוריה</th><th>תיאור</th><th>סטטוס</th><th>תאריך עדכון</th><th>הערות ועד</th></tr></thead><tbody>{_iss_rows}</tbody></table></div>'
         iss_html = f"""
 <div class="section" id="issues">
   <div class="section-title">🔧 קריאות שירות
-    <small>פתוחות: {open_count}</small>
-    {form_btn}
+    <small id="issues-count">פתוחות: {open_count}</small>
+    <a href="{_fl}" target="_blank" class="hdr-btn" style="font-size:12px;padding:4px 10px">+ הגש קריאה</a>
   </div>
-  {iss_content}
-</div>"""
+  <div id="issues-body">{_iss_static}</div>
+</div>
+<script>
+(function(){{
+  var FF='{_fl}';
+  function esc(s){{return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}}
+  function buildHTML(issues){{
+    var open=issues.filter(function(x){{return x.status!=='סגור';}}).length;
+    if(!issues.length)return['<p style="color:var(--muted);font-size:13px;padding:8px 0">אין קריאות פתוחות · <a href="'+FF+'" target="_blank">הגש קריאה חדשה</a></p>',0];
+    var h='<div class="tbl-wrap"><table class="issues-table"><thead><tr><th>#</th><th>תאריך</th><th>שם</th><th>דירה</th><th>קטגוריה</th><th>תיאור</th><th>סטטוס</th><th>תאריך עדכון</th><th>הערות ועד</th></tr></thead><tbody>';
+    var sorted=issues.slice().sort(function(a,b){{return b.id-a.id;}});
+    for(var j=0;j<Math.min(sorted.length,20);j++){{
+      var is=sorted[j],sc=is.status==='סגור'?'badge-green':(is.status==='בטיפול'?'badge-orange':'badge-red');
+      h+='<tr><td>#'+is.id+'</td><td>'+esc(is.date)+'</td><td>'+esc(is.name)+'</td><td dir="ltr" style="text-align:right">'+esc(is.apt)+'</td><td><span class="badge '+sc+'">'+esc(is.category)+'</span></td><td>'+esc(is.desc)+'</td><td><span class="badge '+sc+'">'+esc(is.status)+'</span></td><td style="font-size:11px;color:var(--muted)">'+esc(is.update_date)+'</td><td style="font-size:11px;color:var(--muted)">'+esc(is.notes)+'</td></tr>';
+    }}
+    return[h+'</tbody></table></div>',open];
+  }}
+  // Fetch from issues.json (same domain — no CORS, always fast)
+  fetch('issues.json?_='+Date.now()).then(function(r){{return r.json();}}).then(function(issues){{
+    var res=buildHTML(issues);
+    document.getElementById('issues-body').innerHTML=res[0];
+    document.getElementById('issues-count').textContent='פתוחות: '+res[1];
+  }}).catch(function(){{}});  // silent fail — static content stays
+}})();
+</script>"""
 
     # ── Contacts ──────────────────────────────────────────────────────────────
     con_html = ''
@@ -1409,17 +1456,33 @@ def generate_html(data, issues, cfg, updated_at):
     if admin_form and 'PASTE' not in admin_form:
         admin_link = f'<a href="{he(admin_form)}" target="_blank" style="color:inherit;text-decoration:none" title="כניסת ועד">🔒</a>'
 
+    # ── Links section ─────────────────────────────────────────────────────────
+    links_html = ''
+    _link_items = []
+    if fault_form  and 'PASTE' not in fault_form:
+        _link_items.append(f'<a href="{he(fault_form)}"  target="_blank" class="link-btn link-btn-red">🔧 פתיחת קריאת תקלה</a>')
+    if tenant_form and 'PASTE' not in tenant_form:
+        _link_items.append(f'<a href="{he(tenant_form)}" target="_blank" class="link-btn link-btn-blue">✏️ עדכון פרטים אישיים</a>')
+    if _link_items:
+        links_html = f"""
+<div class="section" id="links">
+  <div class="section-title">🔗 קישורים שימושיים</div>
+  <div class="links-grid">{''.join(_link_items)}</div>
+</div>"""
+
     # ── FAB button ────────────────────────────────────────────────────────────
     fab_html = ''
-    if tenant_form and 'PASTE' not in tenant_form:
-        fab_html = f'<a href="{he(tenant_form)}" target="_blank" class="fab">🔔 דווח על תקלה</a>'
+    if fault_form and 'PASTE' not in fault_form:
+        fab_html = f'<a href="{he(fault_form)}" target="_blank" class="fab">🔧 דווח על תקלה</a>'
 
     # ── Subnav ────────────────────────────────────────────────────────────────
     nav_links = [
         ('#kpis','סיכום'),('#charts','גרפים'),('#tenants','תשלומים'),
         ('#transactions','תנועות'),('#issues','קריאות'),('#contacts','קשר'),
+        ('#links','קישורים'),
     ]
     if anns: nav_links.insert(1, ('#announcements','הודעות'))
+    if not _link_items: nav_links = [l for l in nav_links if l[0] != '#links']
     nav_html = ''.join(f'<a href="{href}">{label}</a>' for href, label in nav_links)
 
     # ── Assemble ──────────────────────────────────────────────────────────────
@@ -1456,6 +1519,7 @@ def generate_html(data, issues, cfg, updated_at):
 {tr_html}
 {iss_html}
 {con_html}
+{links_html}
 
 </div>
 
