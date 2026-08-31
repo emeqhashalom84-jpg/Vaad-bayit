@@ -139,8 +139,15 @@ function onFormSubmit(e) {
 function onEdit(e) {
   const range = e.range;
   const row = range.getRow();
+  const col = range.getColumn();
   if (row === 1) return; // header row
-  if (range.getColumn() !== STATUS_COL) return; // only react to column J (status)
+
+  if (col === ACTIVE_COL) {
+    // Visibility-only change (פעיל/לא פעיל) — just refresh the dashboard, no notification
+    triggerDashboardRefresh_();
+    return;
+  }
+  if (col !== STATUS_COL) return; // only react to column J (status) beyond this point
 
   const sheet = range.getSheet();
   const rowData = sheet.getRange(row, 1, 1, 11).getValues()[0];
