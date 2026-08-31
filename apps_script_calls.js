@@ -54,8 +54,44 @@ function sendTelegram_(chatId, text) {
   });
 }
 
+// Extracts a Google Drive file id from a share link like
+// https://drive.google.com/open?id=XXXX or .../d/XXXX/view
+function driveFileId_(url) {
+  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)|id=([a-zA-Z0-9_-]+)/);
+  return m ? (m[1] || m[2]) : null;
+}
+
+// Sends the actual photo into the chat (not just a link). Telegram fetches
+// the URL server-side, so the Drive file must be shared "Anyone with the
+// link". Falls back to a plain text+link message if there's no image.
+function sendTelegramPhoto_(chatId, photoUrl, caption) {
+  const token = prop_('TELEGRAM_TOKEN');
+  if (!token) { Logger.log('Missing TELEGRAM_TOKEN script property'); return; }
+  const url = 'https://api.telegram.org/bot' + token + '/sendPhoto';
+  UrlFetchApp.fetch(url, {
+    method: 'post',
+    payload: { chat_id: chatId, photo: photoUrl, caption: caption },
+    muteHttpExceptions: true
+  });
+}
+
 function notifyAdminsTelegram_(text) {
   ADMIN_TELEGRAM_IDS.forEach(function (id) { sendTelegram_(id, text); });
+}
+
+// Sends the first image as an actual photo (caption = the summary text);
+// any additional images are listed as plain links in a follow-up message.
+function notifyAdminsTelegramWithImages_(text, images) {
+  if (!images || !images.length) { notifyAdminsTelegram_(text); return; }
+  const fid = driveFileId_(images[0]);
+  const photoUrl = fid ? ('https://drive.google.com/thumbnail?id=' + fid + '&sz=w1024') : null;
+  ADMIN_TELEGRAM_IDS.forEach(function (id) {
+    if (photoUrl) { sendTelegramPhoto_(id, photoUrl, text); }
+    else { sendTelegram_(id, text); }
+  });
+  if (images.length > 1) {
+    notifyAdminsTelegram_('תמונות נוספות:\n' + images.slice(1).join('\n'));
+  }
 }
 
 function triggerDashboardRefresh_() {
@@ -107,6 +143,7 @@ function onFormSubmit(e) {
   const desc     = row[4];
   const location = row[5];
   const urgency  = row[6];
+  const images   = row[7] ? String(row[7]).split(',').map(function(s){return s.trim();}).filter(function(s){return s;}) : [];
 
   sheet.getRange(rowNum, STATUS_COL).setValue('פתוח');
   sheet.getRange(rowNum, ACTIVE_COL).setValue('פעיל');
@@ -130,8 +167,8 @@ function onFormSubmit(e) {
       'התקבלה קריאתך, מספר קריאה: ' + callNumber + '\n\n' + summary);
   }
 
-  notifyAdminsTelegram_('🔧 קריאה חדשה #' + callNumber + '\n' + summary +
-    '\n\nלמענה ושינוי סטטוס: ' + editLink);
+  notifyAdminsTelegramWithImages_('🔧 קריאה חדשה #' + callNumber + '\n' + summary +
+    '\n\nלמענה ושינוי סטטוס: ' + editLink, images);
 
   triggerDashboardRefresh_();
 }
