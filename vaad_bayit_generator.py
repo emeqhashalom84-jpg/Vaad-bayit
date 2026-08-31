@@ -533,28 +533,31 @@ def fetch_issues(issues_url, admin_url):
         rows = list(reader)
         if not rows: return []
         for i, row in enumerate(rows[1:], start=1):
-            if len(row) < 2: continue
-            # Form columns: Timestamp, שם מלא, מספר בית, מספר דירה,
-            #               תיאור התקלה, מיקום, דחיפות, העלאת קובץ, הערות, סטטוס (manual)
+            if len(row) < 2 or not row[0].strip(): continue
+            # Calls response sheet columns (0-indexed): 0 Timestamp | 1 שם מלא
+            # 2 מספר בית | 3 מספר דירה | 4 תיאור התקלה | 5 מיקום התקלה | 6 דחיפות
+            # 7 העלאת תמונות/וידאו | 8 הערות | 9 סטטוס (J) | 10 פעיל (K) | 11 תאריך עדכון סטטוס (L)
+            _active = row[10].strip() if len(row) > 10 else ''
+            if _active == 'לא פעיל': continue
             _building = row[2] if len(row) > 2 else ''
             _apt      = row[3] if len(row) > 3 else ''
             _apt_full = f'בניין {_building} דירה {_apt}'.strip() if _building or _apt else ''
             _status      = row[9].strip()  if len(row) > 9  and row[9].strip()  else 'פתוח'
-            _update_date = row[10].strip() if len(row) > 10 and row[10].strip() else ''
-            _notes       = row[11].strip() if len(row) > 11 and row[11].strip() else ''
+            _update_date = row[11].strip() if len(row) > 11 and row[11].strip() else ''
+            _images_raw  = row[7].strip()  if len(row) > 7  and row[7].strip()  else ''
+            _images      = [u.strip() for u in _images_raw.split(',') if u.strip()]
             issues.append({
                 'id':          i,
                 'date':        row[0] if len(row) > 0 else '',
                 'name':        row[1] if len(row) > 1 else '',
                 'apt':         _apt_full,
-                'category':    row[5] if len(row) > 5 else '',
+                'location':    row[5] if len(row) > 5 else '',
+                'urgency':     row[6] if len(row) > 6 else '',
                 'desc':        row[4] if len(row) > 4 else '',
-                'priority':    row[6] if len(row) > 6 else '',
-                'photo':       row[7] if len(row) > 7 else '',
+                'images':      _images,
                 'status':      _status,
-                'response':    row[8] if len(row) > 8 else '',
                 'update_date': _update_date,
-                'notes':       _notes,
+                'notes':       row[8] if len(row) > 8 else '',
             })
     except Exception as e:
         log.warning(f'Could not fetch issues sheet: {e}')
@@ -1370,9 +1373,30 @@ def generate_html(data, issues, cfg, updated_at):
 </div>"""
 
     # ── Issues (static pre-render + background JS refresh) ───────────────────
+    def _urg_cls(u):
+        if u in ('גבוהה','דחוף','חריגה'): return 'badge-red'
+        if u in ('בינונית',): return 'badge-orange'
+        if u in ('נמוכה',): return 'badge-green'
+        return 'badge-blue'
+
+    def _img_id(u):
+        m = _re.search(r'/d/([a-zA-Z0-9_-]+)|id=([a-zA-Z0-9_-]+)', u)
+        return (m.group(1) or m.group(2)) if m else None
+
+    def _iss_img_html(urls):
+        if not urls: return ''
+        out = ''
+        for u in urls[:4]:
+            fid = _img_id(u)
+            if fid:
+                thumb = f'https://drive.google.com/thumbnail?id={fid}&sz=w200'
+                out += f'<a href="{he(u)}" target="_blank"><img src="{thumb}" loading="lazy" style="width:44px;height:44px;object-fit:cover;border-radius:6px;margin:2px" alt="תמונה"></a>'
+            else:
+                out += f'<a href="{he(u)}" target="_blank" style="font-size:11px">📎 קובץ</a>'
+        return out
+
     iss_html = ''
     if show_iss:
-        _iss_csv = _sheet_to_csv_url(cfg.get('google','issues_sheet_url', fallback='')) or ''
         _fl = he(fault_form or '#')
         # Build static content (always shown immediately)
         if not issues:
@@ -1382,10 +1406,20 @@ def generate_html(data, issues, cfg, updated_at):
             for iss in sorted(issues, key=lambda x: x.get('id',0), reverse=True)[:20]:
                 stat = iss.get('status','פתוח')
                 sc = 'badge-green' if stat == 'סגור' else ('badge-orange' if stat == 'בטיפול' else 'badge-red')
+                urg = iss.get('urgency','')
                 _upd = he(iss.get("update_date",""))
                 _nts = he(iss.get("notes",""))
-                _iss_rows += f'<tr><td>#{iss["id"]}</td><td>{he(iss.get("date","")[:10])}</td><td>{he(iss.get("name",""))}</td><td dir="ltr" style="text-align:right">{he(iss.get("apt",""))}</td><td><span class="badge {sc}">{he(iss.get("category",""))}</span></td><td>{he(iss.get("desc",""))}</td><td><span class="badge {sc}">{he(stat)}</span></td><td style="font-size:11px;color:var(--muted)">{_upd}</td><td style="font-size:11px;color:var(--muted)">{_nts}</td></tr>'
-            _iss_static = f'<div class="tbl-wrap"><table class="issues-table"><thead><tr><th>#</th><th>תאריך</th><th>שם</th><th>דירה</th><th>קטגוריה</th><th>תיאור</th><th>סטטוס</th><th>תאריך עדכון</th><th>הערות ועד</th></tr></thead><tbody>{_iss_rows}</tbody></table></div>'
+                _img = _iss_img_html(iss.get('images') or [])
+                _iss_rows += (f'<tr><td>#{iss["id"]}</td><td>{he(iss.get("date","")[:10])}</td><td>{he(iss.get("name",""))}</td>'
+                              f'<td dir="ltr" style="text-align:right">{he(iss.get("apt",""))}</td>'
+                              f'<td>{he(iss.get("location",""))}</td>'
+                              f'<td><span class="badge {_urg_cls(urg)}">{he(urg)}</span></td>'
+                              f'<td>{he(iss.get("desc",""))}</td>'
+                              f'<td><span class="badge {sc}">{he(stat)}</span></td>'
+                              f'<td style="font-size:11px;color:var(--muted)">{_upd}</td>'
+                              f'<td style="font-size:11px;color:var(--muted)">{_nts}</td>'
+                              f'<td>{_img}</td></tr>')
+            _iss_static = f'<div class="tbl-wrap"><table class="issues-table"><thead><tr><th>#</th><th>תאריך</th><th>שם</th><th>דירה</th><th>מיקום</th><th>דחיפות</th><th>תיאור</th><th>סטטוס</th><th>תאריך עדכון</th><th>הערות</th><th>תמונה</th></tr></thead><tbody>{_iss_rows}</tbody></table></div>'
         iss_html = f"""
 <div class="section" id="issues">
   <div class="section-title">🔧 קריאות שירות
@@ -1398,14 +1432,31 @@ def generate_html(data, issues, cfg, updated_at):
 (function(){{
   var FF='{_fl}';
   function esc(s){{return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}}
+  function urgCls(u){{return u==='גבוהה'||u==='דחוף'||u==='חריגה'?'badge-red':(u==='בינונית'?'badge-orange':(u==='נמוכה'?'badge-green':'badge-blue'));}}
+  function imgId(u){{var m=u.match(/\\/d\\/([a-zA-Z0-9_-]+)|id=([a-zA-Z0-9_-]+)/);return m?(m[1]||m[2]):null;}}
+  function imgHtml(urls){{
+    if(!urls||!urls.length)return'';
+    var out='';
+    for(var k=0;k<Math.min(urls.length,4);k++){{
+      var u=urls[k],fid=imgId(u);
+      if(fid){{out+='<a href="'+esc(u)+'" target="_blank"><img src="https://drive.google.com/thumbnail?id='+fid+'&sz=w200" loading="lazy" style="width:44px;height:44px;object-fit:cover;border-radius:6px;margin:2px" alt="תמונה"></a>';}}
+      else{{out+='<a href="'+esc(u)+'" target="_blank" style="font-size:11px">📎 קובץ</a>';}}
+    }}
+    return out;
+  }}
   function buildHTML(issues){{
     var open=issues.filter(function(x){{return x.status!=='סגור';}}).length;
     if(!issues.length)return['<p style="color:var(--muted);font-size:13px;padding:8px 0">אין קריאות פתוחות · <a href="'+FF+'" target="_blank">הגש קריאה חדשה</a></p>',0];
-    var h='<div class="tbl-wrap"><table class="issues-table"><thead><tr><th>#</th><th>תאריך</th><th>שם</th><th>דירה</th><th>קטגוריה</th><th>תיאור</th><th>סטטוס</th><th>תאריך עדכון</th><th>הערות ועד</th></tr></thead><tbody>';
+    var h='<div class="tbl-wrap"><table class="issues-table"><thead><tr><th>#</th><th>תאריך</th><th>שם</th><th>דירה</th><th>מיקום</th><th>דחיפות</th><th>תיאור</th><th>סטטוס</th><th>תאריך עדכון</th><th>הערות</th><th>תמונה</th></tr></thead><tbody>';
     var sorted=issues.slice().sort(function(a,b){{return b.id-a.id;}});
     for(var j=0;j<Math.min(sorted.length,20);j++){{
       var is=sorted[j],sc=is.status==='סגור'?'badge-green':(is.status==='בטיפול'?'badge-orange':'badge-red');
-      h+='<tr><td>#'+is.id+'</td><td>'+esc(is.date)+'</td><td>'+esc(is.name)+'</td><td dir="ltr" style="text-align:right">'+esc(is.apt)+'</td><td><span class="badge '+sc+'">'+esc(is.category)+'</span></td><td>'+esc(is.desc)+'</td><td><span class="badge '+sc+'">'+esc(is.status)+'</span></td><td style="font-size:11px;color:var(--muted)">'+esc(is.update_date)+'</td><td style="font-size:11px;color:var(--muted)">'+esc(is.notes)+'</td></tr>';
+      h+='<tr><td>#'+is.id+'</td><td>'+esc(is.date)+'</td><td>'+esc(is.name)+'</td><td dir="ltr" style="text-align:right">'+esc(is.apt)+'</td>'+
+         '<td>'+esc(is.location)+'</td><td><span class="badge '+urgCls(is.urgency)+'">'+esc(is.urgency)+'</span></td>'+
+         '<td>'+esc(is.desc)+'</td><td><span class="badge '+sc+'">'+esc(is.status)+'</span></td>'+
+         '<td style="font-size:11px;color:var(--muted)">'+esc(is.update_date)+'</td>'+
+         '<td style="font-size:11px;color:var(--muted)">'+esc(is.notes)+'</td>'+
+         '<td>'+imgHtml(is.images)+'</td></tr>';
     }}
     return[h+'</tbody></table></div>',open];
   }}

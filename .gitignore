@@ -5,3 +5,5 @@ backups/
 data/
 last_processed.txt
 *.log
+*token*.txt
+status/

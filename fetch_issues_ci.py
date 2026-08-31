@@ -4,8 +4,16 @@ URL = ('https://docs.google.com/spreadsheets/d/e/'
        '2PACX-1vTXlu7rgEen0MlaU_k0omizQ_9kUZgJ9M49cMiB7tumP__JEfjakPfiVpwN6bXUhQlYcrRGRhL9jQmJ'
        '/pub?output=csv&gid=386569253')
 
+# Calls response sheet columns (0-indexed):
+#   0 Timestamp | 1 שם מלא | 2 מספר בית | 3 מספר דירה | 4 תיאור התקלה
+#   5 מיקום התקלה | 6 דחיפות | 7 העלאת תמונות/וידאו | 8 הערות
+#   9 סטטוס (J) | 10 פעיל (K) | 11 תאריך עדכון סטטוס (L)
+
 def clean(s):
     return re.sub(r'[‎‏‪-‮⁦-⁩]', '', s).strip()
+
+def col(row, i):
+    return clean(row[i]) if len(row) > i and row[i].strip() else ''
 
 r    = urllib.request.urlopen(URL, timeout=15)
 text = r.read().decode('utf-8')
@@ -15,24 +23,25 @@ issues = []
 for i, row in enumerate(rows[1:], 1):
     if len(row) < 2 or not row[0].strip():
         continue
-    hidden = clean(row[12]) if len(row) > 12 else ''
-    if hidden in ('כן', 'yes', '1'):
+    if col(row, 10) == 'לא פעיל':
         continue
-    b   = clean(row[2]) if len(row) > 2 else ''
-    a   = clean(row[3]) if len(row) > 3 else ''
+    b   = col(row, 2)
+    a   = col(row, 3)
     apt = ('בניין ' + b + ' דירה ' + a).strip() if b or a else ''
-    st  = clean(row[9]) if len(row) > 9 and row[9].strip() else 'פתוח'
-    date_raw = clean(row[0]).split(' ')[0]
+    images_raw = col(row, 7)
+    images = [u.strip() for u in images_raw.split(',') if u.strip()]
     issues.append({
         'id':          i,
-        'date':        date_raw,
-        'name':        clean(row[1]) if len(row) > 1 else '',
+        'date':        col(row, 0).split(' ')[0],
+        'name':        col(row, 1),
         'apt':         apt,
-        'category':    clean(row[5]) if len(row) > 5 else '',
-        'desc':        clean(row[4]) if len(row) > 4 else '',
-        'status':      st,
-        'update_date': clean(row[10]) if len(row) > 10 else '',
-        'notes':       clean(row[11]) if len(row) > 11 else '',
+        'location':    col(row, 5),
+        'urgency':     col(row, 6),
+        'desc':        col(row, 4),
+        'status':      col(row, 9) or 'פתוח',
+        'update_date': col(row, 11),
+        'notes':       col(row, 8),
+        'images':      images,
     })
 
 with open('issues.json', 'w', encoding='utf-8') as f:
