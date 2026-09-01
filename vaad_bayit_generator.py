@@ -562,6 +562,16 @@ def _ann_norm_date(v):
     m = _re.match(r'^(\d{4})-(\d{2})-(\d{2})', v)
     return f'{m.group(3)}/{m.group(2)}/{m.group(1)}' if m else v.split(' ')[0]
 
+# Parses whichever date format ended up in this field (Form's own M/D/Y locale,
+# or Y-M-D from a pasted Excel value) so we can tell if it's a future date.
+def _ann_parse_date(v):
+    for fmt in ('%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'):
+        try:
+            return datetime.strptime(v.split(' ')[0], fmt).date()
+        except ValueError:
+            continue
+    return None
+
 def fetch_announcements(announcements_url):
     import urllib3; urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     anns = []
@@ -574,11 +584,15 @@ def fetch_announcements(announcements_url):
         if not rows: return []
         # Response sheet columns (0-indexed): 0 Timestamp | 1 Email Address (unused)
         # 2 תאריך | 3 כותרת | 4 תוכן | 5 קטגוריה | 6 עדיפות | 7 פעיל
+        today = datetime.now().date()
         for i, row in enumerate(rows[1:], start=1):
             title = row[3].strip() if len(row) > 3 else ''
             if not title: continue
             active = row[7] if len(row) > 7 else ''
             if not _ann_is_active(active): continue
+            date_val = row[2].strip() if len(row) > 2 else ''
+            parsed_date = _ann_parse_date(date_val) if date_val else None
+            if parsed_date and parsed_date > today: continue  # scheduled for the future
             anns.append({
                 'id':       i,
                 'date':     _ann_norm_date(row[2]) if len(row) > 2 else '',

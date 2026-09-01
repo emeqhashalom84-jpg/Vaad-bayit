@@ -23,8 +23,10 @@
 //
 // RESPONSE SHEET COLUMNS (0-indexed) — email collection is ON for this form, so
 // "Email Address" is an extra auto-collected column right after Timestamp:
-//   0 Timestamp | 1 Email Address (auto) | 2 Date | 3 Title | 4 Response Content
-//   5 Category | 6 Priority | 7 Active (כן/לא — only כן triggers an email)
+//   0 Timestamp | 1 Email Address (auto) | 2 Date (also used for future-scheduling — see
+//     fetch_announcements_ci.py / generator's fetch_announcements(): a date later than
+//     today hides the announcement until that day, even if Active=כן) | 3 Title
+//   4 Response Content | 5 Category | 6 Priority | 7 Active (כן/לא — only כן triggers an email)
 //   8 תוקף (ימים) — a Dropdown question (10/15/30/60/90 + "Other" for a custom number),
 //     appended as the last column by Forms. Expiry = Timestamp (col 0) + this many days.
 //     Blank = never auto-expires.

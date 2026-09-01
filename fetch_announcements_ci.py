@@ -1,4 +1,5 @@
 import urllib.request, csv, json, io, re
+from datetime import datetime
 
 URL = ('https://docs.google.com/spreadsheets/d/e/'
        '2PACX-1vT9hMKavbas0ZlwI7Pb5vETPBiFiKslQNZImk_Cd0PeCZUTCP9QEtDTKyWmAb3mCMsUyCenu7DdNpUu'
@@ -29,16 +30,31 @@ def norm_date(v):
     m = re.match(r'^(\d{4})-(\d{2})-(\d{2})', v)
     return f'{m.group(3)}/{m.group(2)}/{m.group(1)}' if m else v.split(' ')[0]
 
+# Parses whichever date format ended up in this field (Form's own M/D/Y locale,
+# or Y-M-D from a pasted Excel value) so we can tell if it's a future date.
+def parse_date(v):
+    for fmt in ('%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'):
+        try:
+            return datetime.strptime(v.split(' ')[0], fmt).date()
+        except ValueError:
+            continue
+    return None
+
 r    = urllib.request.urlopen(URL, timeout=15)
 text = r.read().decode('utf-8')
 rows = list(csv.reader(io.StringIO(text)))
 
+today = datetime.now().date()
 anns = []
 for i, row in enumerate(rows[1:], 1):
     if not col(row, 3):  # no title — skip (works whether the row came from the
         continue         # Form, which auto-fills Timestamp/Email, or was typed directly)
     if not is_active(col(row, 7)):
         continue
+    date_val = col(row, 2)
+    parsed_date = parse_date(date_val) if date_val else None
+    if parsed_date and parsed_date > today:
+        continue  # scheduled for the future — not published yet
     anns.append({
         'id':       i,
         'date':     norm_date(col(row, 2)),
