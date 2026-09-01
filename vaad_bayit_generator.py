@@ -378,44 +378,6 @@ def read_excel(path):
                 data_expense_cats[c0] = c1
 
     # ── Optional sheets ───────────────────────────────────────────────────────
-    announcements = []
-    ws_ann = _sheet(wb, 'הודעות')
-    if ws_ann:
-        ann_rows = list(ws_ann.iter_rows(values_only=True))
-        # Detect layout: 6-col (date|title|content|category|priority|active)
-        #                 5-col (date|title|content|category|active)
-        hdr = ann_rows[0] if ann_rows else []
-        has_priority = len(hdr) >= 6 and _clean(hdr[4]) and 'עדיפות' in str(_clean(hdr[4]))
-        for row in ann_rows[1:]:
-            if not row or not _clean(row[0]): continue
-            if has_priority:
-                pri_raw = _clean(row[4]) if len(row) > 4 else '9'
-                active  = row[5] if len(row) > 5 else True
-            else:
-                pri_raw = '2'
-                active  = row[4] if len(row) > 4 else True
-            try:
-                priority = int(str(pri_raw or '2')[0])
-            except Exception:
-                priority = 2
-            if str(active).lower() in ('false','0','לא','no'): continue
-            date_raw = row[0]
-            if hasattr(date_raw, 'strftime'):
-                date_str = date_raw.strftime('%d/%m/%Y')
-            elif date_raw:
-                date_str = str(date_raw).split(' ')[0]
-            else:
-                date_str = ''
-            title = _clean(row[1]) if len(row) > 1 else ''
-            if not title: continue  # skip rows with no title
-            announcements.append({
-                'date':     date_str,
-                'title':    title,
-                'content':  _clean(row[2]) if len(row) > 2 else '',
-                'category': _clean(row[3]) if len(row) > 3 else 'מידע',
-                'priority': priority,
-            })
-
     building_info = {}
     ws_bi = _sheet(wb, 'פרטי בניין')
     if ws_bi:
@@ -494,7 +456,6 @@ def read_excel(path):
         'budget':               budget,
         'budget_total':         budget_total,
         'budget_actual':        budget_actual,
-        'announcements':        announcements,
         'building_info':        building_info,
         'transaction_mapping':  transaction_mapping,
     }
@@ -585,6 +546,51 @@ def fetch_issues(issues_url, admin_url):
         log.warning(f'Could not fetch admin sheet: {e}')
 
     return issues
+
+# Tolerant of both the dropdown's own values (כן / גבוהה) and raw values that can end up
+# here from pasting old Excel data directly (TRUE/FALSE, "1-גבוהה" style prefixes).
+def _ann_is_active(v):
+    return v.strip().upper() in ('כן', 'TRUE', '1')
+
+def _ann_priority(v):
+    if 'גבוהה' in v: return 1
+    if 'בינונית' in v: return 2
+    if 'נמוכה' in v: return 3
+    return 2
+
+def _ann_norm_date(v):
+    m = _re.match(r'^(\d{4})-(\d{2})-(\d{2})', v)
+    return f'{m.group(3)}/{m.group(2)}/{m.group(1)}' if m else v.split(' ')[0]
+
+def fetch_announcements(announcements_url):
+    import urllib3; urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    anns = []
+    try:
+        url = _sheet_to_csv_url(announcements_url)
+        if not url: return []
+        r = requests.get(url, timeout=10, verify=False)
+        r.encoding = 'utf-8'
+        rows = list(csv.reader(io.StringIO(r.text)))
+        if not rows: return []
+        # Response sheet columns (0-indexed): 0 Timestamp | 1 Email Address (unused)
+        # 2 תאריך | 3 כותרת | 4 תוכן | 5 קטגוריה | 6 עדיפות | 7 פעיל
+        for i, row in enumerate(rows[1:], start=1):
+            title = row[3].strip() if len(row) > 3 else ''
+            if not title: continue
+            active = row[7] if len(row) > 7 else ''
+            if not _ann_is_active(active): continue
+            anns.append({
+                'id':       i,
+                'date':     _ann_norm_date(row[2]) if len(row) > 2 else '',
+                'title':    title,
+                'content':  row[4] if len(row) > 4 else '',
+                'category': (row[5].strip() if len(row) > 5 and row[5].strip() else 'מידע'),
+                'priority': _ann_priority(row[6] if len(row) > 6 else ''),
+            })
+    except Exception as e:
+        log.warning(f'Could not fetch announcements sheet: {e}')
+        return []
+    return anns
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SVG CHARTS
@@ -962,7 +968,7 @@ tr:hover td{background:var(--surface2)}
 .alert-banner{background:var(--red-bg);border:1px solid #fca5a5;border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--red)}
 """
 
-def generate_html(data, issues, cfg, updated_at):
+def generate_html(data, issues, anns, cfg, updated_at):
     building_name = cfg.get('building','name', fallback='ועד בית')
     reserve_target = cfg_float(cfg, 'thresholds', 'reserve_target', 8000)
     col_green  = cfg_float(cfg, 'thresholds', 'collection_green',  85)
@@ -1065,7 +1071,6 @@ def generate_html(data, issues, cfg, updated_at):
         _col_month_name = ''
     trans  = data['transactions']
     cats   = data['expense_categories']
-    anns   = data['announcements']
     binfo  = data['building_info']
 
     # open issues count
@@ -1113,36 +1118,57 @@ def generate_html(data, issues, cfg, updated_at):
 
     kpi_html += '\n</div>'
 
-    # ── Announcements ─────────────────────────────────────────────────────────
-    ann_html = ''
-    if show_ann and anns:
+    # ── Announcements (static pre-render + background JS refresh) ─────────────
+    def _ann_cat_cls(cat):
+        return ('urgent'      if 'דחוף'    in cat else
+                'maintenance' if 'תחזוקה'  in cat else
+                'financial'   if 'כספי'    in cat else
+                'meeting'     if 'כינוסים' in cat else
+                'safety'      if 'בטיחות'  in cat else 'info')
+
+    def _ann_cards_html(items):
         cards = ''
-        for a in sorted(anns, key=lambda x: x.get('priority', 9))[:6]:
-            _cat = a.get('category') or ''
-            cat_cls = ('urgent'      if 'דחוף'    in _cat else
-                       'maintenance' if 'תחזוקה'  in _cat else
-                       'financial'   if 'כספי'    in _cat else
-                       'meeting'     if 'כינוסים' in _cat else
-                       'safety'      if 'בטיחות'  in _cat else 'info')
-            cards += f"""
-<div class="ann-card {cat_cls}">
-  <div class="ann-cat">{he(a['category'] or 'מידע')}</div>
-  <div class="ann-title">{he(a['title'] or '')}</div>
-  <div class="ann-content">{he(a['content'] or '')}</div>
-  <div class="ann-date">{he(a['date'] or '')}</div>
-</div>"""
+        for a in sorted(items, key=lambda x: x.get('priority', 9))[:6]:
+            cat = a.get('category') or 'מידע'
+            cards += (f'<div class="ann-card {_ann_cat_cls(cat)}">'
+                      f'<div class="ann-cat">{he(cat)}</div>'
+                      f'<div class="ann-title">{he(a.get("title",""))}</div>'
+                      f'<div class="ann-content">{he(a.get("content",""))}</div>'
+                      f'<div class="ann-date">{he(a.get("date",""))}</div></div>')
+        return cards
+
+    ann_html = ''
+    if show_ann:
+        if anns:
+            _ann_static = f'<div class="ann-grid">{_ann_cards_html(anns)}</div>'
+        else:
+            _ann_static = '<p style="color:var(--muted);font-size:13px;padding:8px 0">אין הודעות פעילות</p>'
         ann_html = f"""
 <div class="section" id="announcements">
   <div class="section-title">📢 הודעות לדיירים</div>
-  <div class="ann-grid">{cards}</div>
-</div>"""
-    elif show_ann:
-        ann_html = """
-<div class="section" id="announcements">
-  <div class="section-title">📢 הודעות לדיירים
-    <small>הוסף הודעות בגיליון "הודעות" ב-Excel</small>
-  </div>
-</div>"""
+  <div id="announcements-body">{_ann_static}</div>
+</div>
+<script>
+(function(){{
+  function esc(s){{return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}}
+  function catCls(c){{return c.indexOf('דחוף')>-1?'urgent':(c.indexOf('תחזוקה')>-1?'maintenance':(c.indexOf('כספי')>-1?'financial':(c.indexOf('כינוסים')>-1?'meeting':(c.indexOf('בטיחות')>-1?'safety':'info'))));}}
+  function buildHTML(anns){{
+    if(!anns.length)return'<p style="color:var(--muted);font-size:13px;padding:8px 0">אין הודעות פעילות</p>';
+    var sorted=anns.slice().sort(function(a,b){{return (a.priority||9)-(b.priority||9);}});
+    var h='<div class="ann-grid">';
+    for(var j=0;j<Math.min(sorted.length,6);j++){{
+      var a=sorted[j],cat=a.category||'מידע';
+      h+='<div class="ann-card '+catCls(cat)+'"><div class="ann-cat">'+esc(cat)+'</div>'+
+         '<div class="ann-title">'+esc(a.title)+'</div><div class="ann-content">'+esc(a.content)+'</div>'+
+         '<div class="ann-date">'+esc(a.date)+'</div></div>';
+    }}
+    return h+'</div>';
+  }}
+  fetch('announcements.json?_='+Date.now()).then(function(r){{return r.json();}}).then(function(anns){{
+    document.getElementById('announcements-body').innerHTML=buildHTML(anns);
+  }}).catch(function(){{}});  // silent fail — static content stays
+}})();
+</script>"""
 
     # ── Charts ────────────────────────────────────────────────────────────────
     bar_svg   = svg_bar_chart(mi, me)
@@ -1748,6 +1774,7 @@ def run_once():
     auto_push     = cfg_bool(cfg,'github','auto_push', False)
     issues_url    = cfg.get('google','issues_sheet_url', fallback='')
     admin_url     = cfg.get('google','admin_sheet_url',  fallback='')
+    announcements_url = cfg.get('google','announcements_sheet_url', fallback='')
 
     log.info('Reading Excel...')
     try:
@@ -1765,10 +1792,12 @@ def run_once():
     log.info('Fetching Google Sheets...')
     issues = fetch_issues(issues_url, admin_url)
     log.info(f'Issues: {len(issues)}')
+    anns = fetch_announcements(announcements_url)
+    log.info(f'Announcements: {len(anns)}')
 
     updated_at = datetime.now().strftime('%d/%m/%Y %H:%M')
     log.info('Generating HTML...')
-    html = generate_html(data, issues, cfg, updated_at)
+    html = generate_html(data, issues, anns, cfg, updated_at)
 
     Path(output_html).parent.mkdir(parents=True, exist_ok=True)
     with open(output_html, 'w', encoding='utf-8') as f:

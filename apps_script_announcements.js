@@ -10,6 +10,7 @@
 //    (replace any default Code.gs content)
 // 2. Project Settings -> Script Properties -> Add:
 //      TELEGRAM_TOKEN = <bot token> (separate Apps Script project from the calls one, own copy)
+//      GITHUB_PAT     = <the token from D:\Claude_projects\Home_tech\git token.txt>
 //      TEST_EMAIL_1   = <first test address>
 //      TEST_EMAIL_2   = <second test address>
 // 3. Triggers (clock icon) -> Add Trigger:
@@ -35,6 +36,21 @@ const CONTACTS_SHEET_ID = '1AttLipED7i-6iv7ZH6cjx8j32AnoSNQ2Kh9n-TTiJ8Q';
 const ADMIN_EMAIL        = 'emeqhashalom84@gmail.com';
 const ACTIVE_COL = 8;  // column H, 1-indexed
 const EXPIRY_COL = 9;  // column I, 1-indexed — new תוקף עד question
+const REPO          = 'emeqhashalom84-jpg/Vaad-bayit';
+const WORKFLOW_FILE = 'update-issues.yml';
+
+function triggerDashboardRefresh_() {
+  const pat = prop_('GITHUB_PAT');
+  if (!pat) { Logger.log('Missing GITHUB_PAT script property'); return; }
+  const url = 'https://api.github.com/repos/' + REPO + '/actions/workflows/' + WORKFLOW_FILE + '/dispatches';
+  UrlFetchApp.fetch(url, {
+    method: 'post',
+    headers: { Authorization: 'token ' + pat, Accept: 'application/vnd.github+json' },
+    contentType: 'application/json',
+    payload: JSON.stringify({ ref: 'main' }),
+    muteHttpExceptions: true
+  });
+}
 
 // Testing phase: Oren only. Add Michael's Telegram chat id once he's set up (same as calls script).
 const ADMIN_TELEGRAM_IDS = ['996999913'];
@@ -106,6 +122,8 @@ function onFormSubmit(e) {
     'כותרת: ' + title + '\nקטגוריה: ' + category + '\nעדיפות: ' + priority +
     '\nפעיל: ' + active + '\n\nלעריכה: ' + editLink);
 
+  triggerDashboardRefresh_();
+
   if (active !== 'כן') return; // draft/inactive announcement — no tenant email
 
   const recipients = recipientEmails_();
@@ -129,6 +147,7 @@ function checkExpiredAnnouncements_() {
   const rows = sheet.getDataRange().getValues();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  var anyExpired = false;
 
   for (var i = 1; i < rows.length; i++) {
     var active = rows[i][7];
@@ -141,6 +160,9 @@ function checkExpiredAnnouncements_() {
 
     if (expiryDate < today) {
       sheet.getRange(i + 1, ACTIVE_COL).setValue('לא פעיל');
+      anyExpired = true;
     }
   }
+
+  if (anyExpired) triggerDashboardRefresh_();
 }
