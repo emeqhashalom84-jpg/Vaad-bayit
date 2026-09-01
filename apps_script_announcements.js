@@ -145,8 +145,23 @@ function onFormSubmit(e) {
   });
 }
 
+// Parses the תאריך column, which can be a real Date (Form's Date-type answer) or
+// text in either Y-M-D (pasted Excel) or M/D/Y (this sheet's own locale) format.
+function parseScheduledDate_(v) {
+  if (v instanceof Date) return v;
+  if (!v) return null;
+  var s = String(v).trim();
+  var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return new Date(parseInt(m[3], 10), parseInt(m[1], 10) - 1, parseInt(m[2], 10));
+  return null;
+}
+
 // Run daily (time-driven trigger) — flips any expired כן row to לא פעיל.
-// Expiry = submission Timestamp (col 0) + the number of days in VALID_DAYS_COL.
+// Expiry = (whichever is later: submission Timestamp, or a future-scheduled תאריך)
+// + the number of days in VALID_DAYS_COL — so "10 days" always means 10 real days of
+// visibility, even when the announcement was scheduled to publish after it was submitted.
 // Accepts "Other" free-text entries too (e.g. "45"), not just the preset dropdown values.
 function checkExpiredAnnouncements_() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
@@ -161,7 +176,10 @@ function checkExpiredAnnouncements_() {
     var timestamp = rows[i][0];
     if (active !== 'כן' || !validDays || !(timestamp instanceof Date)) continue;
 
-    var expiryDate = new Date(timestamp);
+    var scheduled = parseScheduledDate_(rows[i][2]);
+    var anchor = (scheduled && scheduled > timestamp) ? scheduled : timestamp;
+
+    var expiryDate = new Date(anchor);
     expiryDate.setDate(expiryDate.getDate() + validDays);
     expiryDate.setHours(0, 0, 0, 0);
 
