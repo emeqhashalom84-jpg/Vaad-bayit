@@ -1128,7 +1128,7 @@ def generate_html(data, issues, anns, cfg, updated_at):
 
     def _ann_cards_html(items):
         cards = ''
-        for a in sorted(items, key=lambda x: x.get('priority', 9))[:6]:
+        for a in sorted(items, key=lambda x: x.get('priority', 9)):
             cat = a.get('category') or 'מידע'
             cards += (f'<div class="ann-card {_ann_cat_cls(cat)}">'
                       f'<div class="ann-cat">{he(cat)}</div>'
@@ -1156,7 +1156,7 @@ def generate_html(data, issues, anns, cfg, updated_at):
     if(!anns.length)return'<p style="color:var(--muted);font-size:13px;padding:8px 0">אין הודעות פעילות</p>';
     var sorted=anns.slice().sort(function(a,b){{return (a.priority||9)-(b.priority||9);}});
     var h='<div class="ann-grid">';
-    for(var j=0;j<Math.min(sorted.length,6);j++){{
+    for(var j=0;j<sorted.length;j++){{
       var a=sorted[j],cat=a.category||'מידע';
       h+='<div class="ann-card '+catCls(cat)+'"><div class="ann-cat">'+esc(cat)+'</div>'+
          '<div class="ann-title">'+esc(a.title)+'</div><div class="ann-content">'+esc(a.content)+'</div>'+
