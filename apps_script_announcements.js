@@ -25,7 +25,9 @@
 // "Email Address" is an extra auto-collected column right after Timestamp:
 //   0 Timestamp | 1 Email Address (auto) | 2 Date | 3 Title | 4 Response Content
 //   5 Category | 6 Priority | 7 Active (כן/לא — only כן triggers an email)
-//   8 תוקף עד (expiry date — new question, appended as the last column by Forms)
+//   8 תוקף (ימים) — a Dropdown question (10/15/30/60/90 + "Other" for a custom number),
+//     appended as the last column by Forms. Expiry = Timestamp (col 0) + this many days.
+//     Blank = never auto-expires.
 //
 // EXTRA SETUP for auto-expiry:
 //   Triggers -> Add Trigger -> Function: checkExpiredAnnouncements_
@@ -35,7 +37,7 @@
 const CONTACTS_SHEET_ID = '1AttLipED7i-6iv7ZH6cjx8j32AnoSNQ2Kh9n-TTiJ8Q';
 const ADMIN_EMAIL        = 'emeqhashalom84@gmail.com';
 const ACTIVE_COL = 8;  // column H, 1-indexed
-const EXPIRY_COL = 9;  // column I, 1-indexed — new תוקף עד question
+const VALID_DAYS_COL = 9;  // column I, 1-indexed — new תוקף (ימים) question
 const REPO          = 'emeqhashalom84-jpg/Vaad-bayit';
 const WORKFLOW_FILE = 'update-issues.yml';
 
@@ -142,6 +144,8 @@ function onFormSubmit(e) {
 }
 
 // Run daily (time-driven trigger) — flips any expired כן row to לא פעיל.
+// Expiry = submission Timestamp (col 0) + the number of days in VALID_DAYS_COL.
+// Accepts "Other" free-text entries too (e.g. "45"), not just the preset dropdown values.
 function checkExpiredAnnouncements_() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
   const rows = sheet.getDataRange().getValues();
@@ -150,12 +154,13 @@ function checkExpiredAnnouncements_() {
   var anyExpired = false;
 
   for (var i = 1; i < rows.length; i++) {
-    var active = rows[i][7];
-    var expiry = rows[i][8];
-    if (active !== 'כן' || !expiry) continue;
+    var active    = rows[i][7];
+    var validDays = parseInt(String(rows[i][8]).replace(/[^\d]/g, ''), 10);
+    var timestamp = rows[i][0];
+    if (active !== 'כן' || !validDays || !(timestamp instanceof Date)) continue;
 
-    var expiryDate = expiry instanceof Date ? new Date(expiry) : new Date(String(expiry));
-    if (isNaN(expiryDate.getTime())) continue;
+    var expiryDate = new Date(timestamp);
+    expiryDate.setDate(expiryDate.getDate() + validDays);
     expiryDate.setHours(0, 0, 0, 0);
 
     if (expiryDate < today) {
