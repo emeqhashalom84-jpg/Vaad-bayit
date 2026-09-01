@@ -1004,6 +1004,26 @@ def generate_html(data, issues, cfg, updated_at):
             try: _debt_carryover[name.strip()] = float(val)
             except: pass
 
+    # One-time special charge (e.g. roof repair) — same amount for every tenant, folds into
+    # the regular debt total, but also tracked separately (per-tenant dot + aggregate progress).
+    # Hidden entirely unless [one_time_charge] active=true AND its date has arrived.
+    _otc = {}
+    if cfg.has_section('one_time_charge') and cfg_bool(cfg, 'one_time_charge', 'active', False):
+        try:
+            _otc_amt = float(cfg.get('one_time_charge', 'amount', fallback='0'))
+            _otc_date_s = cfg.get('one_time_charge', 'date', fallback='').strip()
+            _otc_ready = True
+            if _otc_date_s:
+                _otc_ready = datetime.now() >= datetime.strptime(_otc_date_s, '%Y-%m-%d')
+            if _otc_amt > 0 and _otc_ready:
+                _otc = {
+                    'name':        cfg.get('one_time_charge', 'name', fallback='חיוב מיוחד').strip(),
+                    'amount':      _otc_amt,
+                    'description': cfg.get('one_time_charge', 'description', fallback='').strip(),
+                }
+        except Exception:
+            _otc = {}
+
     show_ann  = cfg_bool(cfg,'display','show_announcements')
     show_bud  = cfg_bool(cfg,'display','show_budget')
     show_exp  = cfg_bool(cfg,'display','show_expense_chart')
@@ -1205,13 +1225,18 @@ def generate_html(data, issues, cfg, updated_at):
         t['_approved_note']   = _appr_note
 
         # Expected total = sum of required amount per elapsed month
-        _expected = sum(
+        _expected_normal = sum(
             _appr[i] if i in _appr else _base_rate
             for i in range(_now_month)
         )
+        _otc_amount = _otc['amount'] if _otc else 0.0
+        _expected = _expected_normal + _otc_amount
         _raw = _expected - t['total_paid']
         t['monthly_debt']   = max(0.0,  _raw)
         t['monthly_credit'] = max(0.0, -_raw)
+
+        # Portion of payments beyond normal dues that counts toward the special charge
+        t['_otc_paid'] = min(max(0.0, t['total_paid'] - _expected_normal), _otc_amount) if _otc_amount else 0.0
 
         # Carryover debt from prior year (stored in config.ini [debt_carryover])
         _carry = next((v for k, v in _debt_carryover.items() if k in t['name']), 0.0)
@@ -1264,10 +1289,23 @@ def generate_html(data, issues, cfg, updated_at):
             for i in range(12)
         )
 
+        _otc_cell = ''
+        if _otc:
+            _op = t.get('_otc_paid', 0.0)
+            if _op >= _otc['amount'] - 0.01:
+                _dc, _dl = '#22c55e', 'שולם'
+            elif _op > 0:
+                _dc, _dl = '#f59e0b', 'חלקי'
+            else:
+                _dc, _dl = '#cbd5e1', 'לא שולם'
+            _otc_title = f'{he(_otc["name"])}: {fmt_ils(_op)} / {fmt_ils(_otc["amount"])} — {_dl}'
+            _otc_cell = f'<td><span style="color:{_dc};font-size:18px" title="{_otc_title}">●</span></td>'
+
         rows_html += f"""
 <tr>
   <td><strong>{he(name)}</strong><br><small style="color:var(--muted)">{he(apt_info)}</small></td>
   {dots.replace('<span', '<td><span').replace('</span>', '</span></td>')}
+  {_otc_cell}
   <td style="font-variant-numeric:tabular-nums">{fmt_ils(t['total_paid'])}</td>
   <td><span class="badge {debt_cls}" title="{he(debt_label)}">{he(debt_label)}</span></td>
 </tr>"""
@@ -1279,10 +1317,32 @@ def generate_html(data, issues, cfg, updated_at):
     _grand_debt    = _total_debt26 + _total_carry
     _carry_note    = f' (כולל {fmt_ils(_total_carry)} העברה מ-2025)' if _total_carry > 0 else ''
     _total_cls     = 'badge-red' if _grand_debt > crit_debt else ('badge-orange' if _grand_debt >= warn_debt else 'badge-green')
+
+    _otc_header = ''
+    _otc_totals_cell = ''
+    _otc_progress_html = ''
+    if _otc:
+        _otc_header = f'<th>{he(_otc["name"])}</th>'
+        _otc_target    = _otc['amount'] * len(tenants)
+        _otc_collected = sum(t.get('_otc_paid', 0.0) for t in tenants)
+        _otc_pct = min(_otc_collected / _otc_target * 100, 100) if _otc_target else 0
+        _otc_color = '#22c55e' if _otc_pct >= 100 else ('#f59e0b' if _otc_pct >= 50 else '#ef4444')
+        _otc_totals_cell = f'<td><span class="badge" style="background:{_otc_color}22;color:{_otc_color}">{_otc_pct:.0f}%</span></td>'
+        _otc_desc = f' — {he(_otc["description"])}' if _otc.get('description') else ''
+        _otc_progress_html = f"""
+<div class="prog-item" style="margin-top:14px">
+  <div class="prog-label">
+    <span>📢 {he(_otc['name'])}{_otc_desc}</span>
+    <span style="color:var(--muted)">{fmt_ils(_otc_collected)} / {fmt_ils(_otc_target)} &nbsp;<span style="color:{_otc_color};font-weight:600">{_otc_pct:.0f}%</span></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" style="width:{_otc_pct:.0f}%;background:{_otc_color}"></div></div>
+</div>"""
+
     totals_row = f"""
 <tr style="font-weight:600;border-top:2px solid var(--border);background:var(--surface2)">
   <td>סה"כ</td>
   {'<td></td>' * 12}
+  {_otc_totals_cell}
   <td style="font-variant-numeric:tabular-nums">{fmt_ils(_total_paid)}</td>
   <td><span class="badge {_total_cls}" title="חוב 2026: {fmt_ils(_total_debt26)}{_carry_note}">{fmt_ils(_grand_debt)}{' ↑' if _total_carry > 0 else ''}</span></td>
 </tr>"""
@@ -1296,6 +1356,7 @@ def generate_html(data, issues, cfg, updated_at):
       <tr>
         <th>שם דייר</th>
         {header_months}
+        {_otc_header}
         <th>סה"כ שולם</th>
         <th>חוב חודשי</th>
       </tr>
@@ -1303,6 +1364,7 @@ def generate_html(data, issues, cfg, updated_at):
     <tbody>{rows_html}{totals_row}</tbody>
   </table>
   </div>
+  {_otc_progress_html}
   <div style="font-size:12px;color:var(--muted);margin-top:10px;display:flex;flex-wrap:wrap;gap:18px;align-items:center">
     <span style="display:flex;gap:12px;align-items:center">
       <span><span style="color:#22c55e;font-size:15px">●</span> שולם</span>
