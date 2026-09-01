@@ -1014,7 +1014,7 @@ def generate_html(data, issues, cfg, updated_at):
             _otc_date_s = cfg.get('one_time_charge', 'date', fallback='').strip()
             _otc_ready = True
             if _otc_date_s:
-                _otc_ready = datetime.now() >= datetime.strptime(_otc_date_s, '%Y-%m-%d')
+                _otc_ready = datetime.now() >= datetime.strptime(_otc_date_s, '%d/%m/%Y')
             if _otc_amt > 0 and _otc_ready:
                 _otc = {
                     'name':        cfg.get('one_time_charge', 'name', fallback='חיוב מיוחד').strip(),
