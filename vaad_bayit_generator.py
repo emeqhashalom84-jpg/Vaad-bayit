@@ -6,7 +6,7 @@ vaad_bayit_generator.py
 Reads Excel + Google Sheets → generates static HTML dashboard → Git push
 """
 
-import configparser, openpyxl, requests, csv, io, os, sys, math, shutil, subprocess, logging, time, threading
+import configparser, openpyxl, requests, csv, io, os, sys, math, shutil, subprocess, logging, time, threading, json
 from datetime import datetime
 from pathlib import Path
 from html import escape as he
@@ -572,6 +572,60 @@ def _ann_parse_date(v):
             continue
     return None
 
+def fetch_charges(charges_url, payments_url):
+    """Reads the current one-time charge + per-tenant payments from the admin-managed
+    Google Sheet (replaces the old config.ini [one_time_charge] + inferred-payment heuristic).
+    Charges sheet columns (0-indexed): 0 charge_id | 1 name | 2 amount | 3 date | 4 active | 5 description
+    Payments sheet columns (0-indexed): 0 charge_id | 1 tenant_name | 2 amount_paid | 3 updated_at
+    Returns (charge_dict, payments_dict). charge_dict is {} if no charge is currently active."""
+    import urllib3; urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    charge = {}
+    payments = {}
+    try:
+        curl = _sheet_to_csv_url(charges_url)
+        if not curl: return {}, {}
+        r = requests.get(curl, timeout=10, verify=False)
+        r.encoding = 'utf-8'
+        rows = list(csv.reader(io.StringIO(r.text)))
+        for row in rows[1:]:
+            if len(row) < 5 or not row[0].strip(): continue
+            if (row[4] or '').strip() != 'כן': continue
+            try:
+                amount = float(row[2])
+            except (ValueError, IndexError):
+                continue
+            date_s = row[3].strip() if len(row) > 3 else ''
+            if date_s:
+                try:
+                    if datetime.now() < datetime.strptime(date_s, '%d/%m/%Y'): continue
+                except ValueError:
+                    pass
+            if amount <= 0: continue
+            charge = {
+                'id':          row[0].strip(),
+                'name':        row[1].strip() if len(row) > 1 else 'חיוב מיוחד',
+                'amount':      amount,
+                'description': row[5].strip() if len(row) > 5 else '',
+            }
+            break  # first active+ready row wins
+        if charge:
+            purl = _sheet_to_csv_url(payments_url)
+            if purl:
+                r2 = requests.get(purl, timeout=10, verify=False)
+                r2.encoding = 'utf-8'
+                prows = list(csv.reader(io.StringIO(r2.text)))
+                for row in prows[1:]:
+                    if len(row) < 3 or not row[1].strip(): continue
+                    if row[0].strip() != charge['id']: continue
+                    try:
+                        payments[row[1].strip()] = float(row[2])
+                    except ValueError:
+                        continue
+    except Exception as e:
+        log.warning(f'Could not fetch charges sheet: {e}')
+        return {}, {}
+    return charge, payments
+
 def fetch_announcements(announcements_url):
     import urllib3; urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     anns = []
@@ -982,7 +1036,7 @@ tr:hover td{background:var(--surface2)}
 .alert-banner{background:var(--red-bg);border:1px solid #fca5a5;border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--red)}
 """
 
-def generate_html(data, issues, anns, cfg, updated_at):
+def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payments=None):
     building_name = cfg.get('building','name', fallback='ועד בית')
     reserve_target = cfg_float(cfg, 'thresholds', 'reserve_target', 8000)
     col_green  = cfg_float(cfg, 'thresholds', 'collection_green',  85)
@@ -1024,25 +1078,12 @@ def generate_html(data, issues, anns, cfg, updated_at):
             try: _debt_carryover[name.strip()] = float(val)
             except: pass
 
-    # One-time special charge (e.g. roof repair) — same amount for every tenant, folds into
-    # the regular debt total, but also tracked separately (per-tenant dot + aggregate progress).
-    # Hidden entirely unless [one_time_charge] active=true AND its date has arrived.
-    _otc = {}
-    if cfg.has_section('one_time_charge') and cfg_bool(cfg, 'one_time_charge', 'active', False):
-        try:
-            _otc_amt = float(cfg.get('one_time_charge', 'amount', fallback='0'))
-            _otc_date_s = cfg.get('one_time_charge', 'date', fallback='').strip()
-            _otc_ready = True
-            if _otc_date_s:
-                _otc_ready = datetime.now() >= datetime.strptime(_otc_date_s, '%d/%m/%Y')
-            if _otc_amt > 0 and _otc_ready:
-                _otc = {
-                    'name':        cfg.get('one_time_charge', 'name', fallback='חיוב מיוחד').strip(),
-                    'amount':      _otc_amt,
-                    'description': cfg.get('one_time_charge', 'description', fallback='').strip(),
-                }
-        except Exception:
-            _otc = {}
+    # One-time special charge (e.g. roof repair) — same amount for every tenant, tracked
+    # separately from regular dues (per-tenant dot + aggregate progress + its own debt component).
+    # Managed via the admin GUI + Google Sheet now (see fetch_charges) — real per-tenant payment
+    # amounts, not inferred from dues surplus. Empty dict when no charge is currently active.
+    _otc = charge or {}
+    _otc_payments = charge_payments or {}
 
     show_ann  = cfg_bool(cfg,'display','show_announcements')
     show_bud  = cfg_bool(cfg,'display','show_budget')
@@ -1269,14 +1310,21 @@ def generate_html(data, issues, anns, cfg, updated_at):
             _appr[i] if i in _appr else _base_rate
             for i in range(_now_month)
         )
-        _otc_amount = _otc['amount'] if _otc else 0.0
-        _expected = _expected_normal + _otc_amount
-        _raw = _expected - t['total_paid']
-        t['monthly_debt']   = max(0.0,  _raw)
-        t['monthly_credit'] = max(0.0, -_raw)
+        # Regular dues debt/credit — unaffected by the one-time charge, which is tracked
+        # and paid via a completely separate pool (real per-tenant amounts from the admin sheet).
+        _raw = _expected_normal - t['total_paid']
+        _regular_debt   = max(0.0,  _raw)
+        _regular_credit = max(0.0, -_raw)
 
-        # Portion of payments beyond normal dues that counts toward the special charge
-        t['_otc_paid'] = min(max(0.0, t['total_paid'] - _expected_normal), _otc_amount) if _otc_amount else 0.0
+        _otc_amount = _otc['amount'] if _otc else 0.0
+        _otc_paid_raw = next((v for k, v in _otc_payments.items() if k in t['name'] or t['name'] in k), 0.0)
+        _otc_paid = min(max(0.0, _otc_paid_raw), _otc_amount) if _otc_amount else 0.0
+        _otc_debt = max(0.0, _otc_amount - _otc_paid) if _otc_amount else 0.0
+        t['_otc_paid'] = _otc_paid
+
+        # Combined single debt badge = regular dues owed + any unpaid portion of the charge
+        t['monthly_debt']   = _regular_debt + _otc_debt
+        t['monthly_credit'] = _regular_credit
 
         # Carryover debt from prior year (stored in config.ini [debt_carryover])
         _carry = next((v for k, v in _debt_carryover.items() if k in t['name']), 0.0)
@@ -1404,7 +1452,7 @@ def generate_html(data, issues, anns, cfg, updated_at):
     <tbody>{rows_html}{totals_row}</tbody>
   </table>
   </div>
-  {_otc_progress_html}
+  <div id="otc-progress">{_otc_progress_html}</div>
   <div style="font-size:12px;color:var(--muted);margin-top:10px;display:flex;flex-wrap:wrap;gap:18px;align-items:center">
     <span style="display:flex;gap:12px;align-items:center">
       <span><span style="color:#22c55e;font-size:15px">●</span> שולם</span>
@@ -1567,6 +1615,21 @@ def generate_html(data, issues, anns, cfg, updated_at):
     var res=buildHTML(issues);
     document.getElementById('issues-body').innerHTML=res[0];
     document.getElementById('issues-count').textContent='פתוחות: '+res[1];
+  }}).catch(function(){{}});  // silent fail — static content stays
+
+  // Live-refresh the one-time-charge aggregate progress bar (Sheet-only data, no
+  // Excel dependency) — the per-tenant dot column inside the table above still
+  // needs a local generator run, since that merges in Excel dues data.
+  fetch('charges.json?_='+Date.now()).then(function(r){{return r.json();}}).then(function(c){{
+    var el=document.getElementById('otc-progress');
+    if(!el) return;
+    if(!c||!c.id){{el.innerHTML='';return;}}
+    var color=c.pct>=100?'#22c55e':(c.pct>=50?'#f59e0b':'#ef4444');
+    var desc=c.description?' — '+esc(c.description):'';
+    el.innerHTML='<div class="prog-item" style="margin-top:14px">'+
+      '<div class="prog-label"><span>📢 '+esc(c.name)+desc+'</span>'+
+      '<span style="color:var(--muted)">₪'+Math.round(c.collected).toLocaleString()+' / ₪'+Math.round(c.target).toLocaleString()+' &nbsp;<span style="color:'+color+';font-weight:600">'+c.pct+'%</span></span></div>'+
+      '<div class="prog-bar"><div class="prog-fill" style="width:'+c.pct+'%;background:'+color+'"></div></div></div>';
   }}).catch(function(){{}});  // silent fail — static content stays
 }})();
 </script>"""
@@ -1789,6 +1852,8 @@ def run_once():
     issues_url    = cfg.get('google','issues_sheet_url', fallback='')
     admin_url     = cfg.get('google','admin_sheet_url',  fallback='')
     announcements_url = cfg.get('google','announcements_sheet_url', fallback='')
+    charges_url   = cfg.get('google','charges_sheet_url', fallback='')
+    charge_payments_url = cfg.get('google','charge_payments_sheet_url', fallback='')
 
     log.info('Reading Excel...')
     try:
@@ -1808,15 +1873,30 @@ def run_once():
     log.info(f'Issues: {len(issues)}')
     anns = fetch_announcements(announcements_url)
     log.info(f'Announcements: {len(anns)}')
+    charge, charge_payments = fetch_charges(charges_url, charge_payments_url)
+    log.info(f'Active charge: {charge.get("name") if charge else "none"}')
 
     updated_at = datetime.now().strftime('%d/%m/%Y %H:%M')
     log.info('Generating HTML...')
-    html = generate_html(data, issues, anns, cfg, updated_at)
+    html = generate_html(data, issues, anns, cfg, updated_at, charge, charge_payments)
 
     Path(output_html).parent.mkdir(parents=True, exist_ok=True)
     with open(output_html, 'w', encoding='utf-8') as f:
         f.write(html)
     log.info(f'HTML saved → {output_html}  ({len(html):,} bytes)')
+
+    summary_path = Path(output_html).parent / 'dashboard_summary.json'
+    summary = {
+        'balance':         data['balance'],
+        'income_total':    data['income_total'],
+        'expense_total':   data['expense_total'],
+        'collection_rate': data['collection_rate'],
+        'tenant_count':    len(data['tenants']),
+        'updated_at':      updated_at,
+    }
+    with open(summary_path, 'w', encoding='utf-8') as f:
+        json.dump(summary, f, ensure_ascii=False)
+    log.info(f'Summary saved → {summary_path}')
 
     git_push(output_html, repo_dir, auto_push)
 

@@ -18,9 +18,12 @@ jobs:
       - name: Fetch announcements from Google Sheets
         run: python3 fetch_announcements_ci.py
 
+      - name: Fetch charges from Google Sheets
+        run: python3 fetch_charges_ci.py
+
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add issues.json announcements.json
-          git diff --staged --quiet || (git commit -m "Update issues/announcements $(date -u +'%Y-%m-%d %H:%M UTC')" && git push)
+          git add issues.json announcements.json charges.json
+          git diff --staged --quiet || (git commit -m "Update issues/announcements/charges $(date -u +'%Y-%m-%d %H:%M UTC')" && git push)
