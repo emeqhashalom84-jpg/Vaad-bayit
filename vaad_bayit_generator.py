@@ -1642,37 +1642,43 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
       '<span style="color:var(--muted)">₪'+Math.round(c.collected).toLocaleString()+' / ₪'+Math.round(c.target).toLocaleString()+' &nbsp;<span style="color:'+color+';font-weight:600">'+c.pct+'%</span></span></div>'+
       '<div class="prog-bar"><div class="prog-fill" style="width:'+c.pct+'%;background:'+color+'"></div></div></div>';
   }}).catch(function(){{}});  // silent fail — static content stays
+
+  // Live-refresh per-tenant contact cards (כרטיס דייר) — fully Sheet-based now, no
+  // Excel dependency, so this always reflects the admin panel's tenant-cards tab.
+  fetch('contacts.json?_='+Date.now()).then(function(r){{return r.json();}}).then(function(list){{
+    var el=document.getElementById('tenant-contacts-live');
+    if(!el) return;
+    function line(label,c){{
+      if(!c||!c.name) return '';
+      var extra=[c.phone,c.email].filter(function(x){{return x;}}).join(' · ');
+      return '<div class="contact-detail">'+label+': '+esc(c.name)+(extra?' — '+esc(extra):'')+'</div>';
+    }}
+    el.innerHTML=list.map(function(t){{
+      var h='<div class="contact-card"><div class="contact-name">'+esc(t.lastName)+'</div>'+
+        '<div class="contact-detail" style="color:var(--muted)">בניין '+esc(t.building)+' דירה '+esc(t.apt)+'</div>';
+      h+=line('איש קשר 1',t.contact1);
+      h+=line('איש קשר 2',t.contact2);
+      if(t.rented) h+=line('בעל הדירה',t.owner);
+      return h+'</div>';
+    }}).join('');
+  }}).catch(function(){{}});  // silent fail — static content stays
 }})();
 </script>"""
 
     # ── Contacts ──────────────────────────────────────────────────────────────
-    con_html = ''
-    if binfo or data['contacts']:
-        cards = ''
-        # Bank / payment info from building_info
-        bank_fields = ['בנק','חשבון','סניף','IBAN','מסלקה','בעל החשבון']
-        bank_section = ''
-        for k, v in binfo.items():
-            if v:
-                bank_section += f'<div class="contact-detail"><strong>{he(k)}:</strong> {he(v)}</div>'
-        if bank_section:
-            cards += f'<div class="contact-card"><div class="contact-name">💳 פרטי תשלום</div>{bank_section}</div>'
-
-        # Key contacts
-        for c in data['contacts'][:14]:
-            if not c.get('name'): continue
-            ph = f'<div class="contact-detail">📞 <a href="tel:{c["phone"]}">{he(c["phone"])}</a></div>' if c.get('phone') else ''
-            em = f'<div class="contact-detail">✉ <a href="mailto:{c["email"]}">{he(c["email"])}</a></div>' if c.get('email') else ''
-            apt = f'בניין {c["building"]} דירה {c["apt"]}' if c.get('building') else ''
-            cards += f"""<div class="contact-card">
-  <div class="contact-name">{he(c['name'])}</div>
-  <div class="contact-detail" style="color:var(--muted)">{he(apt)}</div>
-  {ph}{em}
-</div>"""
-        con_html = f"""
+    # Bank/payment info card stays Excel-derived (building-level, not per-tenant).
+    # Per-tenant "כרטיס דייר" cards are rendered live from contacts.json (see JS below) —
+    # migrated off the old Excel-based per-tenant contacts list, which required a local
+    # generator run to reflect any change and could drift from the Sheet-based admin panel.
+    bank_section = ''
+    for k, v in binfo.items():
+        if v:
+            bank_section += f'<div class="contact-detail"><strong>{he(k)}:</strong> {he(v)}</div>'
+    bank_card = f'<div class="contact-card"><div class="contact-name">💳 פרטי תשלום</div>{bank_section}</div>' if bank_section else ''
+    con_html = f"""
 <div class="section" id="contacts">
   <div class="section-title">📞 אנשי קשר</div>
-  <div class="contact-grid">{cards}</div>
+  <div class="contact-grid">{bank_card}<div id="tenant-contacts-live" style="display:contents"></div></div>
 </div>"""
 
     # ── Alert for unmatched transactions ──────────────────────────────────────

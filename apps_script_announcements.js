@@ -32,7 +32,7 @@
 //     Blank = never auto-expires.
 //
 // EXTRA SETUP for auto-expiry:
-//   Triggers -> Add Trigger -> Function: checkExpiredAnnouncements_
+//   Triggers -> Add Trigger -> Function: checkExpiredAnnouncements
 //   Event source: Time-driven | Type: Day timer | Time: any convenient window (e.g. 00:00-01:00)
 // ============================================================
 
@@ -94,15 +94,16 @@ function testEmails_() {
   return [prop_('TEST_EMAIL_1'), prop_('TEST_EMAIL_2')].filter(function (e) { return e; });
 }
 
-// Contacts sheet columns (0-indexed): 1=name, 2=building, 3=apartment, 4=email, 5=phone
+// Contacts sheet columns (0-indexed): 0 בניין | 1 דירה | 2 שם משפחה | 3/4/5 איש קשר 1
+// (שם/טלפון/מייל) | 6/7/8 איש קשר 2 | 9 דירה שכורה | 10/11/12 בעל הדירה
+// Collects both household contacts' emails, not just one per apartment.
 function allTenantEmails_() {
-  const ss = SpreadsheetApp.openById(CONTACTS_SHEET_ID);
-  const sheet = ss.getSheets()[0];
-  const rows = sheet.getDataRange().getValues();
+  const rows = SpreadsheetApp.openById(CONTACTS_SHEET_ID).getSheets()[0].getDataRange().getValues();
   const emails = [];
   for (var i = 1; i < rows.length; i++) {
-    var email = rows[i][4];
-    if (email && String(email).trim()) emails.push(String(email).trim());
+    var e1 = rows[i][5], e2 = rows[i][8];
+    if (e1 && String(e1).trim()) emails.push(String(e1).trim());
+    if (e2 && String(e2).trim()) emails.push(String(e2).trim());
   }
   return emails;
 }
@@ -163,7 +164,7 @@ function parseScheduledDate_(v) {
 // + the number of days in VALID_DAYS_COL — so "10 days" always means 10 real days of
 // visibility, even when the announcement was scheduled to publish after it was submitted.
 // Accepts "Other" free-text entries too (e.g. "45"), not just the preset dropdown values.
-function checkExpiredAnnouncements_() {
+function checkExpiredAnnouncements() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
   const rows = sheet.getDataRange().getValues();
   const today = new Date();
