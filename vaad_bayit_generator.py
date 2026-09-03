@@ -892,6 +892,17 @@ def fmt_ils(v, show_zero=True):
     if v == 0 and not show_zero: return '—'
     return f'₪{v:,.0f}'
 
+# Matches names across two independently-maintained lists (the charges/payments Sheet's
+# free-typed tenant name vs. Excel's full household name, e.g. "אורן אלקיים" vs
+# "אורן ואורלי אלקיים") without requiring one to be a literal substring of the other.
+# Splits on whitespace, strips the Hebrew "and" prefix (ו) from each word, and matches
+# if any word is shared — so a single first name or surname reliably links to the full
+# household name.
+def _name_match(a, b):
+    def toks(s):
+        return {w[1:] if w.startswith('ו') and len(w) > 1 else w for w in str(s).split()}
+    return bool(toks(a) & toks(b))
+
 def status_class(v, green, orange):
     if v >= green: return 'kpi-green'
     if v >= orange: return 'kpi-orange'
@@ -1317,7 +1328,7 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
         _regular_credit = max(0.0, -_raw)
 
         _otc_amount = _otc['amount'] if _otc else 0.0
-        _otc_paid_raw = next((v for k, v in _otc_payments.items() if k in t['name'] or t['name'] in k), 0.0)
+        _otc_paid_raw = next((v for k, v in _otc_payments.items() if _name_match(k, t['name'])), 0.0)
         _otc_paid = min(max(0.0, _otc_paid_raw), _otc_amount) if _otc_amount else 0.0
         _otc_debt = max(0.0, _otc_amount - _otc_paid) if _otc_amount else 0.0
         t['_otc_paid'] = _otc_paid
@@ -1676,7 +1687,7 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
     links_html = ''
     _link_items = []
     if fault_form  and 'PASTE' not in fault_form:
-        _link_items.append(f'<a href="{he(fault_form)}"  target="_blank" class="link-btn link-btn-red">🔧 פתיחת קריאת תקלה</a>')
+        _link_items.append(f'<a href="{he(fault_form)}"  target="_blank" class="link-btn link-btn-red">🔧 פתיחת קריאת שירות</a>')
     if tenant_form and 'PASTE' not in tenant_form:
         _link_items.append(f'<a href="{he(tenant_form)}" target="_blank" class="link-btn link-btn-blue">✏️ עדכון פרטים אישיים</a>')
     if _link_items:
