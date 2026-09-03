@@ -6,7 +6,7 @@ vaad_bayit_generator.py
 Reads Excel + Google Sheets → generates static HTML dashboard → Git push
 """
 
-import configparser, openpyxl, requests, csv, io, os, sys, math, shutil, subprocess, logging, time, threading, json
+import configparser, openpyxl, requests, csv, io, os, sys, math, shutil, subprocess, logging, time, threading
 from datetime import datetime
 from pathlib import Path
 from html import escape as he
@@ -1884,19 +1884,6 @@ def run_once():
     with open(output_html, 'w', encoding='utf-8') as f:
         f.write(html)
     log.info(f'HTML saved → {output_html}  ({len(html):,} bytes)')
-
-    summary_path = Path(output_html).parent / 'dashboard_summary.json'
-    summary = {
-        'balance':         data['balance'],
-        'income_total':    data['income_total'],
-        'expense_total':   data['expense_total'],
-        'collection_rate': data['collection_rate'],
-        'tenant_count':    len(data['tenants']),
-        'updated_at':      updated_at,
-    }
-    with open(summary_path, 'w', encoding='utf-8') as f:
-        json.dump(summary, f, ensure_ascii=False)
-    log.info(f'Summary saved → {summary_path}')
 
     git_push(output_html, repo_dir, auto_push)
 
