@@ -24,25 +24,9 @@
     "desc": "מעלית לא נסגרת",
     "status": "בטיפול",
     "update_date": "9/3/2026",
-    "notes": "טסט",
+    "notes": "נפתחה קריאה מול קונה , יגיעו בשעתיים הקרובות",
     "images": [
       "https://drive.google.com/open?id=1ZsV50RYlfrDuJ-IAkIEAKKNUTAKzo-Dy"
-    ]
-  },
-  {
-    "id": 4,
-    "date": "8/31/2026",
-    "name": "אורלי אלקיים",
-    "apt": "בניין 84 דירה 2",
-    "location": "גינה",
-    "urgency": "דחוף",
-    "desc": "בדיקת תוכנה",
-    "status": "פתוח",
-    "update_date": "",
-    "notes": "",
-    "images": [
-      "https://drive.google.com/open?id=1gNgfaG-6k9Xi1pXvDh-g6hu1LAXc9bGC",
-      "https://drive.google.com/open?id=1lk-ydEgrLam_fxbJv7m_7HsH7YlZef-y"
     ]
   }
 ]
