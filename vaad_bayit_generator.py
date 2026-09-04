@@ -1650,8 +1650,10 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
     if(!el) return;
     function line(label,c){{
       if(!c||!c.name) return '';
-      var extra=[c.phone,c.email].filter(function(x){{return x;}}).join(' · ');
-      return '<div class="contact-detail">'+label+': '+esc(c.name)+(extra?' — '+esc(extra):'')+'</div>';
+      var extra=[];
+      if(c.phone) extra.push('<a href="tel:'+esc(c.phone.replace(/[^0-9+]/g,''))+'" style="color:inherit">'+esc(c.phone)+'</a>');
+      if(c.email) extra.push('<a href="mailto:'+esc(c.email)+'" style="color:inherit">'+esc(c.email)+'</a>');
+      return '<div class="contact-detail">'+label+': '+esc(c.name)+(extra.length?' — '+extra.join(' · '):'')+'</div>';
     }}
     el.innerHTML=list.map(function(t){{
       var h='<div class="contact-card"><div class="contact-name">'+esc(t.displayName||t.lastName)+'</div>'+
