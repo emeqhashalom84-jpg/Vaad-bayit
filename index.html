@@ -127,7 +127,7 @@ tr:hover td{background:var(--surface2)}
 
 <header class="hdr">
   <div class="hdr-title">ועד בית עמק השלום 84-88</div>
-  <div class="hdr-meta">עודכן: 03/09/2026 18:01 </div>
+  <div class="hdr-meta">עודכן: 05/09/2026 02:01 </div>
   <button class="hdr-btn" onclick="toggleTheme()">◐</button>
 </header>
 
@@ -1333,68 +1333,32 @@ tr:hover td{background:var(--surface2)}
       '<span style="color:var(--muted)">₪'+Math.round(c.collected).toLocaleString()+' / ₪'+Math.round(c.target).toLocaleString()+' &nbsp;<span style="color:'+color+';font-weight:600">'+c.pct+'%</span></span></div>'+
       '<div class="prog-bar"><div class="prog-fill" style="width:'+c.pct+'%;background:'+color+'"></div></div></div>';
   }).catch(function(){});  // silent fail — static content stays
+
+  // Live-refresh per-tenant contact cards (כרטיס דייר) — fully Sheet-based now, no
+  // Excel dependency, so this always reflects the admin panel's tenant-cards tab.
+  fetch('contacts.json?_='+Date.now()).then(function(r){return r.json();}).then(function(list){
+    var el=document.getElementById('tenant-contacts-live');
+    if(!el) return;
+    function line(label,c){
+      if(!c||!c.name) return '';
+      var extra=[c.phone,c.email].filter(function(x){return x;}).join(' · ');
+      return '<div class="contact-detail">'+label+': '+esc(c.name)+(extra?' — '+esc(extra):'')+'</div>';
+    }
+    el.innerHTML=list.map(function(t){
+      var h='<div class="contact-card"><div class="contact-name">'+esc(t.displayName||t.lastName)+'</div>'+
+        '<div class="contact-detail" style="color:var(--muted)">בניין '+esc(t.building)+' דירה '+esc(t.apt)+'</div>';
+      h+=line('איש קשר 1',t.contact1);
+      h+=line('איש קשר 2',t.contact2);
+      if(t.rented) h+=line('בעל הדירה',t.owner);
+      return h+'</div>';
+    }).join('');
+  }).catch(function(){});  // silent fail — static content stays
 })();
 </script>
 
 <div class="section" id="contacts">
   <div class="section-title">📞 אנשי קשר</div>
-  <div class="contact-grid"><div class="contact-card">
-  <div class="contact-name">שרלי ועינת בסיאנו</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 84 דירה 1</div>
-  <div class="contact-detail">📞 <a href="tel:0504423303">0504423303</a></div><div class="contact-detail">✉ <a href="mailto:einati75@gmail.com">einati75@gmail.com</a></div>
-</div><div class="contact-card">
-  <div class="contact-name">אורן ואורלי אלקיים</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 84 דירה 2</div>
-  <div class="contact-detail">📞 <a href="tel:0544883429">0544883429</a></div><div class="contact-detail">✉ <a href="mailto:orenelk1@gmail.com">orenelk1@gmail.com</a></div>
-</div><div class="contact-card">
-  <div class="contact-name">חנה פורמן</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 84 דירה 3</div>
-  <div class="contact-detail">📞 <a href="tel:0544366832">0544366832</a></div><div class="contact-detail">✉ <a href="mailto:Chanafu@gmail.com">Chanafu@gmail.com</a></div>
-</div><div class="contact-card">
-  <div class="contact-name">עמרי  ושיר יוסוף</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 84 דירה 4</div>
-  <div class="contact-detail">📞 <a href="tel:0509023903">0509023903</a></div><div class="contact-detail">✉ <a href="mailto:omriyos@gmail.com">omriyos@gmail.com</a></div>
-</div><div class="contact-card">
-  <div class="contact-name">מיכאל ומריה בן אורי</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 86 דירה 1</div>
-  
-</div><div class="contact-card">
-  <div class="contact-name">יוני כהן</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 86 דירה 2</div>
-  
-</div><div class="contact-card">
-  <div class="contact-name">דוד דרס</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 86 דירה 3</div>
-  <div class="contact-detail">📞 <a href="tel:0547367737">0547367737</a></div><div class="contact-detail">✉ <a href="mailto:david.deres@gmail.com">david.deres@gmail.com</a></div>
-</div><div class="contact-card">
-  <div class="contact-name">טניה גלר</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 86 דירה 4</div>
-  <div class="contact-detail">📞 <a href="tel:0527255136">0527255136</a></div><div class="contact-detail">✉ <a href="mailto:gelta4@gmail.com">gelta4@gmail.com</a></div>
-</div><div class="contact-card">
-  <div class="contact-name">מיכל בצלאל</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 86 דירה 5</div>
-  
-</div><div class="contact-card">
-  <div class="contact-name">ברכה ואליעזר אוחיון</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 86 דירה 6</div>
-  <div class="contact-detail">📞 <a href="tel:0506282303">0506282303</a></div><div class="contact-detail">✉ <a href="mailto:bracha177@bezeqint.net">bracha177@bezeqint.net</a></div>
-</div><div class="contact-card">
-  <div class="contact-name">אדינה גילי וואן אייבאייק</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 88 דירה 1</div>
-  <div class="contact-detail">📞 <a href="tel:0523761199">0523761199</a></div><div class="contact-detail">✉ <a href="mailto:Adinagili@gmail.com">Adinagili@gmail.com</a></div>
-</div><div class="contact-card">
-  <div class="contact-name">ענבל הוכבלד</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 88 דירה 2</div>
-  <div class="contact-detail">📞 <a href="tel:0547977211">0547977211</a></div><div class="contact-detail">✉ <a href="mailto:inbal.hochwald@gmail.com">inbal.hochwald@gmail.com</a></div>
-</div><div class="contact-card">
-  <div class="contact-name">נועה קוסטינר</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 88 דירה 3</div>
-  <div class="contact-detail">📞 <a href="tel:0548092004">0548092004</a></div><div class="contact-detail">✉ <a href="mailto:noakostiner@yahoo.com">noakostiner@yahoo.com</a></div>
-</div><div class="contact-card">
-  <div class="contact-name">אנטולי ספקטורוב</div>
-  <div class="contact-detail" style="color:var(--muted)">בניין 88 דירה 4</div>
-  <div class="contact-detail">📞 <a href="tel:0547784253">0547784253</a></div><div class="contact-detail">✉ <a href="mailto:Kruzik@gmail.com">Kruzik@gmail.com</a></div>
-</div></div>
+  <div class="contact-grid"><div id="tenant-contacts-live" style="display:contents"></div></div>
 </div>
 
 <div class="section" id="links">
