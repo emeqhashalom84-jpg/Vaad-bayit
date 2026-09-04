@@ -36,7 +36,10 @@
 //   Event source: Time-driven | Type: Day timer | Time: any convenient window (e.g. 00:00-01:00)
 // ============================================================
 
-const CONTACTS_SHEET_ID = '1AttLipED7i-6iv7ZH6cjx8j32AnoSNQ2Kh9n-TTiJ8Q';
+// עדכון פרטים אישיים (Responses) — the single source of truth for tenant/contact data
+// (see apps_script_admin.js's TENANT_FORM_SHEET_ID comment for the history of why this
+// replaced an earlier, abandoned "master contacts" sheet).
+const TENANT_FORM_SHEET_ID = '1dov_q0JSv74VMF30wQ177O9jVC1se21BW3AwibURHxs';
 const ADMIN_EMAIL        = 'emeqhashalom84@gmail.com';
 const ACTIVE_COL = 8;  // column H, 1-indexed
 const VALID_DAYS_COL = 9;  // column I, 1-indexed — new תוקף (ימים) question
@@ -94,17 +97,53 @@ function testEmails_() {
   return [prop_('TEST_EMAIL_1'), prop_('TEST_EMAIL_2')].filter(function (e) { return e; });
 }
 
-// Contacts sheet columns (0-indexed): 0 בניין | 1 דירה | 2 שם משפחה | 3/4/5 איש קשר 1
-// (שם/טלפון/מייל) | 6/7/8 איש קשר 2 | 9 דירה שכורה | 10/11/12 בעל הדירה
-// Collects both household contacts' emails, not just one per apartment.
+// Header-text matching, not fixed position — Google Forms keeps a response sheet's
+// columns in the order questions were ORIGINALLY created, not the form editor's current
+// order, so a fixed-position mapping breaks silently. Minimal copy of the same helpers in
+// apps_script_admin.js (duplicated — this is a separate standalone project).
+function findCol_(headers, mustHave, mustNotHave) {
+  mustNotHave = mustNotHave || [];
+  for (var i = 0; i < headers.length; i++) {
+    var h = String(headers[i] || '');
+    var ok = mustHave.every(function (s) { return h.indexOf(s) !== -1; }) &&
+             !mustNotHave.some(function (s) { return h.indexOf(s) !== -1; });
+    if (ok) return i;
+  }
+  return -1;
+}
+function get_(row, map, key) {
+  var i = map[key];
+  return (i === -1 || i === undefined) ? '' : (row[i] || '');
+}
+// Collects both household contacts' emails, not just one per apartment. Rows marked
+// 'בוטל' are skipped; when a household submitted more than once, only the LATEST
+// remaining row for that address contributes its emails (avoids emailing a stale address).
 function allTenantEmails_() {
-  const rows = SpreadsheetApp.openById(CONTACTS_SHEET_ID).getSheets()[0].getDataRange().getValues();
-  const emails = [];
+  const sheet = SpreadsheetApp.openById(TENANT_FORM_SHEET_ID).getSheets()[0];
+  const rows = sheet.getDataRange().getValues();
+  const headers = rows[0];
+  const map = {
+    building: findCol_(headers, ['בית']),
+    apt:      findCol_(headers, ['מספר', 'דירה']),
+    c1email:  findCol_(headers, ['קשר', '1', 'מייל']),
+    c2email:  findCol_(headers, ['קשר', '2', 'מייל']),
+    status:   findCol_(headers, ['סטטוס'])
+  };
+  const winners = {};
   for (var i = 1; i < rows.length; i++) {
-    var e1 = rows[i][5], e2 = rows[i][8];
+    var r = rows[i];
+    var b = String(get_(r, map, 'building')).trim(), a = String(get_(r, map, 'apt')).trim();
+    if (!b && !a) continue;
+    if (get_(r, map, 'status') === 'בוטל') continue;
+    winners[b + '|' + a] = r; // later row always overwrites — latest wins
+  }
+  const emails = [];
+  Object.keys(winners).forEach(function (addr) {
+    var r = winners[addr];
+    var e1 = get_(r, map, 'c1email'), e2 = get_(r, map, 'c2email');
     if (e1 && String(e1).trim()) emails.push(String(e1).trim());
     if (e2 && String(e2).trim()) emails.push(String(e2).trim());
-  }
+  });
   return emails;
 }
 

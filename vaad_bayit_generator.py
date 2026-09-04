@@ -1654,7 +1654,7 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
       return '<div class="contact-detail">'+label+': '+esc(c.name)+(extra?' — '+esc(extra):'')+'</div>';
     }}
     el.innerHTML=list.map(function(t){{
-      var h='<div class="contact-card"><div class="contact-name">'+esc(t.lastName)+'</div>'+
+      var h='<div class="contact-card"><div class="contact-name">'+esc(t.displayName||t.lastName)+'</div>'+
         '<div class="contact-detail" style="color:var(--muted)">בניין '+esc(t.building)+' דירה '+esc(t.apt)+'</div>';
       h+=line('איש קשר 1',t.contact1);
       h+=line('איש קשר 2',t.contact2);

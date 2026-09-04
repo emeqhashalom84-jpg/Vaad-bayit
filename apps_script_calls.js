@@ -27,7 +27,11 @@
 //  11 תאריך עדכון סטטוס (L, auto-filled by this script when J changes — for future SLA tracking)
 // ============================================================
 
-const CONTACTS_SHEET_ID = '1AttLipED7i-6iv7ZH6cjx8j32AnoSNQ2Kh9n-TTiJ8Q';
+// עדכון פרטים אישיים (Responses) — the single source of truth for tenant/contact data
+// (see apps_script_admin.js's TENANT_FORM_SHEET_ID comment for the history of why this
+// replaced an earlier, abandoned "master contacts" sheet). This is a fallback lookup only
+// — the fault-report Form now collects the reporter's own email directly (see onFormSubmit).
+const TENANT_FORM_SHEET_ID = '1dov_q0JSv74VMF30wQ177O9jVC1se21BW3AwibURHxs';
 const REPO              = 'emeqhashalom84-jpg/Vaad-bayit';
 const WORKFLOW_FILE     = 'update-issues.yml';
 
@@ -110,30 +114,67 @@ function triggerDashboardRefresh_() {
   });
 }
 
-// Looks up a tenant card by building+apartment against the contacts sheet.
-// Columns (0-indexed): 0 בניין | 1 דירה | 2 שם משפחה | 3 איש קשר 1 שם | 4 טלפון | 5 מייל |
-//   6 איש קשר 2 שם | 7 טלפון | 8 מייל | 9 דירה שכורה (כן/לא) | 10 בעל הדירה שם | 11 טלפון | 12 מייל
-// contact2/owner are null when not applicable — this is a fallback lookup only; the
-// fault-report Form now collects the actual reporter's email directly (see onFormSubmit),
-// since a lookup by address can't tell which of two household members submitted it.
+// Header-text matching, not fixed position — Google Forms keeps a response sheet's
+// columns in the order questions were ORIGINALLY created, not the form editor's current
+// order, so a fixed-position mapping breaks silently. Minimal copy of the same helpers in
+// apps_script_admin.js (duplicated — this is a separate standalone project).
+function findCol_(headers, mustHave, mustNotHave) {
+  mustNotHave = mustNotHave || [];
+  for (var i = 0; i < headers.length; i++) {
+    var h = String(headers[i] || '');
+    var ok = mustHave.every(function (s) { return h.indexOf(s) !== -1; }) &&
+             !mustNotHave.some(function (s) { return h.indexOf(s) !== -1; });
+    if (ok) return i;
+  }
+  return -1;
+}
+function tenantColMap_(headers) {
+  return {
+    building: findCol_(headers, ['בית']),
+    apt:      findCol_(headers, ['מספר', 'דירה']),
+    lastName: findCol_(headers, ['משפחה']),
+    c1name:   findCol_(headers, ['קשר', '1'], ['טלפון', 'מייל']),
+    c1phone:  findCol_(headers, ['קשר', '1', 'טלפון']),
+    c1email:  findCol_(headers, ['קשר', '1', 'מייל']),
+    c2name:   findCol_(headers, ['קשר', '2'], ['טלפון', 'מייל']),
+    c2phone:  findCol_(headers, ['קשר', '2', 'טלפון']),
+    c2email:  findCol_(headers, ['קשר', '2', 'מייל']),
+    rented:   findCol_(headers, ['שכורה']),
+    ownerName:  findCol_(headers, ['בעל', 'שם']),
+    ownerPhone: findCol_(headers, ['בעל', 'טלפון']),
+    ownerEmail: findCol_(headers, ['בעל', 'מייל']),
+    status:   findCol_(headers, ['סטטוס'])
+  };
+}
+function get_(row, map, key) {
+  var i = map[key];
+  return (i === -1 || i === undefined) ? '' : (row[i] || '');
+}
+// Looks up a tenant card by building+apartment. Rows marked 'בוטל' are skipped; when a
+// household submitted more than once, the LATEST remaining row for that address wins.
 function lookupContact_(building, apt) {
-  const rows = SpreadsheetApp.openById(CONTACTS_SHEET_ID).getSheets()[0].getDataRange().getValues();
-  const b = String(building).trim();
-  const a = String(apt).trim();
+  const sheet = SpreadsheetApp.openById(TENANT_FORM_SHEET_ID).getSheets()[0];
+  const rows = sheet.getDataRange().getValues();
+  const headers = rows[0];
+  const map = tenantColMap_(headers);
+  const b = String(building).trim(), a = String(apt).trim();
+  var found = null;
   for (var i = 1; i < rows.length; i++) {
     var r = rows[i];
-    if (String(r[0]).trim() === b && String(r[1]).trim() === a) {
-      const rented = String(r[9] || '').trim() === 'כן';
-      return {
-        lastName: r[2] || '',
-        contact1: { name: r[3] || '', phone: r[4] || '', email: r[5] || '' },
-        contact2: r[6] ? { name: r[6], phone: r[7] || '', email: r[8] || '' } : null,
+    if (get_(r, map, 'status') === 'בוטל') continue;
+    if (String(get_(r, map, 'building')).trim() === b && String(get_(r, map, 'apt')).trim() === a) {
+      const rented = String(get_(r, map, 'rented')).trim() === 'כן';
+      const c2name = get_(r, map, 'c2name'), ownerName = get_(r, map, 'ownerName');
+      found = {
+        lastName: get_(r, map, 'lastName'),
+        contact1: { name: get_(r, map, 'c1name'), phone: get_(r, map, 'c1phone'), email: get_(r, map, 'c1email') },
+        contact2: c2name ? { name: c2name, phone: get_(r, map, 'c2phone'), email: get_(r, map, 'c2email') } : null,
         rented: rented,
-        owner: (rented && r[10]) ? { name: r[10], phone: r[11] || '', email: r[12] || '' } : null
+        owner: (rented && ownerName) ? { name: ownerName, phone: get_(r, map, 'ownerPhone'), email: get_(r, map, 'ownerEmail') } : null
       };
     }
   }
-  return null;
+  return found;
 }
 
 // Builds a link that opens the sheet directly at the status cell (column J) for this row
