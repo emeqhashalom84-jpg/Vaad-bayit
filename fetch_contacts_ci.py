@@ -78,6 +78,15 @@ if CONTACTS_CSV_URL and 'PASTE' not in CONTACTS_CSV_URL:
             order.append(addr)
         winners[addr] = row  # later row always overwrites — latest wins
 
+    # Display order: by building then apartment number, not submission order.
+    def addr_key(addr):
+        b, a = addr.split('|', 1)
+        try:
+            return (int(b), int(a))
+        except ValueError:
+            return (b, a)
+    order.sort(key=addr_key)
+
     for addr in order:
         row = winners[addr]
         rented = get(row, col_map, 'rented') == 'כן'
