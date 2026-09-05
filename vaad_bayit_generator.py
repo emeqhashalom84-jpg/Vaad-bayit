@@ -1650,11 +1650,11 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
     if(!el) return;
     function line(label,c){{
       if(!c||!c.name) return '';
-      var extra=[];
-      if(c.phone) extra.push('<a href="tel:'+esc(c.phone.replace(/[^0-9+]/g,''))+'">'+esc(c.phone)+'</a>');
-      if(c.email) extra.push('<a href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>');
+      var rows='';
+      if(c.phone) rows+='<div style="direction:ltr;text-align:right">📞 <a href="tel:'+esc(c.phone.replace(/[^0-9+]/g,''))+'">'+esc(c.phone)+'</a></div>';
+      if(c.email) rows+='<div style="direction:ltr;text-align:right">✉️ <a href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a></div>';
       var head=label?(label+': '+esc(c.name)):esc(c.name);
-      return '<div class="contact-detail"><strong>'+head+'</strong>'+(extra.length?'<br>'+extra.join(' · '):'')+'</div>';
+      return '<div class="contact-detail"><strong>'+head+'</strong>'+rows+'</div>';
     }}
     el.innerHTML=list.map(function(t){{
       var h='<div class="contact-card"><div class="contact-name">'+esc(t.displayName||t.lastName)+'</div>'+
