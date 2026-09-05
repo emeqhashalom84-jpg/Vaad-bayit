@@ -1,4 +1,4 @@
-import urllib.request, csv, io, json
+import urllib.request, csv, io, json, time
 from datetime import datetime
 
 CHARGES_URL = ('https://docs.google.com/spreadsheets/d/e/'
@@ -16,10 +16,21 @@ TENANT_COUNT = 14
 # גביות sheet columns (0-indexed): 0 charge_id | 1 name | 2 amount | 3 date | 4 active | 5 description
 # תשלומים sheet columns (0-indexed): 0 charge_id | 1 tenant_name | 2 amount_paid | 3 updated_at
 
-def fetch_csv(url):
-    r = urllib.request.urlopen(url, timeout=15)
-    text = r.read().decode('utf-8')
-    return list(csv.reader(io.StringIO(text)))
+# Google's publish endpoint occasionally responds slowly (~1/3 of scheduled runs timed out
+# at 15s before this was added) — a longer timeout plus a couple of retries covers that
+# without needing to wait for the next 5-min cron cycle to pick up missed data.
+def fetch_csv(url, tries=3, timeout=20):
+    last_err = None
+    for attempt in range(tries):
+        try:
+            r = urllib.request.urlopen(url, timeout=timeout)
+            text = r.read().decode('utf-8')
+            return list(csv.reader(io.StringIO(text)))
+        except Exception as e:
+            last_err = e
+            if attempt < tries - 1:
+                time.sleep(3)
+    raise last_err
 
 charge = {}
 rows = fetch_csv(CHARGES_URL)

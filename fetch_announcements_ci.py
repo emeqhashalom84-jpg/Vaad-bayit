@@ -1,9 +1,23 @@
-import urllib.request, csv, json, io, re
+import urllib.request, csv, json, io, re, time
 from datetime import datetime
 
 URL = ('https://docs.google.com/spreadsheets/d/e/'
        '2PACX-1vT9hMKavbas0ZlwI7Pb5vETPBiFiKslQNZImk_Cd0PeCZUTCP9QEtDTKyWmAb3mCMsUyCenu7DdNpUu'
        '/pub?gid=2124074003&single=true&output=csv')
+
+# Google's publish endpoint occasionally responds slowly (~1/3 of scheduled runs timed out
+# at 15s before this was added) — a longer timeout plus a couple of retries covers that
+# without needing to wait for the next 5-min cron cycle to pick up missed data.
+def fetch_url(url, tries=3, timeout=20):
+    last_err = None
+    for attempt in range(tries):
+        try:
+            return urllib.request.urlopen(url, timeout=timeout)
+        except Exception as e:
+            last_err = e
+            if attempt < tries - 1:
+                time.sleep(3)
+    raise last_err
 
 # Announcements response sheet columns (0-indexed):
 #   0 Timestamp | 1 Email Address (unused, collection turned off) | 2 תאריך | 3 כותרת
@@ -40,7 +54,7 @@ def parse_date(v):
             continue
     return None
 
-r    = urllib.request.urlopen(URL, timeout=15)
+r    = fetch_url(URL)
 text = r.read().decode('utf-8')
 rows = list(csv.reader(io.StringIO(text)))
 

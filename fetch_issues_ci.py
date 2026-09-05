@@ -1,8 +1,22 @@
-import urllib.request, csv, json, io, re
+import urllib.request, csv, json, io, re, time
 
 URL = ('https://docs.google.com/spreadsheets/d/e/'
        '2PACX-1vTXlu7rgEen0MlaU_k0omizQ_9kUZgJ9M49cMiB7tumP__JEfjakPfiVpwN6bXUhQlYcrRGRhL9jQmJ'
        '/pub?output=csv&gid=386569253')
+
+# Google's publish endpoint occasionally responds slowly (~1/3 of scheduled runs timed out
+# at 15s before this was added) — a longer timeout plus a couple of retries covers that
+# without needing to wait for the next 5-min cron cycle to pick up missed data.
+def fetch_url(url, tries=3, timeout=20):
+    last_err = None
+    for attempt in range(tries):
+        try:
+            return urllib.request.urlopen(url, timeout=timeout)
+        except Exception as e:
+            last_err = e
+            if attempt < tries - 1:
+                time.sleep(3)
+    raise last_err
 
 # Calls response sheet columns (0-indexed):
 #   0 Timestamp | 1 שם מלא | 2 מספר בית | 3 מספר דירה | 4 תיאור התקלה
@@ -15,7 +29,7 @@ def clean(s):
 def col(row, i):
     return clean(row[i]) if len(row) > i and row[i].strip() else ''
 
-r    = urllib.request.urlopen(URL, timeout=15)
+r    = fetch_url(URL)
 text = r.read().decode('utf-8')
 rows = list(csv.reader(io.StringIO(text)))
 

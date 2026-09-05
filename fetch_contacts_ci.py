@@ -1,9 +1,23 @@
-import urllib.request, csv, io, json
+import urllib.request, csv, io, json, time
 
 # עדכון פרטים אישיים (Responses) — the single source of truth for tenant/contact data.
 # Publish that sheet to web as CSV (File > Share > Publish to web > CSV, "Automatically
 # republish when changes are made" checked) and paste the resulting URL here.
 CONTACTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSxiASsJ9hMm-5nd3mSEwRYk1-vuOLCU2kKGmeKx4PxBjT_nwA1WtP-uK61EjtcQ6oLXL7-vYg6I8uQ/pub?gid=1668586487&single=true&output=csv'
+
+# Google's publish endpoint occasionally responds slowly (~1/3 of scheduled runs timed out
+# at 15s before this was added) — a longer timeout plus a couple of retries covers that
+# without needing to wait for the next 5-min cron cycle to pick up missed data.
+def fetch_url(url, tries=3, timeout=20):
+    last_err = None
+    for attempt in range(tries):
+        try:
+            return urllib.request.urlopen(url, timeout=timeout)
+        except Exception as e:
+            last_err = e
+            if attempt < tries - 1:
+                time.sleep(3)
+    raise last_err
 
 # Columns are found by matching HEADER TEXT, not fixed position — Google Forms keeps a
 # response sheet's columns in the order questions were ORIGINALLY created, which does not
@@ -57,7 +71,7 @@ def build_display_name(c1_name, c2_name, last_name):
 
 out = []
 if CONTACTS_CSV_URL and 'PASTE' not in CONTACTS_CSV_URL:
-    r = urllib.request.urlopen(CONTACTS_CSV_URL, timeout=15)
+    r = fetch_url(CONTACTS_CSV_URL)
     rows = list(csv.reader(io.StringIO(r.read().decode('utf-8'))))
     headers, data_rows = rows[0], rows[1:]
     col_map = build_col_map(headers)
