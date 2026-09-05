@@ -127,7 +127,7 @@ tr:hover td{background:var(--surface2)}
 
 <header class="hdr">
   <div class="hdr-title">ועד בית עמק השלום 84-88</div>
-  <div class="hdr-meta">עודכן: 05/09/2026 02:01 </div>
+  <div class="hdr-meta">עודכן: 05/09/2026 03:15 </div>
   <button class="hdr-btn" onclick="toggleTheme()">◐</button>
 </header>
 
@@ -1341,14 +1341,17 @@ tr:hover td{background:var(--surface2)}
     if(!el) return;
     function line(label,c){
       if(!c||!c.name) return '';
-      var extra=[c.phone,c.email].filter(function(x){return x;}).join(' · ');
-      return '<div class="contact-detail">'+label+': '+esc(c.name)+(extra?' — '+esc(extra):'')+'</div>';
+      var extra=[];
+      if(c.phone) extra.push('<a href="tel:'+esc(c.phone.replace(/[^0-9+]/g,''))+'">'+esc(c.phone)+'</a>');
+      if(c.email) extra.push('<a href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>');
+      var head=label?(label+': '+esc(c.name)):esc(c.name);
+      return '<div class="contact-detail"><strong>'+head+'</strong>'+(extra.length?'<br>'+extra.join(' · '):'')+'</div>';
     }
     el.innerHTML=list.map(function(t){
       var h='<div class="contact-card"><div class="contact-name">'+esc(t.displayName||t.lastName)+'</div>'+
         '<div class="contact-detail" style="color:var(--muted)">בניין '+esc(t.building)+' דירה '+esc(t.apt)+'</div>';
-      h+=line('איש קשר 1',t.contact1);
-      h+=line('איש קשר 2',t.contact2);
+      h+=line('',t.contact1);
+      h+=line('',t.contact2);
       if(t.rented) h+=line('בעל הדירה',t.owner);
       return h+'</div>';
     }).join('');
