@@ -1651,15 +1651,16 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
     function line(label,c){{
       if(!c||!c.name) return '';
       var extra=[];
-      if(c.phone) extra.push('<a href="tel:'+esc(c.phone.replace(/[^0-9+]/g,''))+'" style="color:inherit">'+esc(c.phone)+'</a>');
-      if(c.email) extra.push('<a href="mailto:'+esc(c.email)+'" style="color:inherit">'+esc(c.email)+'</a>');
-      return '<div class="contact-detail">'+label+': '+esc(c.name)+(extra.length?' — '+extra.join(' · '):'')+'</div>';
+      if(c.phone) extra.push('<a href="tel:'+esc(c.phone.replace(/[^0-9+]/g,''))+'">'+esc(c.phone)+'</a>');
+      if(c.email) extra.push('<a href="mailto:'+esc(c.email)+'">'+esc(c.email)+'</a>');
+      var head=label?(label+': '+esc(c.name)):esc(c.name);
+      return '<div class="contact-detail"><strong>'+head+'</strong>'+(extra.length?'<br>'+extra.join(' · '):'')+'</div>';
     }}
     el.innerHTML=list.map(function(t){{
       var h='<div class="contact-card"><div class="contact-name">'+esc(t.displayName||t.lastName)+'</div>'+
         '<div class="contact-detail" style="color:var(--muted)">בניין '+esc(t.building)+' דירה '+esc(t.apt)+'</div>';
-      h+=line('איש קשר 1',t.contact1);
-      h+=line('איש קשר 2',t.contact2);
+      h+=line('',t.contact1);
+      h+=line('',t.contact2);
       if(t.rented) h+=line('בעל הדירה',t.owner);
       return h+'</div>';
     }}).join('');
