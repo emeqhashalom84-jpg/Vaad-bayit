@@ -1814,6 +1814,18 @@ function sortTrans(c){{
   rows.forEach(function(r){{tb.appendChild(r);}});
 }}
 </script>
+<script>
+// Reports real content height to a parent window (e.g. the Admin app's דשבורד tab, which
+// embeds this page in an iframe) so the iframe can be sized exactly to fit — otherwise the
+// iframe gets its own internal scrollbar on top of the outer page's scrollbar ("page in
+// page"). Harmless no-op when this page isn't embedded (postMessage just goes nowhere).
+(function(){{
+  function postHeight(){{ try{{ parent.postMessage({{vaadDashboardHeight: document.documentElement.scrollHeight}}, '*'); }}catch(e){{}} }}
+  if (window.ResizeObserver) new ResizeObserver(postHeight).observe(document.documentElement);
+  window.addEventListener('load', postHeight);
+  postHeight();
+}})();
+</script>
 </body>
 </html>"""
     return html
