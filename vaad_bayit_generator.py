@@ -1820,7 +1820,22 @@ function sortTrans(c){{
 // iframe gets its own internal scrollbar on top of the outer page's scrollbar ("page in
 // page"). Harmless no-op when this page isn't embedded (postMessage just goes nowhere).
 (function(){{
-  function postHeight(){{ try{{ parent.postMessage({{vaadDashboardHeight: document.documentElement.scrollHeight}}, '*'); }}catch(e){{}} }}
+  // html{{height:100%}}/body{{min-height:100%}} make document.documentElement.scrollHeight
+  // self-referential once embedded: the page stretches to fill whatever height the iframe
+  // currently has, then reports THAT inflated size back, locking in the iframe's starting
+  // height forever regardless of real content. Measuring the actual bottom-most content
+  // element instead sidesteps that entirely.
+  function postHeight(){{
+    try{{
+      var h=0;
+      Array.prototype.forEach.call(document.body.children,function(el){{
+        if(el.tagName==='SCRIPT'||el.tagName==='STYLE') return;
+        var bottom=el.offsetTop+el.offsetHeight;
+        if(bottom>h) h=bottom;
+      }});
+      parent.postMessage({{vaadDashboardHeight: h||document.documentElement.scrollHeight}}, '*');
+    }}catch(e){{}}
+  }}
   if (window.ResizeObserver) new ResizeObserver(postHeight).observe(document.documentElement);
   window.addEventListener('load', postHeight);
   postHeight();
