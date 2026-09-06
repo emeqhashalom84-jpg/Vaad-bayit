@@ -1391,14 +1391,18 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
         _otc_cell = ''
         if _otc:
             _op = t.get('_otc_paid', 0.0)
+            # Same ●/◑/○ glyph convention as the monthly dots (full/partial/empty) — this
+            # cell used to always render a solid ● and only change color for "partial",
+            # which looked identical to "paid" at a glance instead of matching the
+            # half-filled ◑ the legend and monthly columns already use for that state.
             if _op >= _otc['amount'] - 0.01:
-                _dc, _dl = '#22c55e', 'שולם'
+                _dc, _dl, _glyph = '#22c55e', 'שולם', '●'
             elif _op > 0:
-                _dc, _dl = '#f59e0b', 'חלקי'
+                _dc, _dl, _glyph = '#f59e0b', 'חלקי', '◑'
             else:
-                _dc, _dl = '#cbd5e1', 'לא שולם'
+                _dc, _dl, _glyph = '#cbd5e1', 'לא שולם', '○'
             _otc_title = f'{he(_otc["name"])}: {fmt_ils(_op)} / {fmt_ils(_otc["amount"])} — {_dl}'
-            _otc_cell = f'<td><span style="color:{_dc};font-size:18px" title="{_otc_title}">●</span></td>'
+            _otc_cell = f'<td><span style="color:{_dc};font-size:18px" title="{_otc_title}">{_glyph}</span></td>'
 
         rows_html += f"""
 <tr>
