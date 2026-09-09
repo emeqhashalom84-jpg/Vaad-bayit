@@ -56,6 +56,23 @@ PIE_MAP = [
     ('חריגות',  ['בדיקה', 'לא צפוי', 'חוב', 'ניקיון', 'אילן']),
 ]
 
+# Fixed category → color mapping for the expense pie chart, keyed by name (not iteration
+# order, which used to determine color and silently reshuffled colors between categories
+# whenever the underlying dict's build order changed — e.g. switching from Excel to the
+# live Sheet). Values match the specific colors Oren is already used to seeing per
+# category (derived from Excel's historical row-scan insertion order: מעליות, בזק, חשמל,
+# חריגות, בנק, ביטוח), not the PIE_MAP declaration order.
+PIE_COLORS = {
+    'מעליות':  '#1B7A8A',
+    'בזק':     '#ED7D31',
+    'חשמל':    '#70AD47',
+    'חריגות':  '#4BACC6',
+    'בנק':     '#C2247A',
+    'ביטוח':   '#1F3864',
+    'אחר':     '#94a3b8',
+}
+PIE_CATEGORY_NAMES = set(PIE_COLORS.keys())
+
 # 2026 annual budget plan (hardcoded targets — column J has live formulas not cached in
 # the Excel file). Shared by the Excel reader and the live-Sheet fetcher so both match
 # actuals against the same (name, target, keywords-or-category) rows.
@@ -744,27 +761,52 @@ def fetch_finance(receipts_url, expenses_url, bank_url, settings_url=None):
             monthly = [0.0] * 12
             cats = {}
             budget_actuals = {_nm: 0.0 for _nm, _tot, _kws, _cat in BUDGET_2026}
-            for row in rows[1:]:
-                if len(row) > 3:
-                    v = _num(row[3])
-                    if v is not None:
-                        total += v
-                        found = True
-                        month_name = row[2].strip() if len(row) > 2 and row[2] else ''
-                        if month_name in MONTHS_HE:
-                            monthly[MONTHS_HE.index(month_name)] += v
-                        cat_name = row[0].strip() if row[0] else ''
-                        for _cname, _kws in PIE_MAP:
-                            if any(_kw in cat_name for _kw in _kws):
-                                cats[_cname] = cats.get(_cname, 0.0) + v
-                                break
-                        row_type = row[4].strip() if len(row) > 4 and row[4] else ''
-                        for _bnm, _btot, _bkws, _bcat in BUDGET_2026:
-                            if _bcat:
-                                if _bcat == 'הוצאות לא צפויות' and 'לא צפויה' in row_type:
+            # Every column looked up by header text, not fixed position — this tab has
+            # already had columns duplicated/reordered by hand more than once (a stray
+            # duplicate "סכום" column once silently shifted "סוג" one position over and
+            # broke budget categorization without erroring), so positional indices aren't
+            # safe here. "קטגוריית עוגה" is optional (falls back to keyword-matching via
+            # PIE_MAP if absent); the rest are required — if any is missing, found stays
+            # False and the caller keeps its Excel-derived fallback instead of guessing.
+            _header = {}
+            if rows:
+                for _i, _h in enumerate(rows[0]):
+                    _hn = (_h or '').strip()
+                    if _hn and _hn not in _header:  # first occurrence wins on duplicates
+                        _header[_hn] = _i
+            cat_col    = _header.get('קטגוריה')
+            month_col  = _header.get('חודש')
+            amount_col = _header.get('סכום')
+            type_col   = _header.get('סוג')
+            pie_col    = _header.get('קטגוריית עוגה')
+            if None not in (cat_col, month_col, amount_col, type_col):
+                for row in rows[1:]:
+                    if len(row) > amount_col:
+                        v = _num(row[amount_col])
+                        if v is not None:
+                            total += v
+                            found = True
+                            month_name = row[month_col].strip() if len(row) > month_col and row[month_col] else ''
+                            if month_name in MONTHS_HE:
+                                monthly[MONTHS_HE.index(month_name)] += v
+                            cat_name = row[cat_col].strip() if len(row) > cat_col and row[cat_col] else ''
+                            explicit = row[pie_col].strip() if pie_col is not None and len(row) > pie_col and row[pie_col] else ''
+                            if explicit in PIE_CATEGORY_NAMES:
+                                cats[explicit] = cats.get(explicit, 0.0) + v
+                            else:
+                                for _cname, _kws in PIE_MAP:
+                                    if any(_kw in cat_name for _kw in _kws):
+                                        cats[_cname] = cats.get(_cname, 0.0) + v
+                                        break
+                                else:
+                                    cats['אחר'] = cats.get('אחר', 0.0) + v
+                            row_type = row[type_col].strip() if len(row) > type_col and row[type_col] else ''
+                            for _bnm, _btot, _bkws, _bcat in BUDGET_2026:
+                                if _bcat:
+                                    if _bcat == 'הוצאות לא צפויות' and 'לא צפויה' in row_type:
+                                        budget_actuals[_bnm] += v
+                                elif _bkws and any(kw in cat_name for kw in _bkws):
                                     budget_actuals[_bnm] += v
-                            elif _bkws and any(kw in cat_name for kw in _bkws):
-                                budget_actuals[_bnm] += v
             if found:
                 result['expense_total'] = total
                 result['monthly_expenses'] = monthly
@@ -894,8 +936,6 @@ def svg_3d_pie_chart(expense_categories):
     total = sum(cats.values())
     if total == 0: return ''
 
-    COLORS = ['#1B7A8A','#ED7D31','#70AD47','#4BACC6','#C2247A','#1F3864','#C00000']
-
     W, H   = 640, 608
     cx, cy = 320, 190
     rx, ry = 160, 70
@@ -917,7 +957,7 @@ def svg_3d_pie_chart(expense_categories):
     lines = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" '
              f'style="width:100%;font-family:Segoe UI,Arial Hebrew,Arial">']
 
-    slices = [(n, v, COLORS[i % len(COLORS)]) for i, (n, v) in enumerate(cats.items())]
+    slices = [(n, v, PIE_COLORS.get(n, '#94a3b8')) for n, v in cats.items()]
     angle = -math.pi / 2
     sd = []
     for n, v, c in slices:
