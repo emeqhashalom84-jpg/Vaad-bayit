@@ -1045,6 +1045,21 @@ def svg_3d_pie_chart(expense_categories):
             else:
                 ly = cy + (ry + depth + 55 + max(0, (4 - pct) * 18) + stagger) * sm
 
+        # Direct, branch-independent length override for specific categories — the pct-based
+        # `extra`/stagger terms above land differently depending on which angle-quadrant branch
+        # a slice falls into (some clamp hard against the chart edge, some are flat, some
+        # scaled), so their actual leader-line length (ex,ey)→(lx,ly) doesn't reliably track a
+        # simple nudge. This instead fixes the line to an exact target length along whatever
+        # direction the branch logic already picked, measured from the real anchor point
+        # (ex,ey), so בזק's line is always longer than בנק's regardless of which branch/quadrant
+        # either one lands in. Per Oren's explicit request.
+        _target_len = {'בזק': 95, 'בנק': 55}.get(s['n'])
+        if _target_len:
+            _vx, _vy = lx - ex, ly - ey
+            _vlen = math.hypot(_vx, _vy) or 1
+            lx = ex + _vx / _vlen * _target_len
+            ly = ey + _vy / _vlen * _target_len
+
         lx = max(65, min(W - 65, lx))
         ly = max(18, min(H - 18, ly))
         pts.append({'s': s, 'ex': ex, 'ey': ey, 'lx': lx, 'ly': ly, 'cm': cm})
