@@ -45,6 +45,33 @@ MONTHS_HE    = ['ינואר','פברואר','מרץ','אפריל','מאי','יו
                 'יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר']
 MONTHS_SHORT = ['ינו','פבר','מרץ','אפר','מאי','יוני','יולי','אוג','ספט','אוק','נוב','דצמ']
 
+# Groups the הוצאות tab's free-text קטגוריה names into the dashboard's named pie slices.
+# Shared by the Excel reader and the live-Sheet fetcher so both build identical categories.
+PIE_MAP = [
+    ('בזק',     ['בזק']),
+    ('מעליות',  ['מעליות']),
+    ('חשמל',    ['מונה חשמל', 'חשמל']),
+    ('בנק',     ['עמלות בנק']),
+    ('ביטוח',   ['ביטוח']),
+    ('חריגות',  ['בדיקה', 'לא צפוי', 'חוב', 'ניקיון', 'אילן']),
+]
+
+# 2026 annual budget plan (hardcoded targets — column J has live formulas not cached in
+# the Excel file). Shared by the Excel reader and the live-Sheet fetcher so both match
+# actuals against the same (name, target, keywords-or-category) rows.
+BUDGET_2026 = [
+    ('בדיקת מעליות דו שנתי',  1412,  ['בדיקת מעליות'], None),
+    ('עלות חודשית 2 מעליות',  17160, ['קונה'],          None),
+    ('מעיינות העמקים',         400,   ['מעיינות'],       None),
+    ('חשמל מדרגות',           2700,  ['מונה'],          None),
+    ('ביטוח מבנה',            2700,  ['ביטוח'],         None),
+    ('נקיון',                 9600,  ['ניקיון'],        None),
+    ('נקיון גג',              1200,  ['גג'],             None),
+    ('בזק מעליות',            600,   ['בזק'],           None),
+    ('עמלות בנק',             240,   ['עמלות בנק'],     None),
+    ('אחר - לא מתוכנן',       8000,  None,              'הוצאות לא צפויות'),
+]
+
 # ─────────────────────────────────────────────────────────────────────────────
 # CONFIG
 # ─────────────────────────────────────────────────────────────────────────────
@@ -274,18 +301,10 @@ def read_excel(path):
                         break
 
         # Build named pie categories from second section actuals
-        _PIE_MAP = [
-            ('בזק',     ['בזק']),
-            ('מעליות',  ['מעליות']),
-            ('חשמל',    ['מונה חשמל', 'חשמל']),
-            ('בנק',     ['עמלות בנק']),
-            ('ביטוח',   ['ביטוח']),
-            ('חריגות',  ['בדיקה', 'לא צפוי', 'חוב', 'ניקיון', 'אילן']),
-        ]
         _named_cats = {}
         for _sn, _sv in _second_actuals.items():
             if not _sv or _sv <= 0: continue
-            for _cname, _kws in _PIE_MAP:
+            for _cname, _kws in PIE_MAP:
                 if any(_kw in _sn for _kw in _kws):
                     _named_cats[_cname] = _named_cats.get(_cname, 0) + _sv
                     break
@@ -322,22 +341,9 @@ def read_excel(path):
             })
 
     # ── Budget ───────────────────────────────────────────────────────────────
-    # 2026 annual budget plan (hardcoded — column J has live formulas not cached in file)
-    _BUDGET_2026 = [
-        ('בדיקת מעליות דו שנתי',  1412,  ['בדיקת מעליות'], None),
-        ('עלות חודשית 2 מעליות',  17160, ['קונה'],          None),
-        ('מעיינות העמקים',         400,   ['מעיינות'],       None),
-        ('חשמל מדרגות',           2700,  ['מונה'],          None),
-        ('ביטוח מבנה',            2700,  ['ביטוח'],         None),
-        ('נקיון',                 9600,  ['ניקיון'],        None),
-        ('נקיון גג',              1200,  ['גג'],             None),
-        ('בזק מעליות',            600,   ['בזק'],           None),
-        ('עמלות בנק',             240,   ['עמלות בנק'],     None),
-        ('אחר - לא מתוכנן',       8000,  None,              'הוצאות לא צפויות'),
-    ]
     budget = []
     budget_total = 35772
-    for _nm, _tot, _kws, _cat in _BUDGET_2026:
+    for _nm, _tot, _kws, _cat in BUDGET_2026:
         _act = 0.0
         for _e in expenses:
             if _cat:
@@ -705,9 +711,15 @@ def fetch_finance(receipts_url, expenses_url, bank_url, settings_url=None):
       all rows regardless of מקור — confirmed by Oren, total expenses includes tenant-paid ones.
     bank (תנועות בנק): newest-first, row after header, col 5 = יתרה בש"ח.
     settings (הגדרות, key/value מפתח/ערך): reserve_target ← יעד_קרן_רזרבה — so Oren can
-      change the reserve target by editing the Sheet instead of the hardcoded config.ini value."""
+      change the reserve target by editing the Sheet instead of the hardcoded config.ini value.
+    Also builds monthly_income (12 values, from the receipts totals row), monthly_expenses
+    (12 values, summed from the expenses tab's חודש column) and expense_categories (dict,
+    grouped via PIE_MAP) — same shape as the Excel reader produces, so the existing chart
+    rendering (svg_bar_chart / pie chart) needs no changes, only the data source."""
     import urllib3; urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-    result = {'income_total': None, 'expense_total': None, 'balance': None, 'reserve_target': None}
+    result = {'income_total': None, 'expense_total': None, 'balance': None, 'reserve_target': None,
+              'monthly_income': None, 'monthly_expenses': None, 'expense_categories': None,
+              'budget': None, 'budget_actual': None}
 
     try:
         url = _sheet_to_csv_url(receipts_url)
@@ -717,6 +729,7 @@ def fetch_finance(receipts_url, expenses_url, bank_url, settings_url=None):
             for row in csv.reader(io.StringIO(r.text)):
                 if row and 'סה"כ' in row[0] and len(row) > 15:
                     result['income_total'] = _num(row[15])
+                    result['monthly_income'] = [_num(row[3+i]) or 0.0 for i in range(12)]
                     break
     except Exception as e:
         log.warning(f'Could not fetch finance receipts sheet: {e}')
@@ -728,14 +741,40 @@ def fetch_finance(receipts_url, expenses_url, bank_url, settings_url=None):
             r.encoding = 'utf-8'
             rows = list(csv.reader(io.StringIO(r.text)))
             total, found = 0.0, False
+            monthly = [0.0] * 12
+            cats = {}
+            budget_actuals = {_nm: 0.0 for _nm, _tot, _kws, _cat in BUDGET_2026}
             for row in rows[1:]:
                 if len(row) > 3:
                     v = _num(row[3])
                     if v is not None:
                         total += v
                         found = True
+                        month_name = row[2].strip() if len(row) > 2 and row[2] else ''
+                        if month_name in MONTHS_HE:
+                            monthly[MONTHS_HE.index(month_name)] += v
+                        cat_name = row[0].strip() if row[0] else ''
+                        for _cname, _kws in PIE_MAP:
+                            if any(_kw in cat_name for _kw in _kws):
+                                cats[_cname] = cats.get(_cname, 0.0) + v
+                                break
+                        row_type = row[4].strip() if len(row) > 4 and row[4] else ''
+                        for _bnm, _btot, _bkws, _bcat in BUDGET_2026:
+                            if _bcat:
+                                if _bcat == 'הוצאות לא צפויות' and 'לא צפויה' in row_type:
+                                    budget_actuals[_bnm] += v
+                            elif _bkws and any(kw in cat_name for kw in _bkws):
+                                budget_actuals[_bnm] += v
             if found:
                 result['expense_total'] = total
+                result['monthly_expenses'] = monthly
+                if cats:
+                    result['expense_categories'] = cats
+                result['budget'] = [
+                    {'activity': _nm, 'total': _tot, 'actual': round(budget_actuals[_nm], 2)}
+                    for _nm, _tot, _kws, _cat in BUDGET_2026
+                ]
+                result['budget_actual'] = total
     except Exception as e:
         log.warning(f'Could not fetch finance expenses sheet: {e}')
 
