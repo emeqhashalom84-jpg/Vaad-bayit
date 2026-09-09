@@ -997,18 +997,25 @@ def svg_3d_pie_chart(expense_categories):
         lines.append(f'<path d="{d}" fill="{s["c"]}" stroke="white" stroke-width="1.5"/>')
 
     # ── Callout label positions ──────────────────────────────────────────────
-    small_bottom_idx = 0
+    # Stagger small bottom slices (alternating long/short lines to prevent label
+    # overlap) by a FIXED category-name order (PIE_MAP), not by whichever order the
+    # categories happen to appear in the data — same fix as PIE_COLORS, for the same
+    # reason: iteration order isn't stable across Excel vs. the live Sheet, so a
+    # slice's line length used to flip unpredictably. בזק always gets the long line,
+    # בנק always gets the short one, whenever both are small enough to qualify.
+    _pie_order = {name: i for i, (name, _kws) in enumerate(PIE_MAP)}
+    _small_bottom = sorted(
+        (s['n'] for s in sd if s['pct'] < 4.0 and math.sin(s['mid']) > 0.5),
+        key=lambda n: _pie_order.get(n, 999)
+    )
+    stagger_map = {n: (70 if i % 2 == 0 else 0) for i, n in enumerate(_small_bottom)}
+
     pts = []
     for s in sd:
         mid = s['mid']
         cm, sm = math.cos(mid), math.sin(mid)
         pct = s['pct']
-
-        # stagger small bottom slices: alternate line lengths to prevent overlap
-        stagger = 0
-        if pct < 4.0 and sm > 0.5:
-            stagger = 70 if small_bottom_idx % 2 == 0 else 0
-            small_bottom_idx += 1
+        stagger = stagger_map.get(s['n'], 0)
 
         ex = cx + rx * cm
         ey = cy + ry * sm + (depth * 0.55 if sm > 0 else 0)
@@ -1430,7 +1437,7 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
       <div class="chart-title">הכנסות מול הוצאות חודשי</div>
       {bar_svg}
     </div>
-    {'<div class="chart-box"><div class="chart-title">הוצאות</div>' + pie3d_svg + '</div>' if pie3d_svg else ''}
+    {'<div class="chart-box"><div class="chart-title">פילוח הוצאות שנתיות</div>' + pie3d_svg + '</div>' if pie3d_svg else ''}
   </div>
 </div>"""
 
