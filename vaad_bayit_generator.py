@@ -660,6 +660,110 @@ def fetch_announcements(announcements_url):
         return []
     return anns
 
+def fetch_tenant_payments(receipts_url):
+    """Reads per-tenant monthly payments + totals from the "תקבולי דיירים" Google Sheet
+    tab, overriding the Excel-derived per-tenant figures. Columns (0-indexed):
+    0 שם דייר | 1 בניין | 2 דירה | 3-14 ינואר..דצמבר | 15 סה"כ שולם בפועל |
+    16 יתרת חוב חודשית | 17 יתרת חוב שנתית | 18 הערות | 19 סוג דירה.
+    Returns {name: {...}} — {} on any failure, so the caller keeps Excel data as-is.
+    Note: monthly_debt is intentionally NOT included here — it's recomputed downstream
+    from total_paid using the same elapsed-month formula the Sheet itself uses (verified
+    to match exactly), so overriding total_paid is enough to keep it correct."""
+    import urllib3; urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    out = {}
+    try:
+        url = _sheet_to_csv_url(receipts_url)
+        if not url: return {}
+        r = requests.get(url, timeout=10, verify=False)
+        r.encoding = 'utf-8'
+        rows = list(csv.reader(io.StringIO(r.text)))
+        for row in rows[1:]:
+            if not row: continue
+            name = row[0].strip() if row[0] else ''
+            if not name or len(name) < 2 or 'אחר' in name or 'סה"כ' in name: continue
+            monthly = [_num(row[3+i]) if len(row) > 3+i else None for i in range(12)]
+            out[name] = {
+                'monthly':      monthly,
+                'total_paid':   _num(row[15]) if len(row) > 15 else None,
+                'annual_debt':  _num(row[17]) if len(row) > 17 else None,
+                'building':     row[1].strip() if len(row) > 1 and row[1] else '',
+                'apartment':    row[2].strip() if len(row) > 2 and row[2] else '',
+                'apt_type':     row[19].strip() if len(row) > 19 and row[19] else '',
+            }
+    except Exception as e:
+        log.warning(f'Could not fetch tenant-payments sheet: {e}')
+        return {}
+    return out
+
+def fetch_finance(receipts_url, expenses_url, bank_url, settings_url=None):
+    """Reads live KPI values from the "Vaad — כספים" Google Sheet, overriding the
+    Excel/config-derived balance/income/expense/reserve-target figures. Any figure
+    that can't be fetched (missing URL, network error, unexpected shape) comes back
+    as None so the caller keeps its existing fallback value instead.
+    receipts (תקבולי דיירים): totals row, col 15 = סה"כ שולם בפועל.
+    expenses (הוצאות, long format קטגוריה/שנה/חודש/סכום/סוג/מקור): sum of col 3 (סכום),
+      all rows regardless of מקור — confirmed by Oren, total expenses includes tenant-paid ones.
+    bank (תנועות בנק): newest-first, row after header, col 5 = יתרה בש"ח.
+    settings (הגדרות, key/value מפתח/ערך): reserve_target ← יעד_קרן_רזרבה — so Oren can
+      change the reserve target by editing the Sheet instead of the hardcoded config.ini value."""
+    import urllib3; urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    result = {'income_total': None, 'expense_total': None, 'balance': None, 'reserve_target': None}
+
+    try:
+        url = _sheet_to_csv_url(receipts_url)
+        if url:
+            r = requests.get(url, timeout=10, verify=False)
+            r.encoding = 'utf-8'
+            for row in csv.reader(io.StringIO(r.text)):
+                if row and 'סה"כ' in row[0] and len(row) > 15:
+                    result['income_total'] = _num(row[15])
+                    break
+    except Exception as e:
+        log.warning(f'Could not fetch finance receipts sheet: {e}')
+
+    try:
+        url = _sheet_to_csv_url(expenses_url)
+        if url:
+            r = requests.get(url, timeout=10, verify=False)
+            r.encoding = 'utf-8'
+            rows = list(csv.reader(io.StringIO(r.text)))
+            total, found = 0.0, False
+            for row in rows[1:]:
+                if len(row) > 3:
+                    v = _num(row[3])
+                    if v is not None:
+                        total += v
+                        found = True
+            if found:
+                result['expense_total'] = total
+    except Exception as e:
+        log.warning(f'Could not fetch finance expenses sheet: {e}')
+
+    try:
+        url = _sheet_to_csv_url(bank_url)
+        if url:
+            r = requests.get(url, timeout=10, verify=False)
+            r.encoding = 'utf-8'
+            rows = list(csv.reader(io.StringIO(r.text)))
+            if len(rows) > 1 and len(rows[1]) > 5:
+                result['balance'] = _num(rows[1][5])
+    except Exception as e:
+        log.warning(f'Could not fetch finance bank sheet: {e}')
+
+    try:
+        url = _sheet_to_csv_url(settings_url)
+        if url:
+            r = requests.get(url, timeout=10, verify=False)
+            r.encoding = 'utf-8'
+            for row in csv.reader(io.StringIO(r.text)):
+                if len(row) > 1 and row[0].strip() == 'יעד_קרן_רזרבה':
+                    result['reserve_target'] = _num(row[1])
+                    break
+    except Exception as e:
+        log.warning(f'Could not fetch finance settings sheet: {e}')
+
+    return result
+
 # ─────────────────────────────────────────────────────────────────────────────
 # SVG CHARTS
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1013,8 +1117,8 @@ tr:hover td{background:var(--surface2)}
 .dot{font-size:14px;cursor:pointer;display:inline-block;padding:6px 4px;margin:-6px -4px;touch-action:manipulation}
 #dot-popup{position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);max-width:260px;box-shadow:0 4px 16px rgba(0,0,0,.18);pointer-events:none;opacity:0;transition:opacity .15s;line-height:1.5;direction:rtl;text-align:right}
 #dot-popup.show{opacity:1}
-.dot-paid{color:#22c55e}.dot-partial{color:#f59e0b}.dot-empty{color:#e2e8f0}
-.dot-approved{color:#2563eb}.dot-approved-partial{color:#60a5fa}.dot-approved-empty{color:#93c5fd}
+.dot-paid{color:#22c55e}.dot-partial{color:#f59e0b;font-size:15px}.dot-empty{color:#e2e8f0}
+.dot-approved{color:#2563eb}.dot-approved-partial{color:#60a5fa;font-size:15px}.dot-approved-empty{color:#93c5fd}
 /* Status badges */
 .badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
 .badge-red{background:var(--red-bg);color:var(--red)}
@@ -1049,7 +1153,7 @@ tr:hover td{background:var(--surface2)}
 
 def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payments=None):
     building_name = cfg.get('building','name', fallback='ועד בית')
-    reserve_target = cfg_float(cfg, 'thresholds', 'reserve_target', 8000)
+    reserve_target = data.get('reserve_target') or cfg_float(cfg, 'thresholds', 'reserve_target', 8000)
     col_green  = cfg_float(cfg, 'thresholds', 'collection_green',  85)
     col_orange = cfg_float(cfg, 'thresholds', 'collection_orange', 70)
     bal_warn   = cfg_float(cfg, 'thresholds', 'balance_warning', 2000)
@@ -1395,14 +1499,18 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
             # cell used to always render a solid ● and only change color for "partial",
             # which looked identical to "paid" at a glance instead of matching the
             # half-filled ◑ the legend and monthly columns already use for that state.
+            _dsize = '18px'
             if _op >= _otc['amount'] - 0.01:
                 _dc, _dl, _glyph = '#22c55e', 'שולם', '●'
             elif _op > 0:
-                _dc, _dl, _glyph = '#f59e0b', 'חלקי', '◑'
+                # ◑ renders visibly smaller than ●/○ at the same font-size in most fonts —
+                # bump it slightly so all three glyphs look the same size (same fix already
+                # applied to the monthly-dot CSS classes).
+                _dc, _dl, _glyph, _dsize = '#f59e0b', 'חלקי', '◑', '20px'
             else:
                 _dc, _dl, _glyph = '#cbd5e1', 'לא שולם', '○'
             _otc_title = f'{he(_otc["name"])}: {fmt_ils(_op)} / {fmt_ils(_otc["amount"])} — {_dl}'
-            _otc_cell = f'<td><span style="color:{_dc};font-size:18px" title="{_otc_title}">{_glyph}</span></td>'
+            _otc_cell = f'<td><span style="color:{_dc};font-size:{_dsize}" title="{_otc_title}">{_glyph}</span></td>'
 
         rows_html += f"""
 <tr>
@@ -1905,6 +2013,10 @@ def run_once():
     announcements_url = cfg.get('google','announcements_sheet_url', fallback='')
     charges_url   = cfg.get('google','charges_sheet_url', fallback='')
     charge_payments_url = cfg.get('google','charge_payments_sheet_url', fallback='')
+    finance_receipts_url = cfg.get('google','finance_receipts_sheet_url', fallback='')
+    finance_expenses_url = cfg.get('google','finance_expenses_sheet_url', fallback='')
+    finance_bank_url     = cfg.get('google','finance_bank_sheet_url', fallback='')
+    finance_settings_url = cfg.get('google','finance_settings_sheet_url', fallback='')
 
     log.info('Reading Excel...')
     try:
@@ -1926,6 +2038,28 @@ def run_once():
     log.info(f'Announcements: {len(anns)}')
     charge, charge_payments = fetch_charges(charges_url, charge_payments_url)
     log.info(f'Active charge: {charge.get("name") if charge else "none"}')
+    finance = fetch_finance(finance_receipts_url, finance_expenses_url, finance_bank_url, finance_settings_url)
+    for k, v in finance.items():
+        if v is not None:
+            data[k] = v
+    log.info(f'Finance sheet overrides — Income: {finance["income_total"]}  '
+             f'Expenses: {finance["expense_total"]}  Balance: {finance["balance"]}  '
+             f'Reserve target: {finance["reserve_target"]}')
+
+    sheet_tenants = fetch_tenant_payments(finance_receipts_url)
+    matched = 0
+    for t in data['tenants']:
+        for sheet_name, sv in sheet_tenants.items():
+            if _name_match(t['name'], sheet_name):
+                t['monthly']     = sv['monthly']
+                t['total_paid']  = sv['total_paid'] if sv['total_paid'] is not None else t['total_paid']
+                t['annual_debt'] = sv['annual_debt'] if sv['annual_debt'] is not None else t['annual_debt']
+                t['apt_building'] = sv['building']
+                t['apt_number']   = sv['apartment']
+                t['apt_type']      = sv['apt_type']
+                matched += 1
+                break
+    log.info(f'Tenant-payments sheet: matched {matched}/{len(data["tenants"])} tenants')
 
     updated_at = datetime.now().strftime('%d/%m/%Y %H:%M')
     log.info('Generating HTML...')
