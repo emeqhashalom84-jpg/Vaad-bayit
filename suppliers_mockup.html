@@ -1,0 +1,338 @@
+<title>כרטיסי ספקים</title>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+  :root{
+    --bg:#eef2f7; --surface:#ffffff; --surface2:#f4f7fb; --border:#dbe3ee;
+    --text:#1c2b3a; --muted:#657485; --primary:#16324f; --accent:#2563eb; --accent-bg:#e8f0fe;
+    --green:#15803d; --green-bg:#dcfce7;
+    --orange:#b45309; --orange-bg:#fef3c7;
+    --red:#b91c1c; --red-bg:#fee2e2;
+    --cat-elev:#6d28d9; --cat-elev-bg:#f1e8fd;
+    --cat-power:#b45309; --cat-power-bg:#fef3c7;
+    --cat-telecom:#0f766e; --cat-telecom-bg:#e3f7f4;
+    --cat-ins:#be185d; --cat-ins-bg:#fce7f3;
+    --cat-bank:#475569; --cat-bank-bg:#e7ebf0;
+    --cat-other:#78716c; --cat-other-bg:#f0eeec;
+    --radius:12px; --radius-sm:8px;
+    --font:'Segoe UI','Arial Hebrew',Arial,sans-serif;
+    --shadow:0 1px 2px rgba(20,30,45,.06), 0 1px 1px rgba(20,30,45,.04);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1720; --surface:#182432; --surface2:#1e2c3d; --border:#2c3c4f;
+      --text:#e6edf5; --muted:#8fa1b3; --primary:#7fb0e8; --accent:#5b9dff; --accent-bg:#12233d;
+      --green:#4ade80; --green-bg:#12321f;
+      --orange:#fbbf24; --orange-bg:#3a2a0c;
+      --red:#f87171; --red-bg:#3a1414;
+      --cat-elev:#c4b5fd; --cat-elev-bg:#2a2249;
+      --cat-power:#fbbf24; --cat-power-bg:#3a2a0c;
+      --cat-telecom:#5eead4; --cat-telecom-bg:#123331;
+      --cat-ins:#f472b6; --cat-ins-bg:#3a1830;
+      --cat-bank:#cbd5e1; --cat-bank-bg:#26313f;
+      --cat-other:#c9c3ba; --cat-other-bg:#2a2724;
+      --shadow:0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1720; --surface:#182432; --surface2:#1e2c3d; --border:#2c3c4f;
+    --text:#e6edf5; --muted:#8fa1b3; --primary:#7fb0e8; --accent:#5b9dff; --accent-bg:#12233d;
+    --green:#4ade80; --green-bg:#12321f;
+    --orange:#fbbf24; --orange-bg:#3a2a0c;
+    --red:#f87171; --red-bg:#3a1414;
+    --cat-elev:#c4b5fd; --cat-elev-bg:#2a2249;
+    --cat-power:#fbbf24; --cat-power-bg:#3a2a0c;
+    --cat-telecom:#5eead4; --cat-telecom-bg:#123331;
+    --cat-ins:#f472b6; --cat-ins-bg:#3a1830;
+    --cat-bank:#cbd5e1; --cat-bank-bg:#26313f;
+    --cat-other:#c9c3ba; --cat-other-bg:#2a2724;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.5}
+  header.top{background:var(--primary);color:#fff;padding:16px 20px;font-weight:700;font-size:19px;
+    display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20;direction:rtl}
+  header.top .sub{font-size:12px;font-weight:400;opacity:.8;margin-right:auto}
+
+  .notice{background:var(--accent-bg);color:var(--primary);border-bottom:1px solid var(--border);
+    padding:9px 20px;font-size:12.5px;direction:rtl;text-align:center}
+  .notice b{font-weight:700}
+
+  main{max-width:1400px;margin:0 auto;padding:18px 20px 60px;direction:rtl}
+
+  .quickdial{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .qd-chip{background:var(--surface);border:1px solid var(--border);border-radius:999px;
+    padding:6px 14px;font-size:13px;display:flex;align-items:center;gap:6px;color:var(--text);
+    box-shadow:var(--shadow)}
+  .qd-chip a{color:var(--accent);text-decoration:none;font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+  .qd-label{color:var(--muted);font-size:11px}
+
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+  .toolbar input{flex:1;min-width:180px;padding:10px 14px;border:1px solid var(--border);
+    border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:14px;font-family:inherit}
+  .toolbar input::placeholder{color:var(--muted)}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);
+    padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;
+    font-family:inherit}
+  .btn.ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+  .btn.small{padding:6px 12px;font-size:12.5px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+  .card.sparse{opacity:.85}
+
+  .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  .card-title{font-size:16.5px;font-weight:700}
+  .cat{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;margin-top:4px}
+  .cat-elev{color:var(--cat-elev);background:var(--cat-elev-bg)}
+  .cat-power{color:var(--cat-power);background:var(--cat-power-bg)}
+  .cat-telecom{color:var(--cat-telecom);background:var(--cat-telecom-bg)}
+  .cat-ins{color:var(--cat-ins);background:var(--cat-ins-bg)}
+  .cat-bank{color:var(--cat-bank);background:var(--cat-bank-bg)}
+  .cat-other{color:var(--cat-other);background:var(--cat-other-bg)}
+
+  .contact-row{display:flex;align-items:center;gap:7px;font-size:13.5px}
+  .contact-row .ico{flex:none;width:16px;text-align:center;color:var(--muted)}
+  .contact-row a{color:var(--accent);text-decoration:none;font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+  .contact-row span.person{color:var(--text)}
+
+  .divider{border-top:1px solid var(--border)}
+
+  .subhead{font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.03em;text-transform:uppercase}
+
+  .fieldlist{display:flex;flex-direction:column;gap:5px}
+  .field-row{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+  .field-row .k{color:var(--muted)}
+  .field-row .v{font-weight:600;font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;text-align:left}
+
+  .activity{background:var(--surface2);border-radius:var(--radius-sm);padding:9px 11px;
+    display:flex;flex-direction:column;gap:4px}
+  .activity-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .activity-name{font-size:13px;font-weight:600}
+  .badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .badge-ok{color:var(--green);background:var(--green-bg)}
+  .badge-soon{color:var(--orange);background:var(--orange-bg)}
+  .badge-late{color:var(--red);background:var(--red-bg)}
+  .activity-meta{font-size:11.5px;color:var(--muted)}
+
+  .empty-note{font-size:12.5px;color:var(--muted);font-style:italic}
+
+  .card-actions{display:flex;gap:8px;margin-top:auto}
+
+  .add-field-btn{font-size:12px;color:var(--accent);background:none;border:1px dashed var(--border);
+    border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;font-family:inherit;align-self:flex-start}
+
+  footer.legend{max-width:1400px;margin:8px auto 40px;padding:0 20px;direction:rtl;
+    font-size:12px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+  footer.legend span{display:flex;align-items:center;gap:5px}
+  footer.legend .dot{width:9px;height:9px;border-radius:50%}
+</style>
+
+<header class="top">
+  <span>🧰 כרטיסי ספקים — ניהול</span>
+  <span class="sub">ועד בית עמק השלום · תצוגה למקוצה בלבד</span>
+</header>
+
+<div class="notice">
+  <b>מוקאפ לעיצוב — לא מחובר עדיין.</b>
+  פרטי הקשר והשדות המותאמים אמיתיים (מהגיליון הקיים). הפעילויות החזרתיות (תאריכי יעד) הן <b>דוגמה להמחשה</b> של הפיצ'ר המבוקש — עדיין לא קיימות בגיליון.
+</div>
+
+<main>
+
+  <div class="quickdial">
+    <span class="qd-label" style="align-self:center">חיוג מהיר:</span>
+    <span class="qd-chip">ישראליפט <a href="tel:098303030">09-830-3030</a></span>
+    <span class="qd-chip">רונית ביטוח <a href="tel:0523907407">052-390-7407</a></span>
+    <span class="qd-chip">בר עוז ביטוח בניין <a href="tel:035020947">03-502-0947</a></span>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" placeholder="חיפוש ספק, קטגוריה או טלפון…">
+    <button class="btn ghost">🔽 סינון קטגוריה</button>
+    <button class="btn">+ הוסף ספק</button>
+  </div>
+
+  <div class="grid">
+
+    <!-- ישראליפט -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">ישראליפט</div>
+          <span class="cat cat-elev">מעליות</span>
+        </div>
+      </div>
+      <div class="contact-row"><span class="ico">📞</span><a href="tel:098303030">09-830-3030</a></div>
+      <div class="contact-row"><span class="ico">☎️</span>קו נוסף: <a href="tel:*5303">*5303</a></div>
+      <div class="divider"></div>
+      <div class="subhead">פעילויות חזרתיות</div>
+      <div class="activity">
+        <div class="activity-top">
+          <span class="activity-name">ביקורת מעליות תקופתית</span>
+          <span class="badge badge-soon">בעוד 12 יום</span>
+        </div>
+        <span class="activity-meta">כל 6 חודשים · יעד קרוב: 18/09/2026</span>
+      </div>
+      <button class="add-field-btn">+ הוסף שדה / פעילות</button>
+      <div class="card-actions">
+        <button class="btn ghost small">✏️ ערוך</button>
+      </div>
+    </div>
+
+    <!-- חברת חשמל -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">חברת חשמל</div>
+          <span class="cat cat-power">חשמל</span>
+        </div>
+      </div>
+      <div class="contact-row"><span class="ico">📞</span><a href="tel:103">103</a></div>
+      <div class="divider"></div>
+      <div class="subhead">שדות נוספים</div>
+      <div class="fieldlist">
+        <div class="field-row"><span class="k">קוד מוסד (הוראת קבע)</span><span class="v">706</span></div>
+        <div class="field-row"><span class="k">מס' חוזה</span><span class="v">340869709</span></div>
+        <div class="field-row"><span class="k">מס' מונה</span><span class="v">11171717</span></div>
+      </div>
+      <button class="add-field-btn">+ הוסף שדה / פעילות</button>
+      <div class="card-actions">
+        <button class="btn ghost small">✏️ ערוך</button>
+      </div>
+    </div>
+
+    <!-- בזק -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">בזק</div>
+          <span class="cat cat-telecom">תקשורת</span>
+        </div>
+      </div>
+      <div class="contact-row"><span class="ico">📞</span><a href="tel:1800800378">1800-800-378</a></div>
+      <div class="contact-row"><span class="ico">☎️</span>קו נוסף: <a href="tel:037278199">03-727-8199</a></div>
+      <div class="divider"></div>
+      <div class="subhead">שדות נוספים</div>
+      <div class="fieldlist">
+        <div class="field-row"><span class="k">קוד מוסד (הוראת קבע)</span><span class="v">703</span></div>
+        <div class="field-row"><span class="k">מס' חוזה</span><span class="v">80689733/2</span></div>
+        <div class="field-row"><span class="k">מס' קו טל' בניין 84</span><span class="v">04-857-6333</span></div>
+        <div class="field-row"><span class="k">מס' קו טל' בניין 88</span><span class="v">04-857-6334</span></div>
+      </div>
+      <button class="add-field-btn">+ הוסף שדה / פעילות</button>
+      <div class="card-actions">
+        <button class="btn ghost small">✏️ ערוך</button>
+      </div>
+    </div>
+
+    <!-- רונית ביטוח -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">רונית ביטוח</div>
+          <span class="cat cat-ins">ביטוח</span>
+        </div>
+      </div>
+      <div class="contact-row"><span class="ico">🧑</span><span class="person">איש קשר: רונית</span></div>
+      <div class="contact-row"><span class="ico">📞</span><a href="tel:0523907407">052-390-7407</a></div>
+      <div class="divider"></div>
+      <div class="subhead">שדות נוספים</div>
+      <div class="fieldlist">
+        <div class="field-row"><span class="k">מס' פוליסה</span><span class="v">רכוש 2026-4471</span></div>
+      </div>
+      <div class="divider"></div>
+      <div class="subhead">פעילויות חזרתיות</div>
+      <div class="activity">
+        <div class="activity-top">
+          <span class="activity-name">חידוש פוליסת ביטוח</span>
+          <span class="badge badge-ok">שנתי · ינואר</span>
+        </div>
+        <span class="activity-meta">יעד קרוב: 01/01/2027</span>
+      </div>
+      <button class="add-field-btn">+ הוסף שדה / פעילות</button>
+      <div class="card-actions">
+        <button class="btn ghost small">✏️ ערוך</button>
+      </div>
+    </div>
+
+    <!-- בר עוז ביטוח בניין -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">בר עוז ביטוח בניין (אלרז מבנים)</div>
+          <span class="cat cat-ins">ביטוח</span>
+        </div>
+      </div>
+      <div class="contact-row"><span class="ico">📞</span><a href="tel:035020947">03-502-0947</a></div>
+      <div class="divider"></div>
+      <div class="subhead">פעילויות חזרתיות</div>
+      <div class="activity">
+        <div class="activity-top">
+          <span class="activity-name">חידוש ביטוח מבנה</span>
+          <span class="badge badge-late">עבר ב-4 ימים</span>
+        </div>
+        <span class="activity-meta">שנתי · יעד קרוב: 01/09/2026</span>
+      </div>
+      <button class="add-field-btn">+ הוסף שדה / פעילות</button>
+      <div class="card-actions">
+        <button class="btn ghost small">✏️ ערוך</button>
+      </div>
+    </div>
+
+    <!-- מעיינות העמקים -->
+    <div class="card sparse">
+      <div class="card-head">
+        <div>
+          <div class="card-title">מעיינות העמקים</div>
+          <span class="cat cat-other">אחר</span>
+        </div>
+      </div>
+      <div class="empty-note">אין עדיין פרטי קשר או שדות — לחצו "ערוך" להוסיף.</div>
+      <button class="add-field-btn">+ הוסף שדה / פעילות</button>
+      <div class="card-actions">
+        <button class="btn ghost small">✏️ ערוך</button>
+      </div>
+    </div>
+
+    <!-- יעקב אלימלך -->
+    <div class="card sparse">
+      <div class="card-head">
+        <div>
+          <div class="card-title">יעקב אלימלך</div>
+          <span class="cat cat-other">אחר</span>
+        </div>
+      </div>
+      <div class="empty-note">אין עדיין פרטי קשר או שדות — לחצו "ערוך" להוסיף.</div>
+      <button class="add-field-btn">+ הוסף שדה / פעילות</button>
+      <div class="card-actions">
+        <button class="btn ghost small">✏️ ערוך</button>
+      </div>
+    </div>
+
+    <!-- בנק הפועלים -->
+    <div class="card sparse">
+      <div class="card-head">
+        <div>
+          <div class="card-title">בנק הפועלים</div>
+          <span class="cat cat-bank">בנק</span>
+        </div>
+      </div>
+      <div class="empty-note">אין עדיין פרטי קשר או שדות — לחצו "ערוך" להוסיף.</div>
+      <button class="add-field-btn">+ הוסף שדה / פעילות</button>
+      <div class="card-actions">
+        <button class="btn ghost small">✏️ ערוך</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="legend">
+    <span><span class="dot" style="background:var(--green)"></span> תקין / עדיין רחוק</span>
+    <span><span class="dot" style="background:var(--orange)"></span> מתקרב (30 יום)</span>
+    <span><span class="dot" style="background:var(--red)"></span> עבר את התאריך</span>
+  </footer>
+
+</main>

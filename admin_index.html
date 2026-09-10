@@ -1,0 +1,1244 @@
+<!-- Vaad Bayit — Admin web app front-end. Paste into an HTML file named "Index" in the
+     "Vaad — Admin" Apps Script project (see setup notes in apps_script_admin.js). -->
+<!-- Every google.script.run call goes through run_() so a server-side error surfaces as an
+     alert instead of leaving the caller's "טוען..." placeholder stuck forever with no feedback. -->
+<meta charset="utf-8">
+<style>
+  :root{
+    --bg:#f0f4f8;--surface:#fff;--surface2:#f5f7fa;--border:#dde3ed;
+    --text:#1e293b;--muted:#64748b;--primary:#1a3a5c;--accent:#2563eb;
+    --green:#15803d;--orange:#b45309;--red:#b91c1c;
+    --green-bg:#dcfce7;--orange-bg:#fef3c7;--red-bg:#fee2e2;
+    --radius:10px;--font:'Segoe UI','Arial Hebrew',Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  /* direction:rtl lives on header/.tabs/main individually, NOT on body/html — keeping the
+     document root's own direction at the default ltr puts the page's own scrollbar on the
+     natural right-hand side; putting rtl on body instead pushes browsers to render it on
+     the left, which read as "wrong side" to Oren/Michael. */
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px}
+  header{background:var(--primary);color:#fff;padding:14px 16px;font-weight:700;font-size:18px;position:sticky;top:0;z-index:10;direction:rtl}
+  .tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:48px;z-index:9;direction:rtl}
+  .tab{flex:1;text-align:center;padding:12px 4px;cursor:pointer;font-weight:600;color:var(--muted);border-bottom:3px solid transparent}
+  .tab.active{color:var(--accent);border-color:var(--accent)}
+  main{padding:14px;max-width:640px;margin:0 auto;direction:rtl}
+  main.wide{max-width:1400px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+  .muted{color:var(--muted);font-size:13px}
+  input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;background:var(--surface2);color:var(--text)}
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:3px;margin-top:8px}
+  button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer}
+  button.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+  button.small{padding:6px 10px;font-size:13px}
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600}
+  .badge-green{background:var(--green-bg);color:var(--green)}
+  .badge-orange{background:var(--orange-bg);color:var(--orange)}
+  .badge-red{background:var(--red-bg);color:var(--red)}
+  .badge-grey{background:var(--surface2);color:var(--muted)}
+  .prog-bar{height:8px;background:var(--surface2);border-radius:6px;overflow:hidden;margin:8px 0}
+  .prog-fill{height:100%;background:var(--green)}
+  .switch{position:relative;display:inline-block;width:44px;height:24px;flex:none}
+  .switch input{opacity:0;width:0;height:0}
+  .slider{position:absolute;inset:0;background:#cbd5e1;border-radius:24px;cursor:pointer;transition:.2s}
+  .slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+  input:checked + .slider{background:var(--green)}
+  input:checked + .slider:before{transform:translateX(-20px)}
+  .dash-frame{width:100%;height:1600px;border:1px solid var(--border);border-radius:var(--radius);margin-top:12px;background:#fff}
+  .empty{text-align:center;color:var(--muted);padding:30px 0}
+  .loading{text-align:center;color:var(--muted);padding:20px 0}
+  h3{margin:0 0 4px}
+  .subhead{font-size:11px;font-weight:700;color:var(--muted);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.02em}
+  .field-row{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:4px}
+  .field-row .k{color:var(--muted)}
+  .field-row .v{font-weight:600}
+  .cat-pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--surface2);color:var(--primary);margin-right:6px}
+  .cat-elev{background:#f1e8fd;color:#6d28d9}
+  .cat-power{background:var(--orange-bg);color:var(--orange)}
+  .cat-telecom{background:#e3f7f4;color:#0f766e}
+  .cat-ins{background:#fce7f3;color:#be185d}
+  .cat-bank{background:#e7ebf0;color:#475569}
+  .cat-other{background:#f0eeec;color:#78716c}
+  .section-divider{border-top:1px solid var(--border);margin:8px 0}
+  .supplier-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:stretch}
+  .supplier-grid .card{margin-bottom:0;display:flex;flex-direction:column}
+  .card-actions{margin-top:auto;padding-top:8px}
+  .qd-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .qd-chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:13px;display:flex;gap:6px;align-items:center}
+  .qd-chip a{color:var(--accent);text-decoration:none}
+  .activity-box{background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:6px}
+  .activity-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .name{font-weight:600}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto}
+  .modal-box{background:var(--surface);border-radius:var(--radius);padding:20px;max-width:480px;width:100%;position:relative;direction:rtl}
+  .modal-close{position:absolute;top:10px;left:10px;background:none;border:none;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);padding:4px}
+</style>
+
+<header>🏢 ועד בית עמק השלום — ניהול</header>
+<div class="tabs">
+  <div class="tab active" data-tab="dash" onclick="showTab('dash')">דשבורד</div>
+  <div class="tab" data-tab="bank" onclick="showTab('bank')">תנועות בנק</div>
+  <div class="tab" data-tab="charges" onclick="showTab('charges')">גביות</div>
+  <div class="tab" data-tab="calls" onclick="showTab('calls')">קריאות</div>
+  <div class="tab" data-tab="anns" onclick="showTab('anns')">הודעות</div>
+  <div class="tab" data-tab="tenants" onclick="showTab('tenants')">כרטיסי דיירים</div>
+  <div class="tab" data-tab="suppliers" onclick="showTab('suppliers')">כרטיסי ספקים</div>
+</div>
+<main class="wide">
+  <div id="tab-dash"></div>
+  <div id="tab-bank" style="display:none"></div>
+  <div id="tab-charges" style="display:none"></div>
+  <div id="tab-calls" style="display:none"></div>
+  <div id="tab-anns" style="display:none"></div>
+  <div id="tab-tenants" style="display:none"></div>
+  <div id="tab-suppliers" style="display:none"></div>
+</main>
+
+<div id="supplier-modal-backdrop" class="modal-backdrop" style="display:none" onclick="if(event.target===this) closeSupplierModal()">
+  <div class="modal-box" id="supplier-modal-content"></div>
+</div>
+
+<script>
+var DASHBOARD_URL = 'https://emeqhashalom84-jpg.github.io/Vaad-bayit/';
+
+// Wraps google.script.run so a server-side error alerts with the real message instead of
+// leaving whatever placeholder ("טוען...") the caller showed stuck forever with no feedback.
+function gsError_(err) { alert('שגיאה בשרת: ' + (err && err.message ? err.message : err)); }
+function run_(successHandler) { return google.script.run.withSuccessHandler(successHandler).withFailureHandler(gsError_); }
+
+function showTab(name) {
+  ['dash','bank','charges','calls','anns','tenants','suppliers'].forEach(function(t){
+    document.getElementById('tab-'+t).style.display = (t===name) ? '' : 'none';
+    document.querySelector('.tab[data-tab="'+t+'"]').classList.toggle('active', t===name);
+  });
+  document.querySelector('main').classList.toggle('wide', name === 'dash' || name === 'suppliers' || name === 'bank');
+  if (name === 'dash') loadDashboard();
+  // bank: NOT reloaded on every tab switch — loadBankTab() wipes the review table, so
+  // switching away and back used to lose an in-progress PDF review entirely (real
+  // complaint, 2026-09-10, especially painful given the OCR parse itself can be slow).
+  // Only the first visit initializes it; later visits just re-show the existing DOM.
+  if (name === 'bank' && !bankTabLoaded) { bankTabLoaded = true; loadBankTab(); }
+  if (name === 'charges') loadCharges();
+  if (name === 'calls') loadCalls();
+  if (name === 'anns') loadAnns();
+  if (name === 'tenants') loadTenants();
+  if (name === 'suppliers') loadSuppliers();
+}
+
+/* ───────────────────────── DASHBOARD ───────────────────────── */
+// No separate stat strip here — it would just repeat numbers the embedded live
+// site already shows in its own KPI cards, from the same source data, sourced
+// or computed differently, only risking clashing figures. Just the refresh button + the real thing.
+function loadDashboard() {
+  var html = '<div class="card" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+    '<button onclick="manualRefresh()">🔄 רענן עכשיו</button>' +
+    '<span id="refresh-status" class="muted"></span></div>' +
+    '<iframe id="dashFrame" src="'+DASHBOARD_URL+'" class="dash-frame"></iframe>';
+  document.getElementById('tab-dash').innerHTML = html;
+}
+
+// The embedded dashboard posts its real content height (see the matching listener in
+// vaad_bayit_generator.py's generated page) so the iframe can be sized to fit exactly —
+// otherwise the iframe gets its own internal scrollbar ON TOP OF the admin page's own
+// scrollbar ("page in page", two scrollbars at once).
+window.addEventListener('message', function (e) {
+  if (e.data && typeof e.data.vaadDashboardHeight === 'number') {
+    var f = document.getElementById('dashFrame');
+    if (f) f.style.height = Math.max(400, e.data.vaadDashboardHeight + 20) + 'px';
+  }
+});
+
+function manualRefresh() {
+  document.getElementById('refresh-status').textContent = 'מפעיל רענון...';
+  run_(function(){
+    document.getElementById('refresh-status').textContent = '✓ הופעל — יעדכן את האתר החי בעוד כ-1-2 דקות';
+  }).withFailureHandler(function(err){
+    document.getElementById('refresh-status').textContent = '✗ שגיאה: '+err.message;
+  }).manualRefreshAll();
+}
+
+/* ───────────────────────── BANK STATEMENT PDF IMPORT ───────────────────────── */
+// Rows are held here between parse and save so the review table can be edited (checkbox,
+// name/supplier choice, "אחר" free text) without re-parsing the PDF each time.
+var bankReviewRows = [], bankTenantNames = [], bankSupplierNames = [], bankTabLoaded = false;
+
+function loadBankTab() {
+  document.getElementById('tab-bank').innerHTML =
+    '<div class="card"><h3>ייבוא תנועות בנק מ-PDF</h3>' +
+    '<div id="bank-last-row" class="muted">בודק את השורה האחרונה בגיליון...</div>' +
+    '<p class="muted" style="margin-top:8px">העלה PDF של תנועות חשבון מהבנק — המערכת תקרא אותו ותציע טבלה לבדיקה לפני שמירה, שום דבר לא נכתב לגיליון אוטומטית.</p>' +
+    '<input type="file" id="bank-pdf-input" accept="application/pdf" onchange="onBankPdfSelected(this.files[0])">' +
+    '<div id="bank-upload-status" class="muted" style="margin-top:8px"></div>' +
+    '</div>' +
+    '<div class="card"><h3>ניקוי חד-פעמי: יישור תקבולי דיירים</h3>' +
+    '<p class="muted">שורות היסטוריות שהוזנו חודש-חודש (לפני שהייתה לוגיקת ההפצה) יכולות להראות חודש כ"חלקי" גם אם חודש מאוחר יותר כיסה את ההפרש. הכלי הזה מפיץ מחדש את הסה"כ בפועל של כל דייר על פני ינואר-דצמבר — בלי להוסיף כסף חדש, רק לסדר. תצוגה מקדימה לפני כל שינוי.</p>' +
+    '<button onclick="previewNormalize_()">🔍 הצג מה ישתנה</button>' +
+    '<div id="normalize-preview-container"></div>' +
+    '</div>' +
+    '<div id="bank-review-container"></div>';
+  run_(function (last) {
+    var el = document.getElementById('bank-last-row');
+    if (!last) { el.textContent = 'אין עדיין תנועות בגיליון.'; return; }
+    el.innerHTML = 'הגיליון מסונכרן עד: <strong>' + esc(last.date) + '</strong> — ' +
+      esc(last.action) + (last.name ? ' (' + esc(last.name) + ')' : '') +
+      ' — יתרה: <strong>' + esc(last.balance) + '</strong>. כל מה שאחרי התאריך הזה ב-PDF הוא חדש.';
+  }).getLastBankRow();
+}
+
+var bankParseTimer = null;
+
+// A real elapsed-time counter, not a fake progress bar — the OCR conversion has no reportable
+// percentage, but an honest "still running, Ns so far" beats a static "a few seconds" message
+// that starts looking broken/stuck once it runs past what it promised (real complaint,
+// 2026-09-10 — Oren couldn't tell if a slow parse was still working or actually hung).
+function startBankParseTimer_() {
+  var start = Date.now();
+  var el = document.getElementById('bank-upload-status');
+  bankParseTimer = setInterval(function () {
+    el.textContent = 'מפרסר... (' + Math.round((Date.now() - start) / 1000) + ' שניות. אם זה נמשך כמה דקות, ' +
+      'בדוק ב-Apps Script → Executions אם יש שגיאת הרשאות)';
+  }, 1000);
+}
+function stopBankParseTimer_() {
+  if (bankParseTimer) { clearInterval(bankParseTimer); bankParseTimer = null; }
+}
+
+function onBankPdfSelected(file) {
+  if (!file) return;
+  document.getElementById('bank-upload-status').textContent = 'קורא את הקובץ...';
+  var reader = new FileReader();
+  reader.onload = function () {
+    // reader.result is "data:application/pdf;base64,<data>" — strip the prefix
+    var base64 = reader.result.split(',')[1];
+    startBankParseTimer_();
+    run_(function (rows) {
+      stopBankParseTimer_();
+      // Real bug caught 2026-09-10: the server call completes successfully (confirmed via
+      // Apps Script's own Executions log, ~6s every time) but the response can still arrive
+      // as null on the client — an Apps Script serialization issue, not a crash in the OCR
+      // or parsing. Without this check it threw "Cannot read properties of null (reading
+      // 'map')" with no useful message, looking exactly like an infinite hang.
+      if (!rows) {
+        document.getElementById('bank-upload-status').textContent =
+          '✗ השרת סיים אך לא החזיר נתונים תקינים (בעיית תקשורת) — נסה קובץ קטן יותר, או שוב בעוד רגע.';
+        return;
+      }
+      bankReviewRows = rows.map(function (r, i) {
+        r.id = i;
+        r.include = !r.isDuplicate; // new rows checked by default, suspected-existing unchecked
+        // For duplicates, show what's already recorded (context only — never sent back on
+        // save, since these rows stay unchecked) instead of the usual recommendation.
+        r.name = r.isDuplicate ? (r.existingName || '') : (r.recommendedName || '');
+        r.note = r.isDuplicate ? (r.existingNote || '') : '';
+        r.nameOther = '';
+        r.distribute = true; // credit rows tagged with a tenant auto-update תקבולי דיירים by
+        // default — uncheck for a credit that isn't a regular monthly payment (e.g. an old-
+        // debt/2025 settlement happens to be tagged with a tenant's name).
+        return r;
+      });
+      document.getElementById('bank-upload-status').textContent =
+        '✓ נמצאו ' + rows.length + ' תנועות';
+      run_(function (names) {
+        bankTenantNames = names;
+        run_(function (snames) {
+          bankSupplierNames = snames;
+          renderBankReviewTable();
+        }).getSupplierNames();
+      }).getTenantNames();
+    }).withFailureHandler(function (err) {
+      stopBankParseTimer_();
+      document.getElementById('bank-upload-status').textContent = '✗ שגיאה: ' + err.message;
+    }).parseBankStatementPdf(base64, file.name);
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderBankReviewTable() {
+  if (!bankReviewRows.length) {
+    document.getElementById('bank-review-container').innerHTML = '';
+    return;
+  }
+  var html = '<div class="card"><h3>בדיקה לפני שמירה</h3>' +
+    '<p class="muted">שורות מסומנות "כבר קיים בגיליון" לא ייבחרו כברירת מחדל — אפשר לסמן אותן ידנית אם ההתאמה האוטומטית שגויה.</p>' +
+    '<div class="tbl-wrap"><table><thead><tr>' +
+    '<th></th><th>תאריך</th><th>פעולה</th><th>סכום</th><th>יתרה</th><th>סוג</th><th>שם דייר/ספק</th><th>עבור</th><th>עדכן תקבולי דיירים</th>' +
+    '</tr></thead><tbody>';
+  bankReviewRows.forEach(function (r) {
+    var dupNote = r.isDuplicate ? ' <span class="muted">(כבר קיים בגיליון)</span>' : '';
+    html += '<tr' + (r.isDuplicate ? ' style="opacity:0.6;background:var(--surface2)"' : '') + '>' +
+      '<td><input type="checkbox" ' + (r.include ? 'checked' : '') + ' onchange="bankReviewRows[' + r.id + '].include=this.checked; renderBankReviewTable()"></td>' +
+      '<td style="white-space:nowrap">' + esc(r.date) + '</td>' +
+      '<td>' + esc(r.action) + dupNote + '</td>' +
+      '<td style="white-space:nowrap">₪' + r.amount.toLocaleString() + '</td>' +
+      '<td style="white-space:nowrap">₪' + r.balance.toLocaleString() + '</td>' +
+      '<td style="white-space:nowrap"><select style="color:' + (r.isCredit ? '#16a34a' : '#dc2626') + ';font-weight:600" ' +
+      'onchange="bankReviewRows[' + r.id + '].isCredit=(this.value===\'credit\'); renderBankReviewTable()">' +
+      '<option value="credit" ' + (r.isCredit ? 'selected' : '') + '>הכנסה</option>' +
+      '<option value="debit" ' + (!r.isCredit ? 'selected' : '') + '>הוצאה</option></select></td>' +
+      '<td>' + bankNameCellHtml_(r) + '</td>' +
+      '<td><input type="text" placeholder="עבור (אופציונלי)" value="' + esc(r.note || '') + '" style="width:100%" ' +
+      'oninput="bankReviewRows[' + r.id + '].note=this.value"></td>' +
+      '<td style="text-align:center">' + (r.isCredit && r.include ? bankDistributeCellHtml_(r) : '<span class="muted">—</span>') +
+      '</td></tr>';
+  });
+  html += '</tbody></table></div>' +
+    '<button style="margin-top:10px" onclick="saveBankRows()">💾 שמור את השורות המסומנות</button>' +
+    '<span id="bank-save-status" class="muted" style="margin-right:10px"></span>' +
+    '</div>';
+  document.getElementById('bank-review-container').innerHTML = html;
+}
+
+// Credit rows get a tenant-name dropdown, debit rows a supplier dropdown — both with "אחר"
+// revealing a free-text box, per Oren's spec.
+// Same household-name-matching idea as _name_match in vaad_bayit_generator.py: the sheet's
+// own history (used for the recommendation) and the official tenant-card display names are
+// two independently-maintained lists, so a recommended name like "עמרי ושיר יוסוב" needs to
+// match its dropdown option even if it isn't byte-for-byte identical (extra/missing spaces,
+// slightly different word order). Splits on whitespace, strips a leading Hebrew "ו" from each
+// word, matches if any word is shared. Without this, a perfectly good recommendation silently
+// falls through to the "אחר" free-text box instead of landing pre-selected in the dropdown.
+function fuzzyNameMatch_(a, b) {
+  function toks(s) { return String(s || '').split(/\s+/).map(function (w) { return w[0] === 'ו' && w.length > 1 ? w.slice(1) : w; }).filter(Boolean); }
+  var ta = toks(a), tb = toks(b);
+  return ta.some(function (w) { return tb.indexOf(w) !== -1; });
+}
+function bankNameCellHtml_(r) {
+  var options = r.isCredit ? bankTenantNames : bankSupplierNames;
+  // Canonicalize once: if r.name fuzzy-matches an option, use the option's exact string so
+  // both the dropdown selection and the value actually saved are the real, official name.
+  if (r.name && r.name !== '__other__' && options.indexOf(r.name) === -1) {
+    var match = options.find(function (n) { return fuzzyNameMatch_(r.name, n); });
+    if (match) r.name = match;
+  }
+  var html = '<select onchange="onBankNameChange_(' + r.id + ', this.value)">' +
+    '<option value="">— בחר —</option>';
+  options.forEach(function (n) {
+    html += '<option value="' + esc(n) + '" ' + (r.name === n ? 'selected' : '') + '>' + esc(n) + '</option>';
+  });
+  var isOther = r.name === '__other__' || (r.name && options.indexOf(r.name) === -1 && r.name !== '');
+  html += '<option value="__other__" ' + (isOther ? 'selected' : '') + '>אחר...</option></select>';
+  if (isOther) {
+    html += '<input type="text" placeholder="שם" value="' + esc(r.name === '__other__' ? '' : r.name) + '" ' +
+      'style="margin-top:4px" oninput="bankReviewRows[' + r.id + '].name=this.value">';
+  }
+  return html;
+}
+function onBankNameChange_(id, value) {
+  bankReviewRows[id].name = value;
+  renderBankReviewTable();
+}
+
+// Small checkbox + "edit amount" button instead of a permanent extra column — the split
+// (some of a payment going toward old 2025 carryover instead of 2026 dues) is a rare,
+// judgment-based override, not something every row needs visible. Reuses the same modal
+// already built for supplier editing (openSupplierModal_/closeSupplierModal), just with
+// different content — one popup element on the page is enough since only one is ever open.
+function bankDistributeCellHtml_(r) {
+  var full = (r.distributeAmount === undefined || r.distributeAmount === null);
+  var label = full ? '' : ' (₪' + r.distributeAmount.toLocaleString() + ' מתוך ₪' + r.amount.toLocaleString() + ')';
+  return '<input type="checkbox" ' + (r.distribute ? 'checked' : '') +
+    ' title="בטל אם זו לא הכנסה חודשית רגילה (למשל סילוק חוב ישן)" ' +
+    'onchange="bankReviewRows[' + r.id + '].distribute=this.checked; renderBankReviewTable()">' +
+    (r.distribute ? ' <button class="small secondary" style="font-size:11px" onclick="openBankSplitModal_(' + r.id + ')">✎ סכום' + label + '</button>' : '');
+}
+
+// Redesigned per Oren (2026-09-10): instead of typing the amount TO distribute directly, type
+// how much goes to the OLD 2025 carryover debt — the rest is computed automatically and is
+// what actually gets distributed into 2026 months. Saving also deducts the carryover amount
+// from "חוב מועבר" for that tenant (e.g. 1520 - 520 = 1000), not just a manual reminder.
+function openBankSplitModal_(id) {
+  var r = bankReviewRows[id];
+  var carry = r.carryoverAmount || 0;
+  openSupplierModal_(
+    '<h3>חלוקת התשלום</h3>' +
+    '<p class="muted">סכום התנועה הכולל: <strong>₪' + r.amount.toLocaleString() + '</strong>. ' +
+    'אם חלק מהתשלום מכוסה כנגד חוב מועבר מ-2025 — הכנס כאן כמה. השאר יופץ אוטומטית לחודשי 2026, ' +
+    'והסכום שהכנסת יופחת אוטומטית מ"חוב מועבר" עבור הדייר.</p>' +
+    '<label>סכום לחוב מועבר:</label>' +
+    '<input type="number" id="bank-split-input" value="' + carry + '" style="width:100%" oninput="updateBankSplitPreview_(' + r.amount + ')">' +
+    '<p style="margin-top:8px">יופץ לתקבולי דיירים 2026: <strong id="bank-split-preview">₪' + (r.amount - carry).toLocaleString() + '</strong></p>' +
+    '<div style="margin-top:10px;display:flex;gap:8px">' +
+    '<button onclick="saveBankSplit_(' + id + ')">אישור</button>' +
+    '<button class="secondary" onclick="bankReviewRows[' + id + '].carryoverAmount=0; closeSupplierModal(); renderBankReviewTable()">איפוס (הכל ל-2026)</button>' +
+    '</div>'
+  );
+}
+function updateBankSplitPreview_(total) {
+  var v = Number(document.getElementById('bank-split-input').value) || 0;
+  document.getElementById('bank-split-preview').textContent = '₪' + Math.max(0, total - v).toLocaleString();
+}
+function saveBankSplit_(id) {
+  var r = bankReviewRows[id];
+  var v = Number(document.getElementById('bank-split-input').value);
+  if (!isFinite(v) || v < 0 || v > r.amount) { alert('סכום לא תקין'); return; }
+  r.carryoverAmount = v;
+  r.distributeAmount = r.amount - v;
+  closeSupplierModal();
+  renderBankReviewTable();
+}
+
+function saveBankRows() {
+  var toSave = bankReviewRows.filter(function (r) { return r.include; })
+    .map(function (r) { return { date: r.date, name: r.name === '__other__' ? '' : r.name, action: r.action, amount: r.amount, isCredit: r.isCredit, balance: r.balance, note: r.note || '', distribute: !!r.distribute, distributeAmount: (r.distributeAmount === undefined || r.distributeAmount === null) ? r.amount : r.distributeAmount, carryoverAmount: r.carryoverAmount || 0 }; });
+  if (!toSave.length) { alert('לא סומנו שורות לשמירה'); return; }
+  var distCount = toSave.filter(function (r) { return r.isCredit && r.name && r.distribute; }).length;
+  var carryTotal = toSave.reduce(function (s, r) { return s + (r.carryoverAmount || 0); }, 0);
+  var msg = 'לשמור ' + toSave.length + ' תנועות לגיליון "תנועות בנק"?';
+  if (distCount) msg += '\n(' + distCount + ' מהן יעדכנו גם את תקבולי דיירים בהתאם)';
+  if (carryTotal) msg += '\n(סה"כ ₪' + carryTotal.toLocaleString() + ' יקוזזו מ"חוב מועבר")';
+  if (!confirm(msg)) return;
+  document.getElementById('bank-save-status').textContent = 'שומר...';
+  run_(function () {
+    document.getElementById('bank-save-status').textContent = '✓ נשמר';
+    bankReviewRows = bankReviewRows.filter(function (r) { return !r.include; });
+    renderBankReviewTable();
+  }).withFailureHandler(function (err) {
+    document.getElementById('bank-save-status').textContent = '✗ שגיאה: ' + err.message;
+  }).appendBankTransactions(toSave);
+}
+
+var normalizePreviewRows = [];
+var MONTHS_HE_ = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'];
+
+function previewNormalize_() {
+  document.getElementById('normalize-preview-container').innerHTML = '<div class="muted">בודק...</div>';
+  run_(function (rows) {
+    normalizePreviewRows = rows;
+    if (!rows.length) {
+      document.getElementById('normalize-preview-container').innerHTML = '<p class="muted">כל השורות כבר מסודרות — אין מה לשנות.</p>';
+      return;
+    }
+    var html = '<div class="tbl-wrap"><table><thead><tr><th></th><th>דייר</th>' +
+      MONTHS_HE_.map(function (m) { return '<th>' + m + '</th>'; }).join('') + '</tr></thead><tbody>';
+    rows.forEach(function (r, idx) {
+      html += '<tr><td rowspan="2" style="vertical-align:middle"><input type="checkbox" id="norm-chk-' + idx + '" checked></td>' +
+        '<td>' + esc(r.name) + ' <span class="muted">(לפני)</span></td>' +
+        r.oldMonthly.map(function (v) { return '<td>' + (v ? '₪' + v.toLocaleString() : '—') + '</td>'; }).join('') + '</tr>' +
+        '<tr><td><strong>' + esc(r.name) + '</strong> <span class="muted">(אחרי)</span></td>' +
+        r.newMonthly.map(function (v, i) {
+          var changed = Math.abs(v - r.oldMonthly[i]) > 0.001;
+          return '<td' + (changed ? ' style="font-weight:700;color:#16a34a"' : '') + '>' + (v ? '₪' + v.toLocaleString() : '—') + '</td>';
+        }).join('') + '</tr>';
+    });
+    html += '</tbody></table></div>' +
+      '<button style="margin-top:10px" onclick="applyNormalize_()">✅ בצע את השינויים המסומנים</button>' +
+      '<span id="normalize-status" class="muted" style="margin-right:10px"></span>';
+    document.getElementById('normalize-preview-container').innerHTML = html;
+  }).previewNormalizeAllTenants();
+}
+
+function applyNormalize_() {
+  var chosen = normalizePreviewRows.filter(function (r, idx) {
+    return document.getElementById('norm-chk-' + idx).checked;
+  }).map(function (r) { return r.rowIdx; });
+  if (!chosen.length) { alert('לא נבחרו שורות'); return; }
+  if (!confirm('לבצע יישור על ' + chosen.length + ' דיירים? הפעולה כותבת ישירות לתקבולי דיירים.')) return;
+  document.getElementById('normalize-status').textContent = 'מבצע...';
+  run_(function () {
+    document.getElementById('normalize-status').textContent = '✓ בוצע';
+    document.getElementById('normalize-preview-container').innerHTML = '<p class="muted">בוצע.</p>';
+  }).withFailureHandler(function (err) {
+    document.getElementById('normalize-status').textContent = '✗ שגיאה: ' + err.message;
+  }).applyNormalizeAllTenants(chosen);
+}
+
+/* ───────────────────────── CHARGES ───────────────────────── */
+var currentCharges = [], selectedChargeId = null, tenantNames = [];
+
+function loadCharges() {
+  document.getElementById('tab-charges').innerHTML = '<div class="loading">טוען...</div>';
+  run_(function(charges){
+    currentCharges = charges;
+    run_(function(names){
+      tenantNames = names;
+      renderCharges();
+    }).getTenantNames();
+  }).getCharges();
+}
+
+function renderCharges() {
+  var active = currentCharges.find(function(c){ return c.active === 'כן'; });
+  var html = '';
+  html += '<div class="card"><h3>גביה נוספת פעילה</h3>';
+  if (active) {
+    html += renderActiveCharge_(active);
+  } else {
+    html += '<div class="muted">אין גביה פעילה כרגע.</div>';
+  }
+  html += '<button style="margin-top:10px" onclick="showNewChargeForm()">+ גביה חדשה</button>';
+  html += '<div id="new-charge-form"></div>';
+  html += '</div>';
+
+  var history = currentCharges.filter(function(c){ return c.active !== 'כן'; });
+  if (history.length) {
+    html += '<div class="card"><h3>היסטוריה</h3>';
+    history.forEach(function(c){
+      html += '<div class="row"><div><span class="name">'+esc(c.name)+'</span> — ₪'+c.amount+' <span class="muted">('+esc(c.date)+')</span></div>' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+        '<button class="small secondary" onclick="showEditChargeForm(\''+c.id+'\')">ערוך</button>' +
+        '<label class="switch" title="הפעל גביה זו מחדש"><input type="checkbox" onchange="toggleCharge(\''+c.id+'\', this.checked)"><span class="slider"></span></label>' +
+        '<button class="small secondary" onclick="deleteCharge_(\''+c.id+'\')" title="מחק לצמיתות">🗑</button>' +
+        '</div></div>' +
+        '<div id="edit-charge-form-'+c.id+'"></div>';
+    });
+    html += '</div>';
+  }
+  document.getElementById('tab-charges').innerHTML = html;
+}
+
+function chargeFormHtml_(id, c) {
+  c = c || {};
+  return '<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">' +
+    '<label>שם הגביה</label><input id="'+id+'-name" value="'+esc(c.name||'')+'" placeholder="תיקון גג 2026">' +
+    '<label>סכום לדייר (₪)</label><input id="'+id+'-amount" type="number" value="'+(c.amount||'')+'" placeholder="500">' +
+    '<label>תאריך תחילה</label><input type="date" id="'+id+'-date" value="'+ddmmyyyyToIso_(c.date||'')+'">' +
+    '<label>תיאור (אופציונלי)</label><textarea id="'+id+'-desc" rows="2">'+esc(c.description||'')+'</textarea>' +
+    '</div>';
+}
+function ddmmyyyyToIso_(s) {
+  var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s||'');
+  if (!m) return '';
+  return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);
+}
+function isoToDdmmyyyy_(s) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');
+  return m ? (m[3]+'/'+m[2]+'/'+m[1]) : '';
+}
+function chargeFormValues_(id) {
+  return {
+    name: document.getElementById(id+'-name').value.trim(),
+    amount: document.getElementById(id+'-amount').value,
+    date: isoToDdmmyyyy_(document.getElementById(id+'-date').value),
+    desc: document.getElementById(id+'-desc').value.trim()
+  };
+}
+
+function showEditChargeForm(id) {
+  var c = currentCharges.find(function(x){ return x.id === id; }) || {};
+  var html = chargeFormHtml_('ec'+id, c) +
+    '<button style="margin-top:10px" onclick="submitEditCharge(\''+id+'\')">שמור שינויים</button>';
+  document.getElementById('edit-charge-form-'+id).innerHTML = html;
+}
+
+function submitEditCharge(id) {
+  var v = chargeFormValues_('ec'+id);
+  if (!v.name || !v.amount) { alert('נא למלא שם וסכום'); return; }
+  run_(function(charges){
+    currentCharges = charges;
+    renderCharges();
+  }).updateCharge(id, v.name, v.amount, v.date, v.desc);
+}
+
+function toggleCharge(id, active) {
+  run_(function(charges){
+    currentCharges = charges;
+    renderCharges();
+  }).setChargeActive(id, active);
+}
+
+// Deliberate, rare, hard delete — distinct from the toggle, which never removes anything.
+function deleteCharge_(id) {
+  var c = currentCharges.find(function(x){ return x.id === id; });
+  var name = c ? c.name : '';
+  if (!confirm('למחוק לצמיתות את הגביה "' + name + '"? הפעולה גם תמחק את כל התשלומים שנרשמו עבורה, ולא ניתנת לביטול.')) return;
+  run_(function(charges){
+    currentCharges = charges;
+    renderCharges();
+  }).deleteCharge(id);
+}
+
+function renderActiveCharge_(charge) {
+  selectedChargeId = charge.id;
+  var target = charge.amount * tenantNames.length;
+  var html = '<div class="row"><div><span class="name">'+esc(charge.name)+'</span><div class="muted">'+esc(charge.description||'')+'</div></div>' +
+    '<span class="badge badge-green">₪'+charge.amount+' לדייר</span>' +
+    '<label class="switch" title="כבה כדי לבטל את הגביה הפעילה"><input type="checkbox" checked onchange="toggleCharge(\''+charge.id+'\', this.checked)"><span class="slider"></span></label></div>';
+  html += '<div class="row" style="margin-top:4px"><button class="small secondary" onclick="showEditChargeForm(\''+charge.id+'\')">ערוך</button></div>';
+  html += '<div id="edit-charge-form-'+charge.id+'"></div>';
+  html += '<div id="charge-progress" class="muted">טוען תשלומים...</div>';
+  html += '<div class="prog-bar"><div class="prog-fill" id="charge-progress-fill" style="width:0%"></div></div>';
+  html += '<div style="margin-top:12px" id="charge-payments-list"></div>';
+
+  run_(function(payments){
+    var collected = 0;
+    Object.keys(payments).forEach(function(k){ collected += Number(payments[k]) || 0; });
+    var pct = target ? Math.min(100, Math.round(collected/target*100)) : 0;
+    document.getElementById('charge-progress').textContent = '₪'+collected.toLocaleString()+' / ₪'+target.toLocaleString()+' ('+pct+'%)';
+    document.getElementById('charge-progress-fill').style.width = pct+'%';
+    var listHtml = tenantNames.map(function(name){
+      var paid = payments[name] || 0;
+      return '<div class="row"><div class="name" style="flex:1">'+esc(name)+'</div>' +
+        '<input type="number" style="width:90px" value="'+paid+'" onblur="savePayment(\''+charge.id+'\', \''+esc(name)+'\', this.value)"></div>';
+    }).join('');
+    document.getElementById('charge-payments-list').innerHTML = listHtml;
+  }).getPayments(charge.id);
+
+  return html;
+}
+
+function savePayment(chargeId, tenantName, value) {
+  google.script.run.setPayment(chargeId, tenantName, value || 0);
+}
+
+function showNewChargeForm() {
+  var html = chargeFormHtml_('nc', {}) +
+    '<button style="margin-top:10px" onclick="submitNewCharge()">שמור והפעל</button>';
+  document.getElementById('new-charge-form').innerHTML = html;
+}
+
+function submitNewCharge() {
+  var v = chargeFormValues_('nc');
+  if (!v.name || !v.amount) { alert('נא למלא שם וסכום'); return; }
+  run_(function(charges){
+    currentCharges = charges;
+    renderCharges();
+  }).createCharge(v.name, v.amount, v.date, v.desc, true);
+}
+
+/* ───────────────────────── CALLS ───────────────────────── */
+var STATUS_OPTIONS = ['פתוח','בטיפול','סגור','מבוטלת'];
+
+function loadCalls() {
+  document.getElementById('tab-calls').innerHTML = '<div class="loading">טוען...</div>';
+  run_(renderCalls).getCalls();
+}
+
+var currentCalls = [];
+
+function renderCalls(calls) {
+  currentCalls = calls;
+  var html = '<div class="card"><button onclick="showNewCallForm()">+ קריאה חדשה</button><div id="new-call-form"></div></div>';
+  if (!calls.length) { html += '<div class="empty">אין קריאות</div>'; document.getElementById('tab-calls').innerHTML = html; return; }
+  html += calls.map(function(c){
+    var statusOptions = STATUS_OPTIONS.map(function(s){
+      return '<option value="'+s+'"'+(s===c.status?' selected':'')+'>'+s+'</option>';
+    }).join('');
+    var badgeCls = c.status === 'סגור' ? 'badge-green' : (c.status === 'בטיפול' ? 'badge-orange' : (c.status === 'מבוטלת' ? 'badge-grey' : 'badge-red'));
+    return '<div class="card">' +
+      '<div class="row"><div><span class="name">'+esc(c.name)+'</span> — בניין '+esc(c.building)+' דירה '+esc(c.apt)+'</div>' +
+      '<span class="badge '+badgeCls+'">'+esc(c.status)+'</span></div>' +
+      '<div class="muted">'+esc(c.desc)+' ('+esc(c.location)+', '+esc(c.urgency)+')</div>' +
+      (c.notes ? '<div class="muted">הערות: '+esc(c.notes)+'</div>' : '') +
+      '<div class="row" style="margin-top:8px">' +
+      '<select onchange="changeCallStatus('+c.rowNum+', this.value)">'+statusOptions+'</select>' +
+      '<label class="switch"><input type="checkbox" '+(c.active==='פעיל'?'checked':'')+' onchange="toggleCall('+c.rowNum+', this.checked)"><span class="slider"></span></label>' +
+      '</div>' +
+      '<div class="row" style="margin-top:8px"><button class="small secondary" onclick="showEditCallForm('+c.rowNum+')">ערוך</button></div>' +
+      '<div id="edit-call-form-'+c.rowNum+'"></div></div>';
+  }).join('');
+  document.getElementById('tab-calls').innerHTML = html;
+}
+
+function changeCallStatus(rowNum, status) {
+  run_(renderCalls).updateCallStatus(rowNum, status);
+}
+function toggleCall(rowNum, active) {
+  run_(renderCalls).toggleCallActive(rowNum, active);
+}
+
+// Same building/apartment values as the tenant personal-details form (84/86/88, units 1-6).
+var CALL_BUILDING_OPTIONS = ['84','86','88'];
+var CALL_APT_OPTIONS = ['1','2','3','4','5','6'];
+// Exact option lists from the real fault-report Form (מיקום התקלה / דחיפות questions).
+var CALL_LOCATION_OPTIONS = ['מעלית','חניה','כניסה','גינה','מסדרון','חדר אשפה','אחר'];
+var CALL_URGENCY_OPTIONS = ['רגיל','דחוף','מיידי פיקוח נפש'];
+function callFormHtml_(id, c) {
+  c = c || {};
+  var statusOptions = STATUS_OPTIONS.map(function(s){
+    return '<option value="'+s+'"'+(s===c.status?' selected':'')+'>'+s+'</option>';
+  }).join('');
+  var buildingOptions = '<option value="">—</option>' + CALL_BUILDING_OPTIONS.map(function(b){
+    return '<option value="'+b+'"'+(b===String(c.building||'')?' selected':'')+'>'+b+'</option>';
+  }).join('');
+  var aptOptions = '<option value="">—</option>' + CALL_APT_OPTIONS.map(function(a){
+    return '<option value="'+a+'"'+(a===String(c.apt||'')?' selected':'')+'>'+a+'</option>';
+  }).join('');
+  var locationOptions = '<option value="">—</option>' + CALL_LOCATION_OPTIONS.map(function(l){
+    return '<option value="'+l+'"'+(l===c.location?' selected':'')+'>'+l+'</option>';
+  }).join('');
+  var urgencyOptions = '<option value="">—</option>' + CALL_URGENCY_OPTIONS.map(function(u){
+    return '<option value="'+u+'"'+(u===c.urgency?' selected':'')+'>'+u+'</option>';
+  }).join('');
+  return '<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">' +
+    '<label>שם מלא</label><input id="'+id+'-name" value="'+esc(c.name||'')+'">' +
+    '<label>מספר בית</label><select id="'+id+'-building">'+buildingOptions+'</select>' +
+    '<label>מספר דירה</label><select id="'+id+'-apt">'+aptOptions+'</select>' +
+    '<label>תיאור התקלה</label><textarea id="'+id+'-desc" rows="2">'+esc(c.desc||'')+'</textarea>' +
+    '<label>מיקום התקלה</label><select id="'+id+'-location">'+locationOptions+'</select>' +
+    '<label>דחיפות</label><select id="'+id+'-urgency">'+urgencyOptions+'</select>' +
+    '<label>הערות</label><textarea id="'+id+'-notes" rows="2">'+esc(c.notes||'')+'</textarea>' +
+    (c.rowNum ? '<label>סטטוס</label><select id="'+id+'-status">'+statusOptions+'</select>' : '') +
+    '</div>';
+}
+function callFormValues_(id) {
+  return {
+    name: document.getElementById(id+'-name').value.trim(),
+    building: document.getElementById(id+'-building').value.trim(),
+    apt: document.getElementById(id+'-apt').value.trim(),
+    desc: document.getElementById(id+'-desc').value.trim(),
+    location: document.getElementById(id+'-location').value.trim(),
+    urgency: document.getElementById(id+'-urgency').value.trim(),
+    notes: document.getElementById(id+'-notes').value.trim()
+  };
+}
+
+function showNewCallForm() {
+  var html = callFormHtml_('ncall', {}) +
+    '<button style="margin-top:10px" onclick="submitNewCall()">שמור</button>';
+  document.getElementById('new-call-form').innerHTML = html;
+}
+
+function submitNewCall() {
+  var v = callFormValues_('ncall');
+  if (!v.name || !v.building || !v.apt || !v.desc) { alert('נא למלא שם, בניין, דירה ותיאור'); return; }
+  run_(renderCalls).createCall(v.name, v.building, v.apt, v.desc, v.location, v.urgency, v.notes);
+}
+
+function showEditCallForm(rowNum) {
+  var c = currentCalls.find(function(x){ return x.rowNum === rowNum; }) || {};
+  var html = callFormHtml_('ecall'+rowNum, c) +
+    '<button style="margin-top:10px" onclick="submitEditCall('+rowNum+')">שמור שינויים</button>';
+  document.getElementById('edit-call-form-'+rowNum).innerHTML = html;
+}
+
+function submitEditCall(rowNum) {
+  var v = callFormValues_('ecall'+rowNum);
+  var status = document.getElementById('ecall'+rowNum+'-status').value;
+  if (!v.name || !v.building || !v.apt || !v.desc) { alert('נא למלא שם, בניין, דירה ותיאור'); return; }
+  run_(renderCalls).updateCall(rowNum, v.name, v.building, v.apt, v.desc, v.location, v.urgency, v.notes, status);
+}
+
+/* ───────────────────────── ANNOUNCEMENTS ───────────────────────── */
+var ANN_CATEGORIES = ['דחוף','תחזוקה','כספי','כינוסים','בטיחות','מידע'];
+var ANN_PRIORITIES = ['גבוהה','בינונית','נמוכה'];
+var currentAnns = [];
+
+function loadAnns() {
+  document.getElementById('tab-anns').innerHTML = '<div class="loading">טוען...</div>';
+  run_(renderAnns).getAnnouncements();
+}
+
+function renderAnns(anns) {
+  currentAnns = anns;
+  var html = '<div class="card"><button onclick="showNewAnnForm()">+ הודעה חדשה</button><div id="new-ann-form"></div></div>';
+  if (!anns.length) { html += '<div class="empty">אין הודעות</div>'; document.getElementById('tab-anns').innerHTML = html; return; }
+  html += anns.map(function(a){
+    return '<div class="card"><div class="row"><div><span class="name">'+esc(a.title)+'</span> <span class="muted">('+esc(a.category)+')</span></div>' +
+      '<label class="switch"><input type="checkbox" '+(a.active==='כן'?'checked':'')+' onchange="toggleAnn('+a.rowNum+', this.checked)"><span class="slider"></span></label>' +
+      '</div><div class="muted">'+esc(a.content)+'</div>' +
+      '<div class="row" style="margin-top:8px"><button class="small secondary" onclick="showEditAnnForm('+a.rowNum+')">ערוך</button></div>' +
+      '<div id="edit-ann-form-'+a.rowNum+'"></div></div>';
+  }).join('');
+  document.getElementById('tab-anns').innerHTML = html;
+}
+
+function toggleAnn(rowNum, active) {
+  run_(renderAnns).toggleAnnouncementActive(rowNum, active);
+}
+
+var ANN_VALID_DAYS_OPTIONS = ['10','15','30','60','90'];
+
+// Announcements' "date" column accepts Y-M-D (native <input type="date"> / pasted Excel)
+// or M/D/Y (the sheet's own Form-locale) — see parseScheduledDate_ in
+// apps_script_announcements.js. A native date input always emits Y-M-D, which is already
+// the first pattern that parser tries, so no conversion is needed going out; converting
+// back in for prefill just needs to handle both possible existing formats.
+function annDateToIso_(s) {
+  s = (s||'').trim();
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (m) return m[0];
+  m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s);
+  if (m) return m[3]+'-'+('0'+m[1]).slice(-2)+'-'+('0'+m[2]).slice(-2);
+  return '';
+}
+
+function annFormHtml_(id, a) {
+  a = a || {};
+  var catOpts = ANN_CATEGORIES.map(function(c){ return '<option value="'+c+'"'+(c===a.category?' selected':'')+'>'+c+'</option>'; }).join('');
+  var prioOpts = ANN_PRIORITIES.map(function(p){ return '<option value="'+p+'"'+(p===a.priority?' selected':'')+'>'+p+'</option>'; }).join('');
+  var vd = String(a.validDays||'');
+  var isPreset = ANN_VALID_DAYS_OPTIONS.indexOf(vd) !== -1;
+  var isOther = vd && !isPreset;
+  var vdOpts = '<option value="">ללא הגבלה</option>' +
+    ANN_VALID_DAYS_OPTIONS.map(function(d){ return '<option value="'+d+'"'+(d===vd?' selected':'')+'>'+d+'</option>'; }).join('') +
+    '<option value="other"'+(isOther?' selected':'')+'>אחר</option>';
+  return '<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">' +
+    '<label>כותרת</label><input id="'+id+'-title" value="'+esc(a.title||'')+'">' +
+    '<label>תוכן</label><textarea id="'+id+'-content" rows="3">'+esc(a.content||'')+'</textarea>' +
+    '<label>קטגוריה</label><select id="'+id+'-category">'+catOpts+'</select>' +
+    '<label>עדיפות</label><select id="'+id+'-priority">'+prioOpts+'</select>' +
+    '<label>תאריך תחילה (ריק = מיידי)</label><input type="date" id="'+id+'-date" value="'+annDateToIso_(a.date)+'">' +
+    '<label>תוקף (ימים)</label><select id="'+id+'-validdays" onchange="onAnnValidDaysChange_(\''+id+'\')">'+vdOpts+'</select>' +
+    '<input id="'+id+'-validdays-other" type="number" style="margin-top:6px" placeholder="מספר ימים" value="'+(isOther?esc(vd):'')+'"'+(isOther?'':' hidden')+'>' +
+    '<label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input type="checkbox" id="'+id+'-active" '+(a.active!=='לא'?'checked':'')+' style="width:auto"> פעיל</label>' +
+    '</div>';
+}
+function onAnnValidDaysChange_(id) {
+  var sel = document.getElementById(id+'-validdays').value;
+  document.getElementById(id+'-validdays-other').hidden = (sel !== 'other');
+}
+function annFormValues_(id) {
+  var vdSel = document.getElementById(id+'-validdays').value;
+  var validDays = vdSel === 'other' ? document.getElementById(id+'-validdays-other').value.trim() : vdSel;
+  return {
+    title: document.getElementById(id+'-title').value.trim(),
+    content: document.getElementById(id+'-content').value.trim(),
+    category: document.getElementById(id+'-category').value,
+    priority: document.getElementById(id+'-priority').value,
+    date: document.getElementById(id+'-date').value.trim(),
+    validDays: validDays,
+    active: document.getElementById(id+'-active').checked
+  };
+}
+
+function showNewAnnForm() {
+  var html = annFormHtml_('nann', {}) +
+    '<button style="margin-top:10px" onclick="submitNewAnn()">שמור</button>';
+  document.getElementById('new-ann-form').innerHTML = html;
+}
+function submitNewAnn() {
+  var v = annFormValues_('nann');
+  if (!v.title || !v.content) { alert('נא למלא כותרת ותוכן'); return; }
+  run_(renderAnns).createAnnouncement(v.date, v.title, v.content, v.category, v.priority, v.active, v.validDays);
+}
+
+function showEditAnnForm(rowNum) {
+  var a = currentAnns.find(function(x){ return x.rowNum === rowNum; }) || {};
+  var html = annFormHtml_('eann'+rowNum, a) +
+    '<button style="margin-top:10px" onclick="submitEditAnn('+rowNum+')">שמור שינויים</button>';
+  document.getElementById('edit-ann-form-'+rowNum).innerHTML = html;
+}
+function submitEditAnn(rowNum) {
+  var v = annFormValues_('eann'+rowNum);
+  if (!v.title || !v.content) { alert('נא למלא כותרת ותוכן'); return; }
+  run_(renderAnns).updateAnnouncement(rowNum, v.date, v.title, v.content, v.category, v.priority, v.active, v.validDays);
+}
+
+/* ───────────────────────── TENANT CARDS (כרטיס דייר) ───────────────────────── */
+var currentTenants = [];
+
+function loadTenants() {
+  document.getElementById('tab-tenants').innerHTML =
+    '<div id="pending-tenants"></div><div id="tenant-cards-list"><div class="loading">טוען...</div></div>';
+  loadPendingTenants();
+  run_(renderTenants).getTenantCards();
+}
+
+function contactLine_(label, c) {
+  if (!c || !c.name) return '';
+  var parts = [c.name];
+  if (c.phone) parts.push(c.phone);
+  if (c.email) parts.push(c.email);
+  return '<div class="muted">'+label+': '+esc(parts.join(' · '))+'</div>';
+}
+
+function loadPendingTenants() {
+  document.getElementById('pending-tenants').innerHTML = '<div class="loading">טוען עדכונים לאישור...</div>';
+  run_(renderPendingTenants).getPendingTenantSubmissions();
+}
+
+function renderPendingTenants(pending) {
+  var el = document.getElementById('pending-tenants');
+  if (!pending.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="card"><h3>עדכוני דיירים לאישור ('+pending.length+')</h3>' +
+    pending.map(function(p){
+      return '<div class="card" style="background:var(--surface2)"><div class="row"><div><span class="name">'+esc(p.lastName)+'</span> <span class="muted">בניין '+esc(p.building)+' דירה '+esc(p.apt)+'</span></div>' +
+        (p.rented ? '<span class="badge badge-orange">שכורה</span>' : '') + '</div>' +
+        contactLine_('איש קשר 1', p.contact1) +
+        contactLine_('איש קשר 2', p.contact2) +
+        (p.rented ? contactLine_('בעל הדירה', p.owner) : '') +
+        '<div class="row" style="margin-top:8px">' +
+        '<button onclick="confirmTenantSub('+p.rowNum+')">אשר</button>' +
+        '<button class="secondary" onclick="rejectTenantSub('+p.rowNum+')">בטל</button>' +
+        '</div></div>';
+    }).join('') + '</div>';
+}
+
+function confirmTenantSub(rowNum) {
+  run_(function(pending){
+    renderPendingTenants(pending);
+    run_(renderTenants).getTenantCards();
+  }).confirmTenantSubmission(rowNum);
+}
+function rejectTenantSub(rowNum) {
+  run_(renderPendingTenants).rejectTenantSubmission(rowNum);
+}
+
+function renderTenants(tenants) {
+  currentTenants = tenants;
+  var html = '<div class="card"><button onclick="showNewTenantForm()">+ כרטיס דייר</button><div id="new-tenant-form"></div></div>';
+  if (!tenants.length) { html += '<div class="empty">אין כרטיסי דיירים</div>'; document.getElementById('tenant-cards-list').innerHTML = html; return; }
+  html += tenants.map(function(t){
+    return '<div class="card"><div class="row"><div><span class="name">'+esc(t.lastName)+'</span> <span class="muted">בניין '+esc(t.building)+' דירה '+esc(t.apt)+'</span></div>' +
+      (t.rented ? '<span class="badge badge-orange">שכורה</span>' : '') + '</div>' +
+      contactLine_('איש קשר 1', t.contact1) +
+      contactLine_('איש קשר 2', t.contact2) +
+      (t.rented ? contactLine_('בעל הדירה', t.owner) : '') +
+      '<div class="row" style="margin-top:8px"><button class="small secondary" onclick="showEditTenantForm('+t.rowNum+')">ערוך</button></div>' +
+      '<div id="edit-tenant-form-'+t.rowNum+'"></div></div>';
+  }).join('');
+  document.getElementById('tenant-cards-list').innerHTML = html;
+}
+
+function tenantFormHtml_(id, t) {
+  t = t || {};
+  var c1 = t.contact1 || {}, c2 = t.contact2 || {}, ow = t.owner || {};
+  var rented = !!t.rented;
+  return '<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">' +
+    '<label>בניין</label><input id="'+id+'-building" value="'+esc(t.building||'')+'">' +
+    '<label>דירה</label><input id="'+id+'-apt" value="'+esc(t.apt||'')+'">' +
+    '<label>שם משפחה</label><input id="'+id+'-lastname" value="'+esc(t.lastName||'')+'">' +
+    '<label>איש קשר 1 - שם</label><input id="'+id+'-c1name" value="'+esc(c1.name||'')+'">' +
+    '<label>איש קשר 1 - טלפון</label><input id="'+id+'-c1phone" value="'+esc(c1.phone||'')+'">' +
+    '<label>איש קשר 1 - מייל</label><input id="'+id+'-c1email" value="'+esc(c1.email||'')+'">' +
+    '<label>איש קשר 2 - שם (אופציונלי)</label><input id="'+id+'-c2name" value="'+esc(c2.name||'')+'">' +
+    '<label>איש קשר 2 - טלפון</label><input id="'+id+'-c2phone" value="'+esc(c2.phone||'')+'">' +
+    '<label>איש קשר 2 - מייל</label><input id="'+id+'-c2email" value="'+esc(c2.email||'')+'">' +
+    '<label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input type="checkbox" id="'+id+'-rented" style="width:auto" '+(rented?'checked':'')+' onchange="onTenantRentedChange_(\''+id+'\')"> דירה שכורה</label>' +
+    '<div id="'+id+'-owner-fields" style="margin-top:6px"'+(rented?'':' hidden')+'>' +
+      '<label>בעל הדירה - שם</label><input id="'+id+'-ownername" value="'+esc(ow.name||'')+'">' +
+      '<label>בעל הדירה - טלפון</label><input id="'+id+'-ownerphone" value="'+esc(ow.phone||'')+'">' +
+      '<label>בעל הדירה - מייל</label><input id="'+id+'-owneremail" value="'+esc(ow.email||'')+'">' +
+    '</div>' +
+    '</div>';
+}
+function onTenantRentedChange_(id) {
+  document.getElementById(id+'-owner-fields').hidden = !document.getElementById(id+'-rented').checked;
+}
+function tenantFormValues_(id) {
+  var rented = document.getElementById(id+'-rented').checked;
+  return {
+    building: document.getElementById(id+'-building').value.trim(),
+    apt: document.getElementById(id+'-apt').value.trim(),
+    lastName: document.getElementById(id+'-lastname').value.trim(),
+    c1name: document.getElementById(id+'-c1name').value.trim(),
+    c1phone: document.getElementById(id+'-c1phone').value.trim(),
+    c1email: document.getElementById(id+'-c1email').value.trim(),
+    c2name: document.getElementById(id+'-c2name').value.trim(),
+    c2phone: document.getElementById(id+'-c2phone').value.trim(),
+    c2email: document.getElementById(id+'-c2email').value.trim(),
+    rented: rented,
+    ownerName: rented ? document.getElementById(id+'-ownername').value.trim() : '',
+    ownerPhone: rented ? document.getElementById(id+'-ownerphone').value.trim() : '',
+    ownerEmail: rented ? document.getElementById(id+'-owneremail').value.trim() : ''
+  };
+}
+
+function showNewTenantForm() {
+  var html = tenantFormHtml_('nt', {}) +
+    '<button style="margin-top:10px" onclick="submitNewTenant()">שמור</button>';
+  document.getElementById('new-tenant-form').innerHTML = html;
+}
+function submitNewTenant() {
+  var v = tenantFormValues_('nt');
+  if (!v.building || !v.apt || !v.lastName || !v.c1name) { alert('נא למלא בניין, דירה, שם משפחה ואיש קשר 1'); return; }
+  run_(function(existing){
+    if (existing) {
+      var ok = confirm('כבר קיים כרטיס דייר לבניין '+v.building+' דירה '+v.apt+' ('+existing.displayName+').\nלהחליף אותו בנתונים החדשים?');
+      if (!ok) return;
+      run_(renderTenants).updateTenantCard(
+        existing.rowNum, v.building, v.apt, v.lastName, v.c1name, v.c1phone, v.c1email,
+        v.c2name, v.c2phone, v.c2email, v.rented, v.ownerName, v.ownerPhone, v.ownerEmail);
+    } else {
+      run_(renderTenants).createTenantCard(
+        v.building, v.apt, v.lastName, v.c1name, v.c1phone, v.c1email,
+        v.c2name, v.c2phone, v.c2email, v.rented, v.ownerName, v.ownerPhone, v.ownerEmail);
+    }
+  }).checkDuplicateTenantCard(v.building, v.apt);
+}
+
+function showEditTenantForm(rowNum) {
+  var t = currentTenants.find(function(x){ return x.rowNum === rowNum; }) || {};
+  var html = tenantFormHtml_('et'+rowNum, t) +
+    '<button style="margin-top:10px" onclick="submitEditTenant('+rowNum+')">שמור שינויים</button>';
+  document.getElementById('edit-tenant-form-'+rowNum).innerHTML = html;
+}
+function submitEditTenant(rowNum) {
+  var v = tenantFormValues_('et'+rowNum);
+  if (!v.building || !v.apt || !v.lastName || !v.c1name) { alert('נא למלא בניין, דירה, שם משפחה ואיש קשר 1'); return; }
+  run_(renderTenants).updateTenantCard(
+    rowNum, v.building, v.apt, v.lastName, v.c1name, v.c1phone, v.c1email,
+    v.c2name, v.c2phone, v.c2email, v.rented, v.ownerName, v.ownerPhone, v.ownerEmail);
+}
+
+/* ───────────────────────── SUPPLIERS ───────────────────────── */
+var currentSuppliers = [];
+var SUPPLIER_CATS = ['חשמל','מעליות','תקשורת','ביטוח','בנק','ניקיון','גינון','אחר'];
+var REMINDER_TYPES = ['הוראת קבע','תשלום','תפוגת חוזה','תפוגת פוליסה','אחר'];
+var REMINDER_FREQS = ['חד-פעמי','חודשי','רבעוני','חצי שנתי','שנתי','אחר'];
+
+function loadSuppliers() {
+  document.getElementById('tab-suppliers').innerHTML = '<div class="loading">טוען...</div>';
+  run_(renderSuppliers).getSuppliers();
+}
+
+// Editing opens in a centered popup instead of expanding inline inside the (narrow, grid-
+// column-width) card — the full form with custom fields + reminders didn't fit legibly
+// squeezed into one grid cell.
+var supplierModalOpen = false;
+function openSupplierModal_(innerHtml) {
+  supplierModalOpen = true;
+  document.getElementById('supplier-modal-content').innerHTML = '<button class="modal-close" onclick="closeSupplierModal()">✕</button>' + innerHtml;
+  document.getElementById('supplier-modal-backdrop').style.display = 'flex';
+}
+function closeSupplierModal() {
+  supplierModalOpen = false;
+  document.getElementById('supplier-modal-backdrop').style.display = 'none';
+}
+// A field/reminder save's server response can arrive AFTER the modal was already closed
+// (e.g. clicked ✕ right after clicking 💾) — without this guard, that response's own
+// "refresh the modal" step would silently reopen it, so ✕ looked like it needed a second
+// click to actually stick.
+function refreshSupplierModalIfOpen_(list, rowNum) {
+  renderSuppliers(list);
+  if (supplierModalOpen) showEditSupplierForm(rowNum);
+}
+
+function badgeClass_(status) {
+  return status === 'late' ? 'badge-red' : (status === 'soon' ? 'badge-orange' : 'badge-green');
+}
+function catClass_(category) {
+  var map = { 'מעליות': 'cat-elev', 'חשמל': 'cat-power', 'תקשורת': 'cat-telecom', 'ביטוח': 'cat-ins', 'בנק': 'cat-bank' };
+  return map[category] || 'cat-other';
+}
+
+// Wrapped in try/catch — a rendering bug used to fail completely silently (no alert, no
+// visible change), which is exactly what caused 50 duplicate rows: the save was actually
+// succeeding every time, but with zero visible confirmation the form looked "stuck", so
+// clicking שמור again and again kept re-submitting the same still-filled-in form.
+function renderSuppliers(list) {
+  try {
+    currentSuppliers = list;
+    var html = '';
+    var quick = list.filter(function (s) { return s.active && s.phone; }).slice(0, 4);
+    if (quick.length) {
+      html += '<div class="qd-row">' + quick.map(function (s) {
+        return '<span class="qd-chip">' + esc(s.name) + ' <a href="tel:' + esc(s.phone.replace(/[^0-9+]/g, '')) + '">' + esc(s.phone) + '</a></span>';
+      }).join('') + '</div>';
+    }
+    html += '<div class="card"><button onclick="showNewSupplierForm()">+ ספק חדש</button></div>';
+    html += '<div class="row" style="gap:10px;margin-bottom:12px">' +
+      '<input id="supplier-search" placeholder="חיפוש לפי שם, קטגוריה או טלפון…" oninput="filterSuppliers()" style="flex:1">' +
+      '<select id="supplier-cat-filter" onchange="filterSuppliers()" style="flex:none;width:auto">' +
+      '<option value="">כל הקטגוריות</option>' +
+      SUPPLIER_CATS.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join('') +
+      '</select></div>';
+    var active = list.filter(function (s) { return s.active; });
+    var inactive = list.filter(function (s) { return !s.active; });
+    if (!active.length && !inactive.length) { html += '<div class="empty">אין ספקים</div>'; document.getElementById('tab-suppliers').innerHTML = html; return; }
+    if (active.length) html += '<div class="supplier-grid">' + active.map(supplierCardHtml_).join('') + '</div>';
+    if (inactive.length) {
+      html += '<div class="subhead" style="margin-top:18px">ספקים לא פעילים</div>';
+      html += '<div class="supplier-grid">' + inactive.map(supplierCardHtml_).join('') + '</div>';
+    }
+    document.getElementById('tab-suppliers').innerHTML = html;
+    document.getElementById('supplier-search').value = supplierFilterState.q;
+    document.getElementById('supplier-cat-filter').value = supplierFilterState.cat;
+    applySupplierFilter_();
+  } catch (e) {
+    document.getElementById('tab-suppliers').innerHTML = '<div class="empty">שגיאה בתצוגה: ' + esc(e.message) + '</div>';
+    alert('שגיאה בהצגת רשימת הספקים: ' + e.message);
+  }
+}
+
+// Filter state is kept outside the DOM so it survives every re-render (a save re-renders
+// the whole tab) instead of the search box silently clearing itself after each action.
+var supplierFilterState = { q: '', cat: '' };
+function filterSuppliers() {
+  supplierFilterState.q = (document.getElementById('supplier-search').value || '').trim().toLowerCase();
+  supplierFilterState.cat = document.getElementById('supplier-cat-filter').value;
+  applySupplierFilter_();
+}
+function applySupplierFilter_() {
+  var q = supplierFilterState.q, cat = supplierFilterState.cat;
+  document.querySelectorAll('#tab-suppliers .supplier-grid .card').forEach(function (card) {
+    var name = card.getAttribute('data-sname') || '';
+    var scat = card.getAttribute('data-scat') || '';
+    var phone = card.getAttribute('data-sphone') || '';
+    var matchesQ = !q || name.indexOf(q) !== -1 || scat.indexOf(q) !== -1 || phone.indexOf(q) !== -1;
+    var matchesCat = !cat || card.getAttribute('data-scat-raw') === cat;
+    card.style.display = (matchesQ && matchesCat) ? '' : 'none';
+  });
+}
+
+function supplierCardHtml_(s) {
+  var h = '<div class="card" data-sname="' + esc((s.name || '').toLowerCase()) + '" data-scat="' + esc((s.category || '').toLowerCase()) + '" data-scat-raw="' + esc(s.category || '') + '" data-sphone="' + esc(s.phone || '') + '">' +
+    '<div class="row"><div><span class="name">' + esc(s.name) + '</span>' +
+    (s.category ? ' <span class="cat-pill ' + catClass_(s.category) + '">' + esc(s.category) + '</span>' : '') + '</div>' +
+    '<label class="switch"><input type="checkbox" ' + (s.active ? 'checked' : '') + ' onchange="toggleSupplierActive_(' + s.rowNum + ', this.checked)"><span class="slider"></span></label></div>';
+  if (s.contact) h += '<div class="muted">איש קשר: ' + esc(s.contact) + '</div>';
+  if (s.phone) h += '<div class="muted">📞 <a href="tel:' + esc(s.phone.replace(/[^0-9+]/g, '')) + '">' + esc(s.phone) + '</a></div>';
+  if (s.phone2) h += '<div class="muted">☎️ קו נוסף: <a href="tel:' + esc(s.phone2.replace(/[^0-9+]/g, '')) + '">' + esc(s.phone2) + '</a></div>';
+  if (s.email) h += '<div class="muted">✉️ <a href="mailto:' + esc(s.email) + '">' + esc(s.email) + '</a></div>';
+  if (s.notes) h += '<div class="muted">' + esc(s.notes) + '</div>';
+  if (s.fields.length) {
+    h += '<div class="section-divider"></div><div class="subhead">שדות נוספים</div>';
+    h += s.fields.map(function (f) {
+      return '<div class="field-row"><span class="k">' + esc(f.label) + '</span><span class="v">' + esc(f.value) + '</span></div>';
+    }).join('');
+  }
+  var activeReminders = s.reminders.filter(function (r) { return r.active; });
+  if (activeReminders.length) {
+    h += '<div class="section-divider"></div><div class="subhead">תזכורות</div>';
+    h += activeReminders.map(function (r) {
+      return '<div class="activity-box"><div class="activity-top"><span>' + esc(r.description) + '</span>' +
+        '<span class="badge ' + badgeClass_(r.badge.status) + '">' + esc(r.badge.label) + '</span></div>' +
+        '<div class="muted" style="font-size:11.5px">' + esc(r.type) + ' · ' + esc(r.frequency) + ' · יעד ' + esc(r.dueDate) + (r.amount ? ' · ₪' + esc(r.amount) : '') + '</div></div>';
+    }).join('');
+  }
+  h += '<div class="row card-actions"><button class="small secondary" onclick="showEditSupplierForm(' + s.rowNum + ')">✏️ ערוך</button>' +
+    '<button class="small secondary" onclick="deleteSupplier_(' + s.rowNum + ')">🗑 מחק</button></div>';
+  h += '</div>';
+  return h;
+}
+
+function supplierCoreFormHtml_(id, s) {
+  s = s || {};
+  return '<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">' +
+    '<label>שם ספק</label><input id="' + id + '-name" value="' + esc(s.name || '') + '">' +
+    '<label>קטגוריה</label><select id="' + id + '-category"><option value="">—</option>' +
+      SUPPLIER_CATS.map(function (c) { return '<option value="' + c + '"' + (c === s.category ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select>' +
+    '<label>איש קשר</label><input id="' + id + '-contact" value="' + esc(s.contact || '') + '">' +
+    '<label>טלפון</label><input id="' + id + '-phone" value="' + esc(s.phone || '') + '">' +
+    '<label>טלפון נוסף</label><input id="' + id + '-phone2" value="' + esc(s.phone2 || '') + '">' +
+    '<label>מייל</label><input id="' + id + '-email" value="' + esc(s.email || '') + '">' +
+    '<label>הערות</label><textarea id="' + id + '-notes" rows="2">' + esc(s.notes || '') + '</textarea>' +
+    '</div>';
+}
+function supplierCoreFormValues_(id) {
+  return {
+    name: document.getElementById(id + '-name').value.trim(),
+    category: document.getElementById(id + '-category').value,
+    contact: document.getElementById(id + '-contact').value.trim(),
+    phone: document.getElementById(id + '-phone').value.trim(),
+    phone2: document.getElementById(id + '-phone2').value.trim(),
+    email: document.getElementById(id + '-email').value.trim(),
+    notes: document.getElementById(id + '-notes').value.trim()
+  };
+}
+function showNewSupplierForm() {
+  var html = '<h3>ספק חדש</h3>' + supplierCoreFormHtml_('ns', {}) +
+    '<button id="ns-submit-btn" style="margin-top:10px" onclick="submitNewSupplier()">שמור</button>';
+  openSupplierModal_(html);
+}
+function submitNewSupplier() {
+  var v = supplierCoreFormValues_('ns');
+  if (!v.name) { alert('נא למלא שם ספק'); return; }
+  var btn = document.getElementById('ns-submit-btn');
+  btn.disabled = true; btn.textContent = 'שומר...';
+  run_(function (list) { renderSuppliers(list); closeSupplierModal(); }).createSupplier(v.name, v.category, v.contact, v.phone, v.phone2, v.email, v.notes);
+}
+function toggleSupplierActive_(rowNum, active) {
+  run_(renderSuppliers).toggleSupplierActive(rowNum, active);
+}
+// Deliberate, separate from the active toggle — the toggle only moves a card between the
+// active/inactive sections, it never removes it. This is the only action that actually
+// deletes the row (and its linked custom fields/reminders), hence the confirm prompt.
+function deleteSupplier_(rowNum) {
+  var s = currentSuppliers.find(function (x) { return x.rowNum === rowNum; });
+  if (!s) return;
+  if (!confirm('למחוק לצמיתות את הספק "' + s.name + '"? הפעולה גם תמחק את כל השדות והתזכורות שלו, ולא ניתנת לביטול.')) return;
+  run_(renderSuppliers).deleteSupplier(rowNum);
+}
+
+function showEditSupplierForm(rowNum) {
+  var s = currentSuppliers.find(function (x) { return x.rowNum === rowNum; });
+  if (!s) return;
+  var id = 'es' + rowNum;
+  var html = '<h3>' + esc(s.name) + '</h3>' + supplierCoreFormHtml_(id, s);
+  html += '<label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input type="checkbox" id="' + id + '-active" ' + (s.active ? 'checked' : '') + ' style="width:auto"> פעיל</label>';
+  html += '<button style="margin-top:8px" onclick="submitEditSupplierCore(' + rowNum + ')">שמור פרטי ספק</button>';
+
+  html += '<div class="subhead" style="margin-top:14px">שדות נוספים</div>';
+  html += s.fields.map(function (f) {
+    return '<div class="row"><input style="flex:1" id="field-label-' + f.rowNum + '" value="' + esc(f.label) + '" placeholder="תווית">' +
+      '<input style="flex:1" id="field-value-' + f.rowNum + '" value="' + esc(f.value) + '" placeholder="ערך">' +
+      '<button class="small secondary" onclick="saveSupplierField(' + f.rowNum + ',' + rowNum + ')">💾</button>' +
+      '<button class="small secondary" onclick="removeSupplierField(' + f.rowNum + ',' + rowNum + ')">🗑</button></div>';
+  }).join('');
+  html += '<div class="row"><input style="flex:1" id="' + id + '-newfield-label" placeholder="תווית חדשה">' +
+    '<input style="flex:1" id="' + id + '-newfield-value" placeholder="ערך">' +
+    '<button class="small secondary" onclick="addSupplierField(\'' + id + '\', ' + rowNum + ')">+ הוסף</button></div>';
+
+  html += '<div class="subhead" style="margin-top:14px">תזכורות</div>';
+  html += s.reminders.map(function (r) { return reminderEditRowHtml_(r, rowNum); }).join('');
+  html += '<div id="' + id + '-new-reminder"></div>';
+  html += '<button class="small secondary" style="margin-top:6px" onclick="showNewReminderForm(\'' + id + '\', ' + rowNum + ')">+ הוסף תזכורת</button>';
+
+  openSupplierModal_(html);
+}
+function submitEditSupplierCore(rowNum) {
+  var id = 'es' + rowNum;
+  var v = supplierCoreFormValues_(id);
+  if (!v.name) { alert('נא למלא שם ספק'); return; }
+  var active = document.getElementById(id + '-active').checked;
+  run_(function (list) { refreshSupplierModalIfOpen_(list, rowNum); }).updateSupplier(rowNum, v.name, v.category, v.contact, v.phone, v.phone2, v.email, v.notes, active);
+}
+
+function saveSupplierField(fieldRowNum, supplierRowNum) {
+  var label = document.getElementById('field-label-' + fieldRowNum).value.trim();
+  var value = document.getElementById('field-value-' + fieldRowNum).value.trim();
+  run_(function (list) { refreshSupplierModalIfOpen_(list, supplierRowNum); }).updateSupplierField(fieldRowNum, label, value);
+}
+function removeSupplierField(fieldRowNum, supplierRowNum) {
+  run_(function (list) { refreshSupplierModalIfOpen_(list, supplierRowNum); }).deleteSupplierField(fieldRowNum);
+}
+function addSupplierField(id, supplierRowNum) {
+  var label = document.getElementById(id + '-newfield-label').value.trim();
+  var value = document.getElementById(id + '-newfield-value').value.trim();
+  if (!label) { alert('נא למלא תווית'); return; }
+  var s = currentSuppliers.find(function (x) { return x.rowNum === supplierRowNum; });
+  run_(function (list) { refreshSupplierModalIfOpen_(list, supplierRowNum); }).createSupplierField(s.name, label, value);
+}
+
+function reminderEditRowHtml_(r, supplierRowNum) {
+  var id = 'rem' + r.rowNum;
+  return '<div class="card" style="padding:10px;margin-bottom:8px">' +
+    '<label>סוג</label><select id="' + id + '-type">' + REMINDER_TYPES.map(function (t) { return '<option' + (t === r.type ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>' +
+    '<label>תיאור</label><input id="' + id + '-desc" value="' + esc(r.description) + '">' +
+    '<label>תדירות</label><select id="' + id + '-freq">' + REMINDER_FREQS.map(function (f) { return '<option' + (f === r.frequency ? ' selected' : '') + '>' + f + '</option>'; }).join('') + '</select>' +
+    '<label>תאריך יעד</label><input type="date" id="' + id + '-date" value="' + ddmmyyyyToIso_(r.dueDate) + '">' +
+    '<label>סכום</label><input type="number" id="' + id + '-amount" value="' + esc(r.amount) + '">' +
+    '<div class="row" style="margin-top:8px">' +
+      '<button class="small secondary" onclick="saveSupplierReminder(' + r.rowNum + ',' + supplierRowNum + ')">💾 שמור</button>' +
+      '<label class="switch"><input type="checkbox" ' + (r.active ? 'checked' : '') + ' onchange="toggleSupplierReminderActive_(' + r.rowNum + ', this.checked, ' + supplierRowNum + ')"><span class="slider"></span></label>' +
+    '</div></div>';
+}
+function saveSupplierReminder(reminderRowNum, supplierRowNum) {
+  var id = 'rem' + reminderRowNum;
+  var type = document.getElementById(id + '-type').value;
+  var desc = document.getElementById(id + '-desc').value.trim();
+  var freq = document.getElementById(id + '-freq').value;
+  var date = isoToDdmmyyyy_(document.getElementById(id + '-date').value);
+  var amount = document.getElementById(id + '-amount').value;
+  run_(function (list) { refreshSupplierModalIfOpen_(list, supplierRowNum); }).updateSupplierReminder(reminderRowNum, type, desc, freq, date, amount);
+}
+function toggleSupplierReminderActive_(reminderRowNum, active, supplierRowNum) {
+  run_(function (list) { refreshSupplierModalIfOpen_(list, supplierRowNum); }).toggleSupplierReminderActive(reminderRowNum, active);
+}
+function showNewReminderForm(id, supplierRowNum) {
+  var html = '<div class="card" style="padding:10px;margin-bottom:8px">' +
+    '<label>סוג</label><select id="' + id + '-nr-type">' + REMINDER_TYPES.map(function (t) { return '<option>' + t + '</option>'; }).join('') + '</select>' +
+    '<label>תיאור</label><input id="' + id + '-nr-desc">' +
+    '<label>תדירות</label><select id="' + id + '-nr-freq">' + REMINDER_FREQS.map(function (f) { return '<option>' + f + '</option>'; }).join('') + '</select>' +
+    '<label>תאריך יעד</label><input type="date" id="' + id + '-nr-date">' +
+    '<label>סכום</label><input type="number" id="' + id + '-nr-amount">' +
+    '<button style="margin-top:8px" onclick="addSupplierReminder(\'' + id + '\', ' + supplierRowNum + ')">שמור תזכורת</button></div>';
+  document.getElementById(id + '-new-reminder').innerHTML = html;
+}
+function addSupplierReminder(id, supplierRowNum) {
+  var type = document.getElementById(id + '-nr-type').value;
+  var desc = document.getElementById(id + '-nr-desc').value.trim();
+  var freq = document.getElementById(id + '-nr-freq').value;
+  var date = isoToDdmmyyyy_(document.getElementById(id + '-nr-date').value);
+  var amount = document.getElementById(id + '-nr-amount').value;
+  if (!desc) { alert('נא למלא תיאור'); return; }
+  var s = currentSuppliers.find(function (x) { return x.rowNum === supplierRowNum; });
+  run_(function (list) { refreshSupplierModalIfOpen_(list, supplierRowNum); }).createSupplierReminder(s.name, type, desc, freq, date, amount);
+}
+
+/* ───────────────────────── util ───────────────────────── */
+function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+loadDashboard();
+</script>

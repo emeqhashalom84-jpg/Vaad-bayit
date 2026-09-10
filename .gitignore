@@ -7,3 +7,7 @@ last_processed.txt
 *.log
 *token*.txt
 status/
+gen_err.txt
+gen_out.txt
+reload project.txt
+error picture/
