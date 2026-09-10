@@ -234,6 +234,9 @@ function onBankPdfSelected(file) {
         r.distribute = true; // credit rows tagged with a tenant auto-update תקבולי דיירים by
         // default — uncheck for a credit that isn't a regular monthly payment (e.g. an old-
         // debt/2025 settlement happens to be tagged with a tenant's name).
+        r.updateExpenses = true; // same idea for debit rows tagged with a supplier — auto-adds
+        // a row to הוצאות; uncheck for a debit that shouldn't be logged there (e.g. an internal
+        // transfer, or a refund already reflected elsewhere).
         return r;
       });
       document.getElementById('bank-upload-status').textContent =
@@ -261,7 +264,7 @@ function renderBankReviewTable() {
   var html = '<div class="card"><h3>בדיקה לפני שמירה</h3>' +
     '<p class="muted">שורות מסומנות "כבר קיים בגיליון" לא ייבחרו כברירת מחדל — אפשר לסמן אותן ידנית אם ההתאמה האוטומטית שגויה.</p>' +
     '<div class="tbl-wrap"><table><thead><tr>' +
-    '<th></th><th>תאריך</th><th>פעולה</th><th>סכום</th><th>יתרה</th><th>סוג</th><th>שם דייר/ספק</th><th>עבור</th><th>עדכן תקבולי דיירים</th>' +
+    '<th></th><th>תאריך</th><th>פעולה</th><th>סכום</th><th>יתרה</th><th>סוג</th><th>שם דייר/ספק</th><th>עבור</th><th>עדכון אוטומטי</th>' +
     '</tr></thead><tbody>';
   bankReviewRows.forEach(function (r) {
     var dupNote = r.isDuplicate ? ' <span class="muted">(כבר קיים בגיליון)</span>' : '';
@@ -278,7 +281,7 @@ function renderBankReviewTable() {
       '<td>' + bankNameCellHtml_(r) + '</td>' +
       '<td><input type="text" placeholder="עבור (אופציונלי)" value="' + esc(r.note || '') + '" style="width:100%" ' +
       'oninput="bankReviewRows[' + r.id + '].note=this.value"></td>' +
-      '<td style="text-align:center">' + (r.isCredit && r.include ? bankDistributeCellHtml_(r) : '<span class="muted">—</span>') +
+      '<td style="text-align:center">' + (!r.include ? '<span class="muted">—</span>' : (r.isCredit ? bankDistributeCellHtml_(r) : bankExpenseCellHtml_(r))) +
       '</td></tr>';
   });
   html += '</tbody></table></div>' +
@@ -342,6 +345,26 @@ function bankDistributeCellHtml_(r) {
     (r.distribute ? ' <button class="small secondary" style="font-size:11px" onclick="openBankSplitModal_(' + r.id + ')">✎ סכום' + label + '</button>' : '');
 }
 
+// Debit-side counterpart of bankDistributeCellHtml_ — no split/carryover concept for expenses,
+// so this is just a plain opt-out checkbox: checked means "add a row to הוצאות on save".
+// Per Oren (2026-09-10): "צפויה/לא צפויה" is auto-classified against the recurring-budget
+// keyword list server-side, but not every real expense fits that list cleanly (or the supplier
+// may not exist yet in כרטיסי ספקים) — so he keeps the final say via this dropdown, which
+// defaults to "אוטומטי" (server decides) but can be forced either way per row.
+function bankExpenseCellHtml_(r) {
+  var type = r.expenseType || '';
+  return '<input type="checkbox" ' + (r.updateExpenses ? 'checked' : '') +
+    ' title="בטל אם ההוצאה הזו לא צריכה להירשם בגיליון הוצאות" ' +
+    'onchange="bankReviewRows[' + r.id + '].updateExpenses=this.checked; renderBankReviewTable()">' +
+    (r.updateExpenses ?
+      ' <select style="font-size:11px" title="סוג ההוצאה (צפויה/לא צפויה) — אוטומטי לפי רשימת התקציב, אפשר לשנות" ' +
+      'onchange="bankReviewRows[' + r.id + '].expenseType=this.value">' +
+      '<option value="" ' + (type === '' ? 'selected' : '') + '>אוטומטי</option>' +
+      '<option value="צפויה" ' + (type === 'צפויה' ? 'selected' : '') + '>צפויה</option>' +
+      '<option value="לא צפויה" ' + (type === 'לא צפויה' ? 'selected' : '') + '>לא צפויה</option>' +
+      '</select>' : '');
+}
+
 // Redesigned per Oren (2026-09-10): instead of typing the amount TO distribute directly, type
 // how much goes to the OLD 2025 carryover debt — the rest is computed automatically and is
 // what actually gets distributed into 2026 months. Saving also deducts the carryover amount
@@ -379,13 +402,15 @@ function saveBankSplit_(id) {
 
 function saveBankRows() {
   var toSave = bankReviewRows.filter(function (r) { return r.include; })
-    .map(function (r) { return { date: r.date, name: r.name === '__other__' ? '' : r.name, action: r.action, amount: r.amount, isCredit: r.isCredit, balance: r.balance, note: r.note || '', distribute: !!r.distribute, distributeAmount: (r.distributeAmount === undefined || r.distributeAmount === null) ? r.amount : r.distributeAmount, carryoverAmount: r.carryoverAmount || 0 }; });
+    .map(function (r) { return { date: r.date, name: r.name === '__other__' ? '' : r.name, action: r.action, amount: r.amount, isCredit: r.isCredit, balance: r.balance, note: r.note || '', distribute: !!r.distribute, distributeAmount: (r.distributeAmount === undefined || r.distributeAmount === null) ? r.amount : r.distributeAmount, carryoverAmount: r.carryoverAmount || 0, updateExpenses: !!r.updateExpenses, expenseType: r.expenseType || '' }; });
   if (!toSave.length) { alert('לא סומנו שורות לשמירה'); return; }
   var distCount = toSave.filter(function (r) { return r.isCredit && r.name && r.distribute; }).length;
   var carryTotal = toSave.reduce(function (s, r) { return s + (r.carryoverAmount || 0); }, 0);
+  var expCount = toSave.filter(function (r) { return !r.isCredit && r.name && r.updateExpenses; }).length;
   var msg = 'לשמור ' + toSave.length + ' תנועות לגיליון "תנועות בנק"?';
   if (distCount) msg += '\n(' + distCount + ' מהן יעדכנו גם את תקבולי דיירים בהתאם)';
   if (carryTotal) msg += '\n(סה"כ ₪' + carryTotal.toLocaleString() + ' יקוזזו מ"חוב מועבר")';
+  if (expCount) msg += '\n(' + expCount + ' מהן יתווספו כשורה חדשה בגיליון "הוצאות")';
   if (!confirm(msg)) return;
   document.getElementById('bank-save-status').textContent = 'שומר...';
   run_(function () {

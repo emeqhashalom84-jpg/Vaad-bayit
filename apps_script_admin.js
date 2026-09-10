@@ -487,6 +487,11 @@ function appendBankTransactions(rows) {
     if (r.isCredit && r.name && r.carryoverAmount) {
       reduceCarryoverDebt_(r.name, r.carryoverAmount);
     }
+    // 2026-09-10: same "automatic update, per-row opt-out" pattern as tenant-payment
+    // distribution above, applied to debits — appends one row to הוצאות per tagged supplier.
+    if (!r.isCredit && r.name && r.updateExpenses) {
+      appendExpenseRow_(r.name, r.amount, r.date, r.note, r.expenseType);
+    }
   });
 
   triggerDashboardRefresh_();
@@ -496,8 +501,38 @@ function appendBankTransactions(rows) {
 function tenantPaymentsSheet_() { return SpreadsheetApp.openById(FINANCE_SHEET_ID).getSheetByName('תקבולי דיירים'); }
 function settingsSheet_() { return SpreadsheetApp.openById(FINANCE_SHEET_ID).getSheetByName('הגדרות'); }
 function approvedPaymentsSheet_() { return SpreadsheetApp.openById(FINANCE_SHEET_ID).getSheetByName('תשלומים מאושרים'); }
+function expensesSheet_() { return SpreadsheetApp.openById(FINANCE_SHEET_ID).getSheetByName('הוצאות'); }
 
 const MONTHS_HE_A_ = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+
+// Same keyword list as BUDGET_2026 in vaad_bayit_generator.py (kept in sync manually — this is
+// the Apps Script side, which has no access to the Python module). Per Oren (2026-09-10): a
+// bank debit's סוג is "צפויה" only if it's part of the approved recurring budget, else "לא צפויה".
+const BUDGET_EXPENSE_KEYWORDS_ = ['בדיקת מעליות', 'קונה', 'מעיינות', 'מונה', 'ביטוח', 'ניקיון', 'גג', 'בזק', 'עמלות בנק'];
+function isExpenseBudgeted_(supplierName) {
+  return BUDGET_EXPENSE_KEYWORDS_.some(function (kw) { return String(supplierName || '').indexOf(kw) !== -1; });
+}
+
+// Appends one row to "הוצאות" for a tagged bank debit — per Oren's decision (2026-09-10), unlike
+// תקבולי דיירים this sheet is one row per expense event, so there's no month-spread logic here:
+// קטגוריה defaults to the supplier name chosen in the bank row, and מיון לפי חודשים mirrors the
+// existing rows' own convention (numeric month index, matching MONTHS_HE_A_). סוג is
+// auto-classified against the recurring-budget keyword list above by default, but Oren can
+// force it either way per row (not every real expense fits that list, or the supplier may not
+// exist yet in כרטיסי ספקים) — explicitType, if passed, wins over the automatic guess.
+// Inserted at row 2 (right after the header), not appended at the physical bottom — same
+// "newest first" convention as תנועות בנק (per Oren, 2026-09-10: appendRow() landed new rows
+// at the very end regardless of month, breaking the sheet's existing newest-first layout).
+function appendExpenseRow_(supplierName, amount, dateStr, note, explicitType) {
+  const parts = String(dateStr).split('/'); // DD/MM/YYYY
+  const month = Number(parts[1]);
+  const year = Number(parts[2]);
+  const monthName = MONTHS_HE_A_[month - 1] || '';
+  const type = explicitType || (isExpenseBudgeted_(supplierName) ? 'צפויה' : 'לא צפויה');
+  const sheet = expensesSheet_();
+  sheet.insertRowAfter(1);
+  sheet.getRange(2, 1, 1, 8).setValues([[supplierName, year, monthName, amount, type, '', note || '', month]]);
+}
 
 // Real bug caught by Oren (2026-09-10): the distribution/normalize math was treating every
 // month as the flat base/corner rate, so a tenant with a committee-approved reduced amount for
