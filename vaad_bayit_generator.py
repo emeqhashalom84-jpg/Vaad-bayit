@@ -1574,13 +1574,19 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
             debt_cls   = 'badge-green'
             debt_label = 'ללא חוב'
 
-        # find contact for this tenant
-        con = contact_map.get(name, {})
-        for cname, cdata in contact_map.items():
-            if name in cname or cname in name:
-                con = cdata
-                break
-        apt_info = f'בניין {con.get("building","")} דירה {con.get("apt","")}' if con.get('building') else ''
+        # Building/apartment label: prefer the live תקבולי דיירים Sheet fetch (t['apt_building']/
+        # t['apt_number'], set in run_once() — confirmed correct by Oren) over the old contacts
+        # sheet lookup below, which was found to have wrong apartment numbers for building 86
+        # (a stale/out-of-sync data source, not something to reconcile — just stop using it).
+        if t.get('apt_building'):
+            apt_info = f'בניין {t["apt_building"]} דירה {t["apt_number"]}'
+        else:
+            con = contact_map.get(name, {})
+            for cname, cdata in contact_map.items():
+                if name in cname or cname in name:
+                    con = cdata
+                    break
+            apt_info = f'בניין {con.get("building","")} דירה {con.get("apt","")}' if con.get('building') else ''
 
         # determine rate for this tenant
         rate = 170 if any(v == 170 for v in t['monthly'] if v) else 210
