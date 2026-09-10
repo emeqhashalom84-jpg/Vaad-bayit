@@ -49,12 +49,16 @@ MONTHS_SHORT = ['ינו','פבר','מרץ','אפר','מאי','יוני','יול�
 # Shared by the Excel reader and the live-Sheet fetcher so both build identical categories.
 PIE_MAP = [
     ('בזק',     ['בזק']),
-    ('מעליות',  ['מעליות']),
+    ('מעליות',  ['מעליות', 'קונה']),
     ('חשמל',    ['מונה חשמל', 'חשמל']),
-    ('בנק',     ['עמלות בנק']),
+    ('בנק',     ['בנק']),
     ('ביטוח',   ['ביטוח']),
     ('חריגות',  ['בדיקה', 'לא צפוי', 'חוב', 'ניקיון', 'אילן']),
 ]
+# Note (2026-09-10): 'קונה' and the broadened 'בנק' (was 'עמלות בנק' only) were added because
+# the bank-import automation writes קטגוריה as the raw supplier name chosen in the Admin app
+# (e.g. "קונה", "בנק הפועלים") — per Oren's explicit choice, not the older hand-typed labels
+# ("מעליות - קונה", "עמלות בנק"). Both spellings now need to land in the same pie slice.
 
 # Fixed category → color mapping for the expense pie chart, keyed by name (not iteration
 # order, which used to determine color and silently reshuffled colors between categories
