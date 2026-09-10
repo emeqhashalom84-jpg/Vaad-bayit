@@ -736,7 +736,7 @@ def fetch_finance(receipts_url, expenses_url, bank_url, settings_url=None):
     import urllib3; urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     result = {'income_total': None, 'expense_total': None, 'balance': None, 'reserve_target': None,
               'monthly_income': None, 'monthly_expenses': None, 'expense_categories': None,
-              'budget': None, 'budget_actual': None}
+              'budget': None, 'budget_actual': None, 'transactions': None}
 
     try:
         url = _sheet_to_csv_url(receipts_url)
@@ -828,6 +828,23 @@ def fetch_finance(receipts_url, expenses_url, bank_url, settings_url=None):
             rows = list(csv.reader(io.StringIO(r.text)))
             if len(rows) > 1 and len(rows[1]) > 5:
                 result['balance'] = _num(rows[1][5])
+            # Also builds the full transactions list (same shape read_excel() produces from
+            # the old Excel תנועות חשבון sheet) so the dashboard's transactions table shows
+            # live Sheet data too — not just the balance KPI. תאריך,שם,פעולה,חובה,זכות,יתרה,עבור.
+            trans = []
+            for row in rows[1:]:
+                if not row or not row[0]: continue
+                trans.append({
+                    'date':    row[0].strip(),
+                    'name':    row[1].strip() if len(row) > 1 else '',
+                    'action':  row[2].strip() if len(row) > 2 else '',
+                    'debit':   _num(row[3]) if len(row) > 3 else None,
+                    'credit':  _num(row[4]) if len(row) > 4 else None,
+                    'balance': row[5].strip() if len(row) > 5 else '',
+                    'purpose': row[6].strip() if len(row) > 6 else '',
+                })
+            if trans:
+                result['transactions'] = trans
     except Exception as e:
         log.warning(f'Could not fetch finance bank sheet: {e}')
 
