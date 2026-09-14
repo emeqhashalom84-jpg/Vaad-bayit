@@ -1720,7 +1720,7 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
 
     tenant_html = f"""
 <div class="section" id="tenants">
-  <div class="section-title">🏠 תשלומי דיירים 2026</div>
+  <div class="section-title">🏠 תקבולי דיירים 2026</div>
   <div class="tbl-wrap">
   <table>
     <thead>
