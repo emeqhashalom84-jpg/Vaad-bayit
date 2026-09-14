@@ -92,6 +92,7 @@ BUDGET_2026 = [
     ('עמלות בנק',             240,   ['עמלות בנק'],     None),
     ('אחר - לא מתוכנן',       8000,  None,              'הוצאות לא צפויות'),
 ]
+BUDGET_TOTAL_2026 = 35772  # fixed annual target, independent of any data source
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CONFIG
@@ -363,7 +364,7 @@ def read_excel(path):
 
     # ── Budget ───────────────────────────────────────────────────────────────
     budget = []
-    budget_total = 35772
+    budget_total = BUDGET_TOTAL_2026
     for _nm, _tot, _kws, _cat in BUDGET_2026:
         _act = 0.0
         for _e in expenses:
@@ -716,11 +717,35 @@ def fetch_tenant_payments(receipts_url):
                 'building':     row[1].strip() if len(row) > 1 and row[1] else '',
                 'apartment':    row[2].strip() if len(row) > 2 and row[2] else '',
                 'apt_type':     row[19].strip() if len(row) > 19 and row[19] else '',
+                'note':         row[18].strip() if len(row) > 18 and row[18] else '',
             }
     except Exception as e:
         log.warning(f'Could not fetch tenant-payments sheet: {e}')
         return {}
     return out
+
+# Builds the same tenants-list shape read_excel() produces, directly from
+# fetch_tenant_payments()'s output — used as the PRIMARY source now (2026-09-14): the Sheet
+# already has everything except monthly_comments (an Excel-cell-comment feature with no Sheet
+# equivalent yet), so this needs no Excel involvement at all. monthly_debt is left at 0.0 here
+# on purpose — same as read_excel(), it's recomputed downstream from total_paid using the
+# elapsed-month formula (verified to match exactly), so a stub value here is never read as-is.
+def tenants_from_sheet(sheet_tenants):
+    tenants = []
+    for name, sv in sheet_tenants.items():
+        tenants.append({
+            'name':             name,
+            'monthly':          sv['monthly'],
+            'monthly_comments': [None] * 12,
+            'total_paid':       sv['total_paid'] or 0.0,
+            'monthly_debt':     0.0,
+            'annual_debt':      sv['annual_debt'] or 0.0,
+            'apt_building':     sv['building'],
+            'apt_number':       sv['apartment'],
+            'apt_type':         sv['apt_type'],
+            'note':             sv['note'],
+        })
+    return tenants
 
 def fetch_finance(receipts_url, expenses_url, bank_url, settings_url=None):
     """Reads live KPI values from the "Vaad — כספים" Google Sheet, overriding the
@@ -1640,9 +1665,16 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
             _otc_title = f'{he(_otc["name"])}: {fmt_ils(_op)} / {fmt_ils(_otc["amount"])} — {_dl}'
             _otc_cell = f'<td><span style="color:{_dc};font-size:{_dsize}" title="{_otc_title}">{_glyph}</span></td>'
 
+        # General per-tenant note from the "הערות" column in תקבולי דיירים (2026-09-14) — unlike
+        # the Excel-only monthly_comments (a specific note pinned to one month's cell), this is
+        # one note for the whole tenant row. Shown as a small icon + tooltip next to the name,
+        # same "icon/badge + title tooltip" convention already used for approved-payment credits.
+        _note = (t.get('note') or '').strip()
+        _note_icon = f' <span title="{he(_note)}" style="cursor:help">📝</span>' if _note else ''
+
         rows_html += f"""
 <tr>
-  <td><strong>{he(name)}</strong><br><small style="color:var(--muted)">{he(apt_info)}</small></td>
+  <td><strong>{he(name)}</strong>{_note_icon}<br><small style="color:var(--muted)">{he(apt_info)}</small></td>
   {dots.replace('<span', '<td><span').replace('</span>', '</span></td>')}
   {_otc_cell}
   <td style="font-variant-numeric:tabular-nums">{fmt_ils(t['total_paid'])}</td>
@@ -2146,18 +2178,19 @@ def run_once():
     finance_bank_url     = cfg.get('google','finance_bank_sheet_url', fallback='')
     finance_settings_url = cfg.get('google','finance_settings_sheet_url', fallback='')
 
-    log.info('Reading Excel...')
+    # Excel is now OPTIONAL (2026-09-14) — the Sheet is the primary source for everything;
+    # Excel, when reachable, only contributes monthly_comments (an Excel-cell-comment feature
+    # with no Sheet equivalent yet). This lets run_once() work unchanged on a machine with no
+    # access to the local Excel file at all (e.g. a CI runner), for full-automation purposes.
+    log.info('Reading Excel (optional)...')
+    excel_data = None
     try:
         if backup_folder:
             backup_excel(excel_path, backup_folder)
-        data = read_excel(excel_path)
+        excel_data = read_excel(excel_path)
+        log.info(f'Excel OK — Tenants: {len(excel_data["tenants"])} (comments only will be used)')
     except Exception as e:
-        log.error(f'Excel read failed: {e}')
-        return
-
-    log.info(f'Balance: {data["balance"]:,.0f}  Income: {data["income_total"]:,.0f}  '
-             f'Expenses: {data["expense_total"]:,.0f}  Collection: {data["collection_rate"]*100:.0f}%  '
-             f'Tenants: {len(data["tenants"])}')
+        log.warning(f'Excel unavailable ({e}) — continuing Sheet-only, no monthly comments')
 
     log.info('Fetching Google Sheets...')
     issues = fetch_issues(issues_url, admin_url)
@@ -2167,27 +2200,35 @@ def run_once():
     charge, charge_payments = fetch_charges(charges_url, charge_payments_url)
     log.info(f'Active charge: {charge.get("name") if charge else "none"}')
     finance = fetch_finance(finance_receipts_url, finance_expenses_url, finance_bank_url, finance_settings_url)
+    sheet_tenants = fetch_tenant_payments(finance_receipts_url)
+
+    # Sane zero-state defaults (same shape read_excel() used to guarantee) — finance/tenants
+    # overwrite almost all of these; only stays a placeholder if a Sheet fetch genuinely fails.
+    data = {
+        'balance': 0.0, 'income_total': 0.0, 'expense_total': 0.0,
+        'collection_rate': 0.0,  # always recomputed downstream from tenants + config anyway
+        'monthly_income': [0.0] * 12, 'monthly_expenses': [0.0] * 12,
+        'contacts': [], 'expense_categories': {}, 'transactions': [],
+        'budget': [], 'budget_total': BUDGET_TOTAL_2026, 'budget_actual': 0.0,
+        'building_info': {},
+    }
     for k, v in finance.items():
         if v is not None:
             data[k] = v
-    log.info(f'Finance sheet overrides — Income: {finance["income_total"]}  '
-             f'Expenses: {finance["expense_total"]}  Balance: {finance["balance"]}  '
-             f'Reserve target: {finance["reserve_target"]}')
+    log.info(f'Finance sheet — Income: {finance["income_total"]}  Expenses: {finance["expense_total"]}  '
+             f'Balance: {finance["balance"]}  Reserve target: {finance["reserve_target"]}')
 
-    sheet_tenants = fetch_tenant_payments(finance_receipts_url)
-    matched = 0
-    for t in data['tenants']:
-        for sheet_name, sv in sheet_tenants.items():
-            if _name_match(t['name'], sheet_name):
-                t['monthly']     = sv['monthly']
-                t['total_paid']  = sv['total_paid'] if sv['total_paid'] is not None else t['total_paid']
-                t['annual_debt'] = sv['annual_debt'] if sv['annual_debt'] is not None else t['annual_debt']
-                t['apt_building'] = sv['building']
-                t['apt_number']   = sv['apartment']
-                t['apt_type']      = sv['apt_type']
-                matched += 1
-                break
-    log.info(f'Tenant-payments sheet: matched {matched}/{len(data["tenants"])} tenants')
+    data['tenants'] = tenants_from_sheet(sheet_tenants)
+    if excel_data:
+        enriched = 0
+        for t in data['tenants']:
+            for et in excel_data['tenants']:
+                if _name_match(t['name'], et['name']):
+                    t['monthly_comments'] = et['monthly_comments']
+                    enriched += 1
+                    break
+        log.info(f'Excel comments: enriched {enriched}/{len(data["tenants"])} tenants')
+    log.info(f'Tenants (from Sheet): {len(data["tenants"])}')
 
     updated_at = datetime.now().strftime('%d/%m/%Y %H:%M')
     log.info('Generating HTML...')
