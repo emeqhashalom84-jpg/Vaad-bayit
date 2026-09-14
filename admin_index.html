@@ -77,7 +77,7 @@
 <header>🏢 ועד בית עמק השלום — ניהול</header>
 <div class="tabs">
   <div class="tab active" data-tab="dash" onclick="showTab('dash')">דשבורד</div>
-  <div class="tab" data-tab="bank" onclick="showTab('bank')">תנועות בנק</div>
+  <div class="tab" data-tab="bank" onclick="showTab('bank')">תנועות חשבון הבנק</div>
   <div class="tab" data-tab="charges" onclick="showTab('charges')">גביות</div>
   <div class="tab" data-tab="calls" onclick="showTab('calls')">קריאות</div>
   <div class="tab" data-tab="anns" onclick="showTab('anns')">הודעות</div>
@@ -164,7 +164,7 @@ var bankReviewRows = [], bankTenantNames = [], bankSupplierNames = [], bankTabLo
 
 function loadBankTab() {
   document.getElementById('tab-bank').innerHTML =
-    '<div class="card"><h3>ייבוא תנועות בנק מ-PDF</h3>' +
+    '<div class="card"><h3>ייבוא תנועות חשבון הבנק מ-PDF</h3>' +
     '<div id="bank-last-row" class="muted">בודק את השורה האחרונה בגיליון...</div>' +
     '<p class="muted" style="margin-top:8px">העלה PDF של תנועות חשבון מהבנק — המערכת תקרא אותו ותציע טבלה לבדיקה לפני שמירה, שום דבר לא נכתב לגיליון אוטומטית.</p>' +
     '<input type="file" id="bank-pdf-input" accept="application/pdf" onchange="onBankPdfSelected(this.files[0])">' +
@@ -407,7 +407,7 @@ function saveBankRows() {
   var distCount = toSave.filter(function (r) { return r.isCredit && r.name && r.distribute; }).length;
   var carryTotal = toSave.reduce(function (s, r) { return s + (r.carryoverAmount || 0); }, 0);
   var expCount = toSave.filter(function (r) { return !r.isCredit && r.name && r.updateExpenses; }).length;
-  var msg = 'לשמור ' + toSave.length + ' תנועות לגיליון "תנועות בנק"?';
+  var msg = 'לשמור ' + toSave.length + ' תנועות לגיליון "תנועות חשבון הבנק"?';
   if (distCount) msg += '\n(' + distCount + ' מהן יעדכנו גם את תקבולי דיירים בהתאם)';
   if (carryTotal) msg += '\n(סה"כ ₪' + carryTotal.toLocaleString() + ' יקוזזו מ"חוב מועבר")';
   if (expCount) msg += '\n(' + expCount + ' מהן יתווספו כשורה חדשה בגיליון "הוצאות")';

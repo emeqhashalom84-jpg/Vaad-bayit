@@ -257,7 +257,7 @@ function getTenantNames() {
 /* ───────────────────────── BANK STATEMENT PDF IMPORT ───────────────────────── */
 // "Vaad — כספים" — a different spreadsheet from CHARGES_SHEET_ID (that's "Vaad — גביות נוספות").
 const FINANCE_SHEET_ID = '1HC7znYWIVfMA-NZSJA-0braStI0NQa0vZiYymVo-pWU';
-function bankSheet_() { return SpreadsheetApp.openById(FINANCE_SHEET_ID).getSheetByName('תנועות בנק'); }
+function bankSheet_() { return SpreadsheetApp.openById(FINANCE_SHEET_ID).getSheetByName('תנועות חשבון הבנק'); }
 
 // Existing תנועות בנק rows' date column may hold a real Date object (Sheets auto-converts a
 // typed/pasted "DD/MM/YYYY" string the moment it looks date-like, unless explicitly locked as

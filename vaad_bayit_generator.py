@@ -1786,7 +1786,7 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
 </tr>"""
         tr_html = f"""
 <div class="section" id="transactions">
-  <div class="section-title">🏦 תנועות בנק
+  <div class="section-title">🏦 תנועות חשבון הבנק
     <small>{len(trans)} תנועות</small>
   </div>
   <input type="text" class="tr-search" id="tr-search" placeholder="חיפוש לפי שם / תיאור..." oninput="filterTrans()">
