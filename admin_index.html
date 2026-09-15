@@ -1064,12 +1064,12 @@ function showDebtClearanceModal_(rowNum) {
       '<label>עבור איזה דייר/תקופה:</label><select id="dc-tenant">'+options+'</select>' +
       '<label style="margin-top:8px">סוג אישור:</label>' +
       '<select id="dc-type">' +
-        '<option value="sale">✅ אישור היעדר חובות לבעל דירה (מכירה/עו"ד)</option>' +
-        '<option value="rental">✅ אישור תשלומים לשוכר</option>' +
+        '<option value="sale">אישור היעדר חובות לבעל דירה (מכירה/עו"ד)</option>' +
+        '<option value="rental">אישור תשלומים לשוכר</option>' +
       '</select>' +
       (t.rented ? '' : '<p class="muted" style="margin-top:8px">אין "בעל דירה" מוגדר בכרטיס זה — באישור המכירה יופיע '+esc(ownerName)+' (הדייר עצמו) כבעלים.</p>') +
       '<div style="margin-top:10px;display:flex;gap:8px">' +
-      '<button id="dc-go-btn" onclick="downloadDebtClearance_('+rowNum+', '+JSON.stringify(ownerName)+')">הפק אישור</button>' +
+      '<button id="dc-go-btn" onclick="downloadDebtClearance_('+rowNum+')">הפק אישור</button>' +
       '<button class="secondary" onclick="closeSupplierModal()">ביטול</button>' +
       '</div>'
     );
@@ -1078,8 +1078,13 @@ function showDebtClearanceModal_(rowNum) {
 
 // Server blocks entirely (throws) if the tenant has any open debt — the error message already
 // states the amount, so it's just shown as-is via alert(), no special-case handling needed here.
-function downloadDebtClearance_(rowNum, ownerName) {
+function downloadDebtClearance_(rowNum) {
   var t = currentTenants.find(function(x){ return x.rowNum === rowNum; }) || {};
+  // Recomputed here (not passed in from showDebtClearanceModal_) — embedding a Hebrew name
+  // straight into an onclick="..." HTML attribute string breaks on the first embedded quote
+  // character (real bug hit 2026-09-15). Cheap to recompute, and avoids the quoting problem
+  // entirely rather than trying to escape it correctly.
+  var ownerName = t.rented ? (t.owner && t.owner.name) : t.displayName;
   var tenantName = document.getElementById('dc-tenant').value;
   var certType = document.getElementById('dc-type').value;
   var btn = document.getElementById('dc-go-btn');
