@@ -1059,18 +1059,27 @@ function downloadDebtClearance_(rowNum) {
     btn.textContent = 'מפיק... (' + Math.round((Date.now() - start) / 1000) + ' שנ׳)';
   }, 1000);
   function done() { clearInterval(timer); btn.disabled = false; btn.textContent = origText; }
-  run_(function(result){
+  // Wrapped in try/catch: if the call itself throws synchronously (e.g. the client-side
+  // google.script.run stub doesn't recognize the function name at all — seen 2026-09-15, a
+  // deploy-sync issue, not a real code bug), the timer above would otherwise be orphaned and
+  // count up forever with no way to stop it, since done() would never run.
+  try {
+    run_(function(result){
+      done();
+      var a = document.createElement('a');
+      a.href = 'data:application/pdf;base64,' + result.base64;
+      a.download = result.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }).withFailureHandler(function(err){
+      done();
+      alert('✗ ' + err.message);
+    }).generateDebtClearanceCertificate_(t.building, t.apt, t.displayName);
+  } catch (e) {
     done();
-    var a = document.createElement('a');
-    a.href = 'data:application/pdf;base64,' + result.base64;
-    a.download = result.filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }).withFailureHandler(function(err){
-    done();
-    alert('✗ ' + err.message);
-  }).generateDebtClearanceCertificate_(t.building, t.apt, t.displayName);
+    alert('✗ שגיאת לקוח: ' + e.message);
+  }
 }
 
 /* ───────────────────────── SUPPLIERS ───────────────────────── */
