@@ -661,6 +661,74 @@ function applyNormalizeAllTenants(rowIdxs) {
   return true;
 }
 
+// ── ONE-TIME MIGRATION (2026-09-15) — run manually once from the Apps Script editor ────────
+// Adds occupancy-window columns (U "פעיל מחודש", V "פעיל עד חודש") to תקבולי דיירים and
+// rewrites the Q/R debt formulas to respect them, so a mid-year tenant swap can freeze the
+// departing tenant's debt at their last month and start the new tenant's debt only from their
+// move-in month — instead of every row implicitly assuming "occupied since January, still
+// occupied now" (MONTH(TODAY()) with no start/end bound, which is what every row's formula
+// does TODAY). Prerequisite for the planned "החלפת דייר" Admin button — not yet built.
+//
+// SAFE BY DESIGN: every existing row gets U=1, V="" (blank = "still active"), which makes the
+// new formula mathematically IDENTICAL to the old one for every tenant who hasn't moved
+// (verified: MIN(MONTH(TODAY()),12) - 1 + 1 = MONTH(TODAY()), same as today's formula). Each
+// row's own rate (210 or 170) is preserved by parsing it out of that row's EXISTING Q formula
+// — never assumed/hardcoded — so a row already using a different rate isn't silently changed.
+// Idempotent: skips migration entirely if the U1 header already reads "פעיל מחודש" (running
+// it twice is a safe no-op, not a double-migration).
+//
+// NORMALLY Apps Script must never write to columns P/Q/R (live formulas, only D:O are ever
+// written by the automated distribution/normalize code) — this function is the deliberate,
+// explicit, one-time exception to that rule; it is never called by any automated flow.
+function migrateAddOccupancyColumns_ONE_TIME() {
+  const sheet = tenantPaymentsSheet_();
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn(); // 20 (T) before migration
+  const uCol = lastCol + 1, vCol = lastCol + 2;
+
+  if (sheet.getRange(1, uCol).getValue() === 'פעיל מחודש') {
+    log_('migrateAddOccupancyColumns_ONE_TIME: already migrated, skipping');
+    return 'already migrated — no changes made';
+  }
+
+  sheet.getRange(1, uCol).setValue('פעיל מחודש');
+  sheet.getRange(1, vCol).setValue('פעיל עד חודש');
+
+  const names   = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  const qFormulas = sheet.getRange(2, 17, lastRow - 1, 1).getFormulas(); // col Q
+  var migrated = 0, skipped = [];
+  for (var i = 0; i < names.length; i++) {
+    const row = i + 2; // 1-indexed sheet row
+    const name = String(names[i][0] || '').trim();
+    const building = sheet.getRange(row, 2).getValue();
+    if (!name || !String(building || '').trim()) continue; // same "real tenant row" filter as the normalize tool
+
+    const m = /\((\d+)\s*\*\s*MONTH\(TODAY\(\)\)\)/.exec(qFormulas[i][0] || '');
+    if (!m) { skipped.push(name); continue; } // unexpected formula shape — leave untouched, flag for manual review
+    const rate = m[1];
+
+    sheet.getRange(row, uCol).setValue(1);
+    sheet.getRange(row, vCol).setValue('');
+    sheet.getRange(row, 17).setFormula(
+      '=MAX(0,(' + rate + '*(MIN(MONTH(TODAY()),IF(' + colLetter_(vCol) + row + '="",12,' + colLetter_(vCol) + row + '))-' +
+      colLetter_(uCol) + row + '+1))-P' + row + ')'
+    );
+    sheet.getRange(row, 18).setFormula(
+      '=(' + rate + '*(IF(' + colLetter_(vCol) + row + '="",12,' + colLetter_(vCol) + row + ')-' +
+      colLetter_(uCol) + row + '+1))-P' + row
+    );
+    migrated++;
+  }
+  const msg = 'Migrated ' + migrated + ' rows.' + (skipped.length ? ' Skipped (unexpected formula, check manually): ' + skipped.join(', ') : '');
+  log_('migrateAddOccupancyColumns_ONE_TIME: ' + msg);
+  return msg;
+}
+function colLetter_(col) {
+  var s = '';
+  while (col > 0) { var r = (col - 1) % 26; s = String.fromCharCode(65 + r) + s; col = Math.floor((col - 1) / 26); }
+  return s;
+}
+
 function carryoverSheet_() { return SpreadsheetApp.openById(FINANCE_SHEET_ID).getSheetByName('חוב מועבר'); }
 
 // Reduces a tenant's 2025 carryover debt by `amount` (e.g. 1520 - 520 = 1000), per Oren's
