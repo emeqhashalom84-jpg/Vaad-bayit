@@ -74,6 +74,7 @@ const ADMIN_EMAIL   = 'emeqhashalom84@gmail.com';
 const BUILDING_NAME    = 'ועד בית עמק השלום 84-88';
 const BUILDING_ADDRESS = 'עמק השלום 84, 86, 88, יקנעם עילית';
 const COMMITTEE_MANAGER = 'אורן אלקיים';
+const COMMITTEE_PHONE   = '0544883429'; // Oren's own number, from his תנועות/כרטיס דייר record
 const ADMIN_TELEGRAM_IDS = ['996999913']; // add Michael's chat id here once he's set up
 
 // Calls sheet columns (1-indexed, matches apps_script_calls.js)
@@ -785,66 +786,116 @@ function replaceTenant(building, apt, departureMonthIdx, newTenantName, startMon
   return true;
 }
 
-// ── Debt-clearance certificate ("אישור היעדר חובות") — 2026-09-15 ──────────────────────────
-// For a lawyer/property-transfer proceeding, per Oren: needs to be an actual PDF, not just
-// on-screen text. Deliberately BLOCKS entirely (throws) if the tenant has any open debt —
-// this certifies a legal fact, so it must never be possible to generate a false "no debt"
-// document. Reads Q/R as VALUES (not formulas) since those are the live, already-computed
-// figures. Independent of replaceTenant — usable any time a certificate is needed, not only
-// during an actual tenant swap (a lawyer may need this weeks before the swap is finalized).
+// ── Debt-clearance certificates ("אישור היעדר חובות") — 2026-09-15 ─────────────────────────
+// Two real letterhead templates Oren already uses (from his own .docx), reproduced exactly —
+// 'sale' (בעלות/עורך דין/רוכש פוטנציאלי) and 'rental' (מוחזקת על ידי .../המחזיק בדירה). For a
+// lawyer/property-transfer proceeding, so this must be an actual PDF, not on-screen text.
+// Deliberately BLOCKS entirely (throws) if the tenant has any open debt — this certifies a
+// legal fact, so it must never be possible to generate a false "no debt" document. Reads Q/R
+// as VALUES (not formulas) since those are the live, already-computed figures.
+// Matched by building+apartment+NAME (not just "the active row") — a turned-over apartment has
+// MULTIPLE תקבולי דיירים rows over time (see replaceTenant above), and a certificate may be
+// needed for whichever tenant-period Oren actually picks in the Admin UI, not only the current
+// one (a lawyer may need this weeks before a swap is finalized, or for a since-departed tenant).
 // Builds a throwaway Google Doc purely as a rendering step, converts it to a PDF blob, returns
 // the PDF as base64 for the client to trigger a download — then deletes the Doc (only the PDF
 // bytes matter; no need to leave a Doc cluttering Drive for every certificate ever generated).
-// NOTE (2026-09-15): no trailing underscore on this one, unlike most other internal helpers in
-// this file — Apps Script treats a trailing-underscore name as PRIVATE and genuinely refuses to
-// expose it to google.script.run from the client at all (not merely hiding it from the editor's
-// manual Run dropdown, which is what the underscore convention usually only does). This function
-// (and replaceTenant, below) are called directly from admin_index.html, so they must NOT have
-// one. Real bug hunted down the hard way — cost a long debugging session before finding this.
-function generateDebtClearanceCertificate(building, apt, tenantName) {
+// NOTE (2026-09-15): no trailing underscore on any of these three — Apps Script treats a
+// trailing-underscore function name as PRIVATE and genuinely refuses to expose it to
+// google.script.run from the client at all (not merely hiding it from the editor's manual Run
+// dropdown, which is what the underscore convention usually only does). All three are called
+// directly from admin_index.html. Real bug hunted down the hard way once already — don't repeat it.
+function formatHebrewDate_(date) {
+  return date.getDate() + ' ב' + MONTHS_HE_A_[date.getMonth()] + ' ' + date.getFullYear();
+}
+
+// Every תקבולי דיירים row for this apartment (current AND historical, after a tenant swap) —
+// feeds the "which tenant-period is this certificate for" dropdown in the Admin UI.
+function getTenantPaymentRowsForApt(building, apt) {
+  const rows = tenantPaymentsSheet_().getDataRange().getValues();
+  const b = String(building || '').trim(), a = String(apt || '').trim();
+  const out = [];
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][1] || '').trim() === b && String(rows[i][2] || '').trim() === a) {
+      out.push({ name: String(rows[i][0] || '').trim(), active: !rows[i][21] });
+    }
+  }
+  return out;
+}
+
+function findTenantPaymentRowByName_(building, apt, tenantName) {
   const sheet = tenantPaymentsSheet_();
   const rows = sheet.getDataRange().getValues();
   const b = String(building || '').trim(), a = String(apt || '').trim();
-  var rowIdx = -1;
   for (var i = 1; i < rows.length; i++) {
-    if (String(rows[i][1] || '').trim() === b && String(rows[i][2] || '').trim() === a && !rows[i][21]) {
-      rowIdx = i;
-      break;
+    if (String(rows[i][1] || '').trim() === b && String(rows[i][2] || '').trim() === a &&
+        String(rows[i][0] || '').trim() === tenantName) {
+      return { sheet: sheet, rowIdx: i };
     }
   }
-  if (rowIdx === -1) throw new Error('לא נמצאה שורה פעילה לבניין ' + b + ' דירה ' + a + ' בתקבולי דיירים');
+  return null;
+}
 
-  const sheetRow = rowIdx + 1;
-  const monthlyDebt = Number(sheet.getRange(sheetRow, 17).getValue()) || 0; // Q
-  const annualDebt  = Number(sheet.getRange(sheetRow, 18).getValue()) || 0; // R
+// certType: 'sale' or 'rental'. ownerName only matters for 'sale' (ignored otherwise).
+function generateDebtClearanceCertificate(building, apt, tenantName, certType, ownerName) {
+  const found = findTenantPaymentRowByName_(building, apt, tenantName);
+  if (!found) throw new Error('לא נמצאה שורה לבניין ' + building + ' דירה ' + apt + ' עבור "' + tenantName + '" בתקבולי דיירים');
+
+  const sheetRow = found.rowIdx + 1;
+  const monthlyDebt = Number(found.sheet.getRange(sheetRow, 17).getValue()) || 0; // Q
+  const annualDebt  = Number(found.sheet.getRange(sheetRow, 18).getValue()) || 0; // R
   if (monthlyDebt > 0.5 || annualDebt > 0.5) {
     throw new Error('לא ניתן להפיק אישור — יש חוב פתוח (חודשי: ₪' + monthlyDebt.toFixed(2) +
       ', שנתי: ₪' + annualDebt.toFixed(2) + '). יש לסגור את החוב לפני הפקת האישור.');
   }
 
   const now = new Date();
-  const monthName = MONTHS_HE_A_[now.getMonth()];
-  const dateStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+  const dateStr = formatHebrewDate_(now);
+  const streetAddr = 'עמק השלום ' + building;
+  const isSale = certType === 'sale';
 
-  const doc = DocumentApp.create('אישור היעדר חובות - ' + tenantName + ' - ' + dateStr);
+  const doc = DocumentApp.create((isSale ? 'אישור למכירה' : 'אישור לשכירות') + ' - ' + tenantName + ' - ' + dateStr);
   const body = doc.getBody();
-  const CENTER = DocumentApp.HorizontalAlignment.CENTER;
-  body.appendParagraph(BUILDING_NAME).setHeading(DocumentApp.ParagraphHeading.HEADING1).setAlignment(CENTER);
-  body.appendParagraph(BUILDING_ADDRESS).setAlignment(CENTER);
+  body.appendParagraph(dateStr);
+  body.appendParagraph('ועד הבית');
+  body.appendParagraph(BUILDING_NAME);
+  body.appendParagraph('יוקנעם עילית');
   body.appendParagraph('');
-  body.appendParagraph('אישור היעדר חובות').setHeading(DocumentApp.ParagraphHeading.HEADING2).setAlignment(CENTER);
+  body.appendParagraph('לכל מאן דבעי');
   body.appendParagraph('');
-  body.appendParagraph('תאריך: ' + dateStr);
+  body.appendParagraph('הנדון: אישור היעדר חובות לוועד הבית').setBold(true);
   body.appendParagraph('');
-  body.appendParagraph(
-    'הריני לאשר כי הדייר/ים ' + tenantName + ', שהתגורר/ו בבניין ' + b + ' דירה ' + a +
-    ', אינו/ם חייב/ים כספים לועד הבית ' + BUILDING_NAME + ' נכון לתאריך זה, וזאת עד ובכלל חודש ' +
-    monthName + ' ' + now.getFullYear() + '.'
-  );
+
+  if (isSale) {
+    body.appendParagraph(
+      'הרינו לאשר כי לדירה מס\' ' + apt + ' בבניין ברחוב ' + streetAddr + ', יוקנעם עילית בבעלות ' +
+      ownerName + ' לא קיימים חובות כלפי ועד הבית.'
+    );
+    body.appendParagraph('');
+    body.appendParagraph(
+      'למיטב ידיעת ועד הבית ונכון למועד הוצאת אישור זה, כל התשלומים החלים על הדירה האמורה שולמו במלואם, ' +
+      'ולא קיימים חובות שוטפים, חובות עבר, חיובים מיוחדים שאושרו וטרם נפרעו, או כל דרישה כספית אחרת בגין הדירה כלפי ועד הבית.'
+    );
+    body.appendParagraph('');
+    body.appendParagraph('תשלומי ועד הבית שולמו במלואם עד וכולל חודש ' + MONTHS_HE_A_[now.getMonth()] + ' ' + now.getFullYear() + '.');
+    body.appendParagraph('');
+    body.appendParagraph('אישור זה ניתן לבקשת בעלי הזכויות בדירה לצורך הצגתו בפני עורך דין, רוכש פוטנציאלי ו/או כל גורם מוסמך אחר, לפי העניין');
+  } else {
+    body.appendParagraph(
+      'הרינו לאשר כי בגין דירה מס\' ' + apt + ' בבניין ברחוב ' + streetAddr + ', המוחזקת על ידי ' +
+      tenantName + ', לא קיימים חובות לוועד הבית בגין תקופת השכירות הידועה לוועד הבית עד למועד הוצאת אישור זה.'
+    );
+    body.appendParagraph('');
+    body.appendParagraph('אישור זה ניתן לבקשת המחזיק בדירה לצורך הצגתו לכל גורם רלוונטי.');
+  }
+
   body.appendParagraph('');
   body.appendParagraph('בברכה,');
+  body.appendParagraph('____________________________________________________________________');
   body.appendParagraph(COMMITTEE_MANAGER);
   body.appendParagraph('בשם ' + BUILDING_NAME);
+  body.appendParagraph('טל\': ' + COMMITTEE_PHONE);
+  body.appendParagraph('דוא"ל: ' + ADMIN_EMAIL);
   doc.saveAndClose();
 
   const docFile = DriveApp.getFileById(doc.getId());
@@ -852,7 +903,7 @@ function generateDebtClearanceCertificate(building, apt, tenantName) {
   const base64 = Utilities.base64Encode(pdfBlob.getBytes());
   docFile.setTrashed(true);
 
-  return { base64: base64, filename: 'אישור היעדר חוב - ' + tenantName + '.pdf' };
+  return { base64: base64, filename: (isSale ? 'אישור למכירה' : 'אישור לשכירות') + ' - ' + tenantName + '.pdf' };
 }
 
 function carryoverSheet_() { return SpreadsheetApp.openById(FINANCE_SHEET_ID).getSheetByName('חוב מועבר'); }

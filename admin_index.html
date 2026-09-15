@@ -910,7 +910,7 @@ function renderTenants(tenants) {
       (t.rented ? contactLine_('בעל הדירה', t.owner) : '') +
       '<div class="row" style="margin-top:8px"><button class="small secondary" onclick="showEditTenantForm('+t.rowNum+')">ערוך</button>' +
       '<button class="small secondary" onclick="showReplaceTenantModal_('+t.rowNum+')">🔁 החלפת דייר</button>' +
-      '<button class="small secondary" onclick="downloadDebtClearance_('+t.rowNum+')" id="dc-btn-'+t.rowNum+'">📄 אישור היעדר חוב</button></div>' +
+      '<button class="small secondary" onclick="showDebtClearanceModal_('+t.rowNum+')">📄 אישור היעדר חוב</button></div>' +
       '<div id="edit-tenant-form-'+t.rowNum+'"></div></div>';
   }).join('');
   document.getElementById('tenant-cards-list').innerHTML = html;
@@ -1044,11 +1044,45 @@ function saveReplaceTenant_(rowNum) {
   }).replaceTenant(t.building, t.apt, departIdx, newName, startIdx);
 }
 
+// Two real letterhead templates Oren already uses — 'sale' (בעלות/עורך דין/רוכש) and 'rental'
+// (מוחזקת על ידי/המחזיק). A turned-over apartment can have several תקבולי דיירים rows over
+// time (see showReplaceTenantModal_ above), so this modal lets Oren pick WHICH tenant-period
+// the certificate is actually about — it doesn't just assume "whoever is active now".
+function showDebtClearanceModal_(rowNum) {
+  var t = currentTenants.find(function(x){ return x.rowNum === rowNum; }) || {};
+  run_(function(paymentRows){
+    if (!paymentRows || !paymentRows.length) {
+      alert('לא נמצאו שורות בתקבולי דיירים לבניין ' + t.building + ' דירה ' + t.apt);
+      return;
+    }
+    var ownerName = t.rented ? (t.owner && t.owner.name) : t.displayName;
+    var options = paymentRows.map(function(r){
+      return '<option value="'+esc(r.name)+'" '+(r.active?'selected':'')+'>'+esc(r.name)+(r.active?' (נוכחי)':' (עבר)')+'</option>';
+    }).join('');
+    openSupplierModal_(
+      '<h3>📄 אישור היעדר חוב — בניין '+esc(t.building)+' דירה '+esc(t.apt)+'</h3>' +
+      '<label>עבור איזה דייר/תקופה:</label><select id="dc-tenant">'+options+'</select>' +
+      '<label style="margin-top:8px">סוג אישור:</label>' +
+      '<select id="dc-type">' +
+        '<option value="sale">✅ אישור היעדר חובות לבעל דירה (מכירה/עו"ד)</option>' +
+        '<option value="rental">✅ אישור תשלומים לשוכר</option>' +
+      '</select>' +
+      (t.rented ? '' : '<p class="muted" style="margin-top:8px">אין "בעל דירה" מוגדר בכרטיס זה — באישור המכירה יופיע '+esc(ownerName)+' (הדייר עצמו) כבעלים.</p>') +
+      '<div style="margin-top:10px;display:flex;gap:8px">' +
+      '<button id="dc-go-btn" onclick="downloadDebtClearance_('+rowNum+', '+JSON.stringify(ownerName)+')">הפק אישור</button>' +
+      '<button class="secondary" onclick="closeSupplierModal()">ביטול</button>' +
+      '</div>'
+    );
+  }).getTenantPaymentRowsForApt(t.building, t.apt);
+}
+
 // Server blocks entirely (throws) if the tenant has any open debt — the error message already
 // states the amount, so it's just shown as-is via alert(), no special-case handling needed here.
-function downloadDebtClearance_(rowNum) {
+function downloadDebtClearance_(rowNum, ownerName) {
   var t = currentTenants.find(function(x){ return x.rowNum === rowNum; }) || {};
-  var btn = document.getElementById('dc-btn-'+rowNum);
+  var tenantName = document.getElementById('dc-tenant').value;
+  var certType = document.getElementById('dc-type').value;
+  var btn = document.getElementById('dc-go-btn');
   var origText = btn.textContent;
   btn.disabled = true;
   // Visible elapsed-seconds counter (same idea as startBankParseTimer_ for the PDF-import
@@ -1066,6 +1100,7 @@ function downloadDebtClearance_(rowNum) {
   try {
     run_(function(result){
       done();
+      closeSupplierModal();
       var a = document.createElement('a');
       a.href = 'data:application/pdf;base64,' + result.base64;
       a.download = result.filename;
@@ -1075,7 +1110,7 @@ function downloadDebtClearance_(rowNum) {
     }).withFailureHandler(function(err){
       done();
       alert('✗ ' + err.message);
-    }).generateDebtClearanceCertificate(t.building, t.apt, t.displayName);
+    }).generateDebtClearanceCertificate(t.building, t.apt, tenantName, certType, ownerName);
   } catch (e) {
     done();
     alert('✗ שגיאת לקוח: ' + e.message);
