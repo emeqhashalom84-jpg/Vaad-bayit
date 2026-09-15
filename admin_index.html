@@ -899,7 +899,8 @@ function renderTenants(tenants) {
       contactLine_('איש קשר 1', t.contact1) +
       contactLine_('איש קשר 2', t.contact2) +
       (t.rented ? contactLine_('בעל הדירה', t.owner) : '') +
-      '<div class="row" style="margin-top:8px"><button class="small secondary" onclick="showEditTenantForm('+t.rowNum+')">ערוך</button></div>' +
+      '<div class="row" style="margin-top:8px"><button class="small secondary" onclick="showEditTenantForm('+t.rowNum+')">ערוך</button>' +
+      '<button class="small secondary" onclick="showReplaceTenantModal_('+t.rowNum+')">🔁 החלפת דייר</button></div>' +
       '<div id="edit-tenant-form-'+t.rowNum+'"></div></div>';
   }).join('');
   document.getElementById('tenant-cards-list').innerHTML = html;
@@ -984,6 +985,53 @@ function submitEditTenant(rowNum) {
   run_(renderTenants).updateTenantCard(
     rowNum, v.building, v.apt, v.lastName, v.c1name, v.c1phone, v.c1email,
     v.c2name, v.c2phone, v.c2email, v.rented, v.ownerName, v.ownerPhone, v.ownerEmail);
+}
+
+// ── Tenant turnover ("החלפת דייר") — 2026-09-15 ─────────────────────────────────────────────
+// Closes the departing tenant's תקבולי דיירים row at their last month and opens a new row for
+// the incoming tenant from their first month — both keep the same בניין/דירה, so payment
+// history for the unit reads as two consecutive chapters instead of being overwritten.
+// Deliberately does NOT touch this card's own contact fields (שם משפחה/אנשי קשר) — update
+// those separately via "ערוך" whenever the new tenant's details are known; this button is
+// scoped to the finance side only. Requires the one-time occupancy-columns migration
+// (migrateAddOccupancyColumns_ONE_TIME) to have already been run in Code.gs.
+var MONTHS_HE_FULL_ = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+function monthSelectHtml_(id, selectedIdx1based) {
+  var html = '<select id="'+id+'">';
+  MONTHS_HE_FULL_.forEach(function(name, i) {
+    html += '<option value="'+(i+1)+'" '+((i+1)===selectedIdx1based?'selected':'')+'>'+name+'</option>';
+  });
+  return html + '</select>';
+}
+function showReplaceTenantModal_(rowNum) {
+  var t = currentTenants.find(function(x){ return x.rowNum === rowNum; }) || {};
+  var nowMonth = new Date().getMonth() + 1;
+  openSupplierModal_(
+    '<h3>🔁 החלפת דייר — בניין '+esc(t.building)+' דירה '+esc(t.apt)+'</h3>' +
+    '<p class="muted">דייר נוכחי: '+esc(t.displayName)+'. פעולה זו סוגרת את השורה שלו ב"תקבולי דיירים" ופותחת שורה חדשה לדייר הנכנס — לא נוגעת בפרטי הקשר של כרטיס זה (עדכן אותם בנפרד דרך "ערוך").</p>' +
+    '<label>חודש עזיבת הדייר הנוכחי:</label>' + monthSelectHtml_('rt-depart', nowMonth) +
+    '<label style="margin-top:8px">שם הדייר החדש (כפי שיוצג בדשבורד):</label>' +
+    '<input type="text" id="rt-newname" placeholder="לדוגמה: דני ורותי כהן">' +
+    '<label style="margin-top:8px">חודש כניסת הדייר החדש:</label>' + monthSelectHtml_('rt-start', nowMonth) +
+    '<div style="margin-top:10px;display:flex;gap:8px">' +
+    '<button onclick="saveReplaceTenant_('+rowNum+')">אשר החלפה</button>' +
+    '<button class="secondary" onclick="closeSupplierModal()">ביטול</button>' +
+    '</div>'
+  );
+}
+function saveReplaceTenant_(rowNum) {
+  var t = currentTenants.find(function(x){ return x.rowNum === rowNum; }) || {};
+  var newName = document.getElementById('rt-newname').value.trim();
+  if (!newName) { alert('נא להזין שם לדייר החדש'); return; }
+  var departIdx = Number(document.getElementById('rt-depart').value);
+  var startIdx = Number(document.getElementById('rt-start').value);
+  if (!confirm('לסגור את השורה של '+t.displayName+' בחודש '+MONTHS_HE_FULL_[departIdx-1]+',\nולפתוח שורה חדשה ל"'+newName+'" מחודש '+MONTHS_HE_FULL_[startIdx-1]+'?\n\nזכור לבדוק ידנית ב-config.ini אם היו רשומות בשם הישן (תעריף פינה/זיכוי מאושר/חוב מועבר).')) return;
+  run_(function(){
+    closeSupplierModal();
+    alert('✓ בוצע — השורה החדשה נוספה ל"תקבולי דיירים"');
+  }).withFailureHandler(function(err){
+    alert('✗ שגיאה: ' + err.message);
+  }).replaceTenant_(t.building, t.apt, departIdx, newName, startIdx);
 }
 
 /* ───────────────────────── SUPPLIERS ───────────────────────── */

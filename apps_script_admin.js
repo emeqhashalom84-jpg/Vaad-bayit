@@ -729,6 +729,53 @@ function colLetter_(col) {
   return s;
 }
 
+// ── Tenant turnover ("החלפת דייר") — 2026-09-15 ─────────────────────────────────────────────
+// Depends on migrateAddOccupancyColumns_ONE_TIME already having been run (U/V columns must
+// exist with every row's Q/R already rewritten to the occupancy-aware formula). Closes the
+// departing tenant's row at their last month (V) and opens a NEW row for the incoming tenant
+// starting at their first month (U) — both rows keep the same building+apartment, so the
+// dashboard shows two chapters of the same unit instead of overwriting history.
+// Deliberately does NOT touch כרטיסי דיירים (contact info) — that stays the separate, existing
+// form/approval flow; Oren updates the card's contact fields whenever he has them, independent
+// of this. Finds the OLD row by building+apartment (not by name — the whole point of this
+// feature is that name-based matching is fragile across a tenant swap), preferring the row
+// with a still-blank V (i.e. currently active) in case a second swap ever happens on the same
+// unit. Q/R/apt-type are copied from the old row via copyTo(), NOT reconstructed as formula
+// text — copyTo() auto-adjusts the U/V/P row-relative references to the new row, so this never
+// needs to know or guess the actual formula shape (kept in sync automatically with whatever the
+// migration or a future formula tweak produced).
+function replaceTenant_(building, apt, departureMonthIdx, newTenantName, startMonthIdx) {
+  const sheet = tenantPaymentsSheet_();
+  const rows = sheet.getDataRange().getValues();
+  const b = String(building || '').trim(), a = String(apt || '').trim();
+  var oldRowIdx = -1;
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][1] || '').trim() === b && String(rows[i][2] || '').trim() === a && !rows[i][21]) {
+      oldRowIdx = i;
+      break;
+    }
+  }
+  if (oldRowIdx === -1) {
+    throw new Error('לא נמצאה שורה פעילה לבניין ' + b + ' דירה ' + a + ' בתקבולי דיירים — ודא שהמיגרציה (עמודות U/V) בוצעה');
+  }
+  const oldSheetRow = oldRowIdx + 1;
+  const aptType = rows[oldRowIdx][19]; // עמודה T = סוג דירה
+
+  sheet.getRange(oldSheetRow, 22).setValue(departureMonthIdx); // V — closes the departing tenant's row
+
+  const newSheetRow = oldSheetRow + 1;
+  sheet.insertRowAfter(oldSheetRow);
+  sheet.getRange(oldSheetRow, 16, 1, 3) // P:R
+    .copyTo(sheet.getRange(newSheetRow, 16, 1, 3), SpreadsheetApp.CopyPasteType.PASTE_FORMULA, false);
+  sheet.getRange(newSheetRow, 1, 1, 3).setValues([[newTenantName, building, apt]]); // A:C
+  sheet.getRange(newSheetRow, 20).setValue(aptType); // T
+  sheet.getRange(newSheetRow, 21).setValue(startMonthIdx); // U
+  sheet.getRange(newSheetRow, 22).setValue(''); // V stays blank — new tenant is active
+
+  triggerDashboardRefresh_();
+  return true;
+}
+
 function carryoverSheet_() { return SpreadsheetApp.openById(FINANCE_SHEET_ID).getSheetByName('חוב מועבר'); }
 
 // Reduces a tenant's 2025 carryover debt by `amount` (e.g. 1520 - 520 = 1000), per Oren's
