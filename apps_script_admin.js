@@ -856,46 +856,54 @@ function generateDebtClearanceCertificate(building, apt, tenantName, certType, o
 
   const doc = DocumentApp.create((isSale ? 'אישור למכירה' : 'אישור לשכירות') + ' - ' + tenantName + ' - ' + dateStr);
   const body = doc.getBody();
-  body.appendParagraph(dateStr);
-  body.appendParagraph('ועד הבית');
-  body.appendParagraph(BUILDING_NAME);
-  body.appendParagraph('יוקנעם עילית');
-  body.appendParagraph('');
-  body.appendParagraph('לכל מאן דבעי');
-  body.appendParagraph('');
-  body.appendParagraph('הנדון: אישור היעדר חובות לוועד הבית').setBold(true);
-  body.appendParagraph('');
+  const RIGHT = DocumentApp.HorizontalAlignment.RIGHT, CENTER = DocumentApp.HorizontalAlignment.CENTER;
+  // DocumentApp paragraphs default to left-aligned/LTR with no built-in "make this RTL" call —
+  // explicitly right-aligning every paragraph is what actually fixes a Hebrew doc reading
+  // backwards (real issue Oren caught 2026-09-15: the whole letter came out flush-left).
+  function p(text) { return body.appendParagraph(text).setAlignment(RIGHT); }
+
+  p(dateStr);
+  p('ועד הבית');
+  p(BUILDING_NAME);
+  p('יוקנעם עילית');
+  p('');
+  p('לכל מאן דבעי');
+  p('');
+  // הנדון: bigger, underlined, centered — per Oren's explicit styling request, to stand out
+  // as the letter's subject line rather than blend into the body paragraphs.
+  p('הנדון: אישור היעדר חובות לוועד הבית').setBold(true).setUnderline(true).setFontSize(13).setAlignment(CENTER);
+  p('');
 
   if (isSale) {
-    body.appendParagraph(
+    p(
       'הרינו לאשר כי לדירה מס\' ' + apt + ' בבניין ברחוב ' + streetAddr + ', יוקנעם עילית בבעלות ' +
       ownerName + ' לא קיימים חובות כלפי ועד הבית.'
     );
-    body.appendParagraph('');
-    body.appendParagraph(
+    p('');
+    p(
       'למיטב ידיעת ועד הבית ונכון למועד הוצאת אישור זה, כל התשלומים החלים על הדירה האמורה שולמו במלואם, ' +
       'ולא קיימים חובות שוטפים, חובות עבר, חיובים מיוחדים שאושרו וטרם נפרעו, או כל דרישה כספית אחרת בגין הדירה כלפי ועד הבית.'
     );
-    body.appendParagraph('');
-    body.appendParagraph('תשלומי ועד הבית שולמו במלואם עד וכולל חודש ' + MONTHS_HE_A_[now.getMonth()] + ' ' + now.getFullYear() + '.');
-    body.appendParagraph('');
-    body.appendParagraph('אישור זה ניתן לבקשת בעלי הזכויות בדירה לצורך הצגתו בפני עורך דין, רוכש פוטנציאלי ו/או כל גורם מוסמך אחר, לפי העניין');
+    p('');
+    p('תשלומי ועד הבית שולמו במלואם עד וכולל חודש ' + MONTHS_HE_A_[now.getMonth()] + ' ' + now.getFullYear() + '.');
+    p('');
+    p('אישור זה ניתן לבקשת בעלי הזכויות בדירה לצורך הצגתו בפני עורך דין, רוכש פוטנציאלי ו/או כל גורם מוסמך אחר, לפי העניין');
   } else {
-    body.appendParagraph(
+    p(
       'הרינו לאשר כי בגין דירה מס\' ' + apt + ' בבניין ברחוב ' + streetAddr + ', המוחזקת על ידי ' +
       tenantName + ', לא קיימים חובות לוועד הבית בגין תקופת השכירות הידועה לוועד הבית עד למועד הוצאת אישור זה.'
     );
-    body.appendParagraph('');
-    body.appendParagraph('אישור זה ניתן לבקשת המחזיק בדירה לצורך הצגתו לכל גורם רלוונטי.');
+    p('');
+    p('אישור זה ניתן לבקשת המחזיק בדירה לצורך הצגתו לכל גורם רלוונטי.');
   }
 
-  body.appendParagraph('');
-  body.appendParagraph('בברכה,');
-  body.appendParagraph('____________________________________________________________________');
-  body.appendParagraph(COMMITTEE_MANAGER);
-  body.appendParagraph('בשם ' + BUILDING_NAME);
-  body.appendParagraph('טל\': ' + COMMITTEE_PHONE);
-  body.appendParagraph('דוא"ל: ' + ADMIN_EMAIL);
+  p('');
+  p('בברכה,');
+  p('____________________________________________________________________');
+  p(COMMITTEE_MANAGER);
+  p('בשם ' + BUILDING_NAME);
+  p('טל\': ' + COMMITTEE_PHONE);
+  p('דוא"ל: ' + ADMIN_EMAIL);
   doc.saveAndClose();
 
   const docFile = DriveApp.getFileById(doc.getId());
