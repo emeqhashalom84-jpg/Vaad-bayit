@@ -860,7 +860,13 @@ function generateDebtClearanceCertificate(building, apt, tenantName, certType, o
   // DocumentApp paragraphs default to left-aligned/LTR with no built-in "make this RTL" call —
   // explicitly right-aligning every paragraph is what actually fixes a Hebrew doc reading
   // backwards (real issue Oren caught 2026-09-15: the whole letter came out flush-left).
-  function p(text) { return body.appendParagraph(text).setAlignment(RIGHT); }
+  // Leading ‏ (RIGHT-TO-LEFT MARK, invisible/zero-width) forces the paragraph's bidi base
+  // direction to true RTL — setAlignment(RIGHT) alone only positions the paragraph block against
+  // the right margin, it does NOT fix the LOGICAL reading/embedding direction, so "weak"
+  // characters (periods, commas) at the end of a sentence land on the wrong side (real issue
+  // Oren caught 2026-09-15: punctuation stranded away from the last word instead of right after
+  // it in RTL reading order).
+  function p(text) { return body.appendParagraph('‏' + text).setAlignment(RIGHT); }
 
   p(dateStr);
   p('ועד הבית');
