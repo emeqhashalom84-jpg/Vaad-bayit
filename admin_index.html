@@ -1041,7 +1041,7 @@ function saveReplaceTenant_(rowNum) {
     alert('✓ בוצע — השורה החדשה נוספה ל"תקבולי דיירים"');
   }).withFailureHandler(function(err){
     alert('✗ שגיאה: ' + err.message);
-  }).replaceTenant_(t.building, t.apt, departIdx, newName, startIdx);
+  }).replaceTenant(t.building, t.apt, departIdx, newName, startIdx);
 }
 
 // Server blocks entirely (throws) if the tenant has any open debt — the error message already
@@ -1075,7 +1075,7 @@ function downloadDebtClearance_(rowNum) {
     }).withFailureHandler(function(err){
       done();
       alert('✗ ' + err.message);
-    }).generateDebtClearanceCertificate_(t.building, t.apt, t.displayName);
+    }).generateDebtClearanceCertificate(t.building, t.apt, t.displayName);
   } catch (e) {
     done();
     alert('✗ שגיאת לקוח: ' + e.message);

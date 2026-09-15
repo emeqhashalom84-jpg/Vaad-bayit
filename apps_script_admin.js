@@ -751,7 +751,9 @@ function colLetter_(col) {
 // text — copyTo() auto-adjusts the U/V/P row-relative references to the new row, so this never
 // needs to know or guess the actual formula shape (kept in sync automatically with whatever the
 // migration or a future formula tweak produced).
-function replaceTenant_(building, apt, departureMonthIdx, newTenantName, startMonthIdx) {
+// NOTE (2026-09-15): no trailing underscore — see generateDebtClearanceCertificate's comment
+// below for why (Apps Script refuses google.script.run access to trailing-underscore names).
+function replaceTenant(building, apt, departureMonthIdx, newTenantName, startMonthIdx) {
   const sheet = tenantPaymentsSheet_();
   const rows = sheet.getDataRange().getValues();
   const b = String(building || '').trim(), a = String(apt || '').trim();
@@ -788,12 +790,18 @@ function replaceTenant_(building, apt, departureMonthIdx, newTenantName, startMo
 // on-screen text. Deliberately BLOCKS entirely (throws) if the tenant has any open debt —
 // this certifies a legal fact, so it must never be possible to generate a false "no debt"
 // document. Reads Q/R as VALUES (not formulas) since those are the live, already-computed
-// figures. Independent of replaceTenant_ — usable any time a certificate is needed, not only
+// figures. Independent of replaceTenant — usable any time a certificate is needed, not only
 // during an actual tenant swap (a lawyer may need this weeks before the swap is finalized).
 // Builds a throwaway Google Doc purely as a rendering step, converts it to a PDF blob, returns
 // the PDF as base64 for the client to trigger a download — then deletes the Doc (only the PDF
 // bytes matter; no need to leave a Doc cluttering Drive for every certificate ever generated).
-function generateDebtClearanceCertificate_(building, apt, tenantName) {
+// NOTE (2026-09-15): no trailing underscore on this one, unlike most other internal helpers in
+// this file — Apps Script treats a trailing-underscore name as PRIVATE and genuinely refuses to
+// expose it to google.script.run from the client at all (not merely hiding it from the editor's
+// manual Run dropdown, which is what the underscore convention usually only does). This function
+// (and replaceTenant, below) are called directly from admin_index.html, so they must NOT have
+// one. Real bug hunted down the hard way — cost a long debugging session before finding this.
+function generateDebtClearanceCertificate(building, apt, tenantName) {
   const sheet = tenantPaymentsSheet_();
   const rows = sheet.getDataRange().getValues();
   const b = String(building || '').trim(), a = String(apt || '').trim();
