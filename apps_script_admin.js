@@ -871,7 +871,7 @@ function generateDebtClearanceCertificate(building, apt, tenantName, certType, o
   p('');
   // הנדון: bigger, underlined, centered — per Oren's explicit styling request, to stand out
   // as the letter's subject line rather than blend into the body paragraphs.
-  p('הנדון: אישור היעדר חובות לוועד הבית').setBold(true).setUnderline(true).setFontSize(13).setAlignment(CENTER);
+  const subjectPar = p('הנדון: אישור היעדר חובות לוועד הבית').setAlignment(CENTER);
   p('');
 
   if (isSale) {
@@ -904,6 +904,11 @@ function generateDebtClearanceCertificate(building, apt, tenantName, certType, o
   p('בשם ' + BUILDING_NAME);
   p('טל\': ' + COMMITTEE_PHONE);
   p('דוא"ל: ' + ADMIN_EMAIL);
+  // Whole-letter font size (12pt, per Oren) applied last so it doesn't get overridden by any
+  // earlier per-paragraph call — then the הנדון line's own styling (bold/underline/14pt) is
+  // re-applied on top, since it must stand out from the rest, not blend into the 12pt body text.
+  body.editAsText().setFontSize(12);
+  subjectPar.setFontSize(14).setBold(true).setUnderline(true);
   doc.saveAndClose();
 
   const docFile = DriveApp.getFileById(doc.getId());
