@@ -106,6 +106,15 @@ var DASHBOARD_URL = 'https://emeqhashalom84-jpg.github.io/Vaad-bayit/';
 function gsError_(err) { alert('שגיאה בשרת: ' + (err && err.message ? err.message : err)); }
 function run_(successHandler) { return google.script.run.withSuccessHandler(successHandler).withFailureHandler(gsError_); }
 
+// Surfaces any uncaught client-side JS error as a plain alert() — added 2026-09-15 because
+// Oren's work laptop has DevTools/Console blocked by IT policy (Palo Alto Networks), so a
+// silent client-side exception (e.g. a null element, a bad reference) would otherwise be
+// completely invisible with no way to diagnose it at all.
+window.onerror = function (msg, url, line, col, error) {
+  alert('שגיאת JS: ' + msg + ' (שורה ' + line + ')');
+  return false;
+};
+
 function showTab(name) {
   ['dash','bank','charges','calls','anns','tenants','suppliers'].forEach(function(t){
     document.getElementById('tab-'+t).style.display = (t===name) ? '' : 'none';
@@ -1041,9 +1050,17 @@ function downloadDebtClearance_(rowNum) {
   var t = currentTenants.find(function(x){ return x.rowNum === rowNum; }) || {};
   var btn = document.getElementById('dc-btn-'+rowNum);
   var origText = btn.textContent;
-  btn.disabled = true; btn.textContent = 'מפיק...';
+  btn.disabled = true;
+  // Visible elapsed-seconds counter (same idea as startBankParseTimer_ for the PDF-import
+  // feature) — without DevTools available, a plain "stuck" button gives Oren no way to tell
+  // "still working" from "actually broken", or how many seconds have really passed.
+  var start = Date.now();
+  var timer = setInterval(function () {
+    btn.textContent = 'מפיק... (' + Math.round((Date.now() - start) / 1000) + ' שנ׳)';
+  }, 1000);
+  function done() { clearInterval(timer); btn.disabled = false; btn.textContent = origText; }
   run_(function(result){
-    btn.disabled = false; btn.textContent = origText;
+    done();
     var a = document.createElement('a');
     a.href = 'data:application/pdf;base64,' + result.base64;
     a.download = result.filename;
@@ -1051,7 +1068,7 @@ function downloadDebtClearance_(rowNum) {
     a.click();
     document.body.removeChild(a);
   }).withFailureHandler(function(err){
-    btn.disabled = false; btn.textContent = origText;
+    done();
     alert('✗ ' + err.message);
   }).generateDebtClearanceCertificate_(t.building, t.apt, t.displayName);
 }
