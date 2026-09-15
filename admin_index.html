@@ -900,7 +900,8 @@ function renderTenants(tenants) {
       contactLine_('איש קשר 2', t.contact2) +
       (t.rented ? contactLine_('בעל הדירה', t.owner) : '') +
       '<div class="row" style="margin-top:8px"><button class="small secondary" onclick="showEditTenantForm('+t.rowNum+')">ערוך</button>' +
-      '<button class="small secondary" onclick="showReplaceTenantModal_('+t.rowNum+')">🔁 החלפת דייר</button></div>' +
+      '<button class="small secondary" onclick="showReplaceTenantModal_('+t.rowNum+')">🔁 החלפת דייר</button>' +
+      '<button class="small secondary" onclick="downloadDebtClearance_('+t.rowNum+')" id="dc-btn-'+t.rowNum+'">📄 אישור היעדר חוב</button></div>' +
       '<div id="edit-tenant-form-'+t.rowNum+'"></div></div>';
   }).join('');
   document.getElementById('tenant-cards-list').innerHTML = html;
@@ -1032,6 +1033,27 @@ function saveReplaceTenant_(rowNum) {
   }).withFailureHandler(function(err){
     alert('✗ שגיאה: ' + err.message);
   }).replaceTenant_(t.building, t.apt, departIdx, newName, startIdx);
+}
+
+// Server blocks entirely (throws) if the tenant has any open debt — the error message already
+// states the amount, so it's just shown as-is via alert(), no special-case handling needed here.
+function downloadDebtClearance_(rowNum) {
+  var t = currentTenants.find(function(x){ return x.rowNum === rowNum; }) || {};
+  var btn = document.getElementById('dc-btn-'+rowNum);
+  var origText = btn.textContent;
+  btn.disabled = true; btn.textContent = 'מפיק...';
+  run_(function(result){
+    btn.disabled = false; btn.textContent = origText;
+    var a = document.createElement('a');
+    a.href = 'data:application/pdf;base64,' + result.base64;
+    a.download = result.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }).withFailureHandler(function(err){
+    btn.disabled = false; btn.textContent = origText;
+    alert('✗ ' + err.message);
+  }).generateDebtClearanceCertificate_(t.building, t.apt, t.displayName);
 }
 
 /* ───────────────────────── SUPPLIERS ───────────────────────── */

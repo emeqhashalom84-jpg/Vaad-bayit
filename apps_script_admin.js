@@ -67,6 +67,13 @@ const SUPPLIER_REMINDER_THRESHOLDS = [30, 15, 7, 3, 1];
 const REPO          = 'emeqhashalom84-jpg/Vaad-bayit';
 const WORKFLOW_FILE = 'update-issues.yml';
 const ADMIN_EMAIL   = 'emeqhashalom84@gmail.com';
+
+// Building identity for generated documents (debt-clearance certificate) — Code.gs has no
+// access to config.ini (separate runtime from the Python generator), so these are kept here
+// directly. Keep in sync by hand with config.ini's [building] section if either changes.
+const BUILDING_NAME    = 'ועד בית עמק השלום 84-88';
+const BUILDING_ADDRESS = 'עמק השלום 84, 86, 88, יקנעם עילית';
+const COMMITTEE_MANAGER = 'אורן אלקיים';
 const ADMIN_TELEGRAM_IDS = ['996999913']; // add Michael's chat id here once he's set up
 
 // Calls sheet columns (1-indexed, matches apps_script_calls.js)
@@ -774,6 +781,70 @@ function replaceTenant_(building, apt, departureMonthIdx, newTenantName, startMo
 
   triggerDashboardRefresh_();
   return true;
+}
+
+// ── Debt-clearance certificate ("אישור היעדר חובות") — 2026-09-15 ──────────────────────────
+// For a lawyer/property-transfer proceeding, per Oren: needs to be an actual PDF, not just
+// on-screen text. Deliberately BLOCKS entirely (throws) if the tenant has any open debt —
+// this certifies a legal fact, so it must never be possible to generate a false "no debt"
+// document. Reads Q/R as VALUES (not formulas) since those are the live, already-computed
+// figures. Independent of replaceTenant_ — usable any time a certificate is needed, not only
+// during an actual tenant swap (a lawyer may need this weeks before the swap is finalized).
+// Builds a throwaway Google Doc purely as a rendering step, converts it to a PDF blob, returns
+// the PDF as base64 for the client to trigger a download — then deletes the Doc (only the PDF
+// bytes matter; no need to leave a Doc cluttering Drive for every certificate ever generated).
+function generateDebtClearanceCertificate_(building, apt, tenantName) {
+  const sheet = tenantPaymentsSheet_();
+  const rows = sheet.getDataRange().getValues();
+  const b = String(building || '').trim(), a = String(apt || '').trim();
+  var rowIdx = -1;
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][1] || '').trim() === b && String(rows[i][2] || '').trim() === a && !rows[i][21]) {
+      rowIdx = i;
+      break;
+    }
+  }
+  if (rowIdx === -1) throw new Error('לא נמצאה שורה פעילה לבניין ' + b + ' דירה ' + a + ' בתקבולי דיירים');
+
+  const sheetRow = rowIdx + 1;
+  const monthlyDebt = Number(sheet.getRange(sheetRow, 17).getValue()) || 0; // Q
+  const annualDebt  = Number(sheet.getRange(sheetRow, 18).getValue()) || 0; // R
+  if (monthlyDebt > 0.5 || annualDebt > 0.5) {
+    throw new Error('לא ניתן להפיק אישור — יש חוב פתוח (חודשי: ₪' + monthlyDebt.toFixed(2) +
+      ', שנתי: ₪' + annualDebt.toFixed(2) + '). יש לסגור את החוב לפני הפקת האישור.');
+  }
+
+  const now = new Date();
+  const monthName = MONTHS_HE_A_[now.getMonth()];
+  const dateStr = Utilities.formatDate(now, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+
+  const doc = DocumentApp.create('אישור היעדר חובות - ' + tenantName + ' - ' + dateStr);
+  const body = doc.getBody();
+  const CENTER = DocumentApp.HorizontalAlignment.CENTER;
+  body.appendParagraph(BUILDING_NAME).setHeading(DocumentApp.ParagraphHeading.HEADING1).setAlignment(CENTER);
+  body.appendParagraph(BUILDING_ADDRESS).setAlignment(CENTER);
+  body.appendParagraph('');
+  body.appendParagraph('אישור היעדר חובות').setHeading(DocumentApp.ParagraphHeading.HEADING2).setAlignment(CENTER);
+  body.appendParagraph('');
+  body.appendParagraph('תאריך: ' + dateStr);
+  body.appendParagraph('');
+  body.appendParagraph(
+    'הריני לאשר כי הדייר/ים ' + tenantName + ', שהתגורר/ו בבניין ' + b + ' דירה ' + a +
+    ', אינו/ם חייב/ים כספים לועד הבית ' + BUILDING_NAME + ' נכון לתאריך זה, וזאת עד ובכלל חודש ' +
+    monthName + ' ' + now.getFullYear() + '.'
+  );
+  body.appendParagraph('');
+  body.appendParagraph('בברכה,');
+  body.appendParagraph(COMMITTEE_MANAGER);
+  body.appendParagraph('בשם ' + BUILDING_NAME);
+  doc.saveAndClose();
+
+  const docFile = DriveApp.getFileById(doc.getId());
+  const pdfBlob = docFile.getAs('application/pdf');
+  const base64 = Utilities.base64Encode(pdfBlob.getBytes());
+  docFile.setTrashed(true);
+
+  return { base64: base64, filename: 'אישור היעדר חוב - ' + tenantName + '.pdf' };
 }
 
 function carryoverSheet_() { return SpreadsheetApp.openById(FINANCE_SHEET_ID).getSheetByName('חוב מועבר'); }
