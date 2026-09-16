@@ -997,6 +997,113 @@ function reduceCarryoverDebt_(tenantName, amount) {
 
 function log_(msg) { console.log(msg); }
 
+// ── Open new year (2026 → 2027) — designed 2026-09-16 with Oren, NOT yet run for real. ─────
+// Manual, run directly from the Apps Script editor (never an Admin button, never triggered
+// automatically by date — opening a year has real consequences and must be an explicit,
+// reviewed action). Same two-function preview/apply pattern as the bulk normalize tool:
+// previewOpenYear2027_ only reads and logs; applyOpenYear2027_ is the only one that writes.
+//
+// PREREQUISITE: fill in הגדרות with 'תעריף_רגיל_2027' and 'תעריף_פינה_2027' before running
+// either function (2027's real rates) — both functions refuse to proceed without them.
+const OPEN_YEAR_OLD_ = 2026, OPEN_YEAR_NEW_ = 2027;
+
+function _openYearPlan_() {
+  const oldSheet = tenantPaymentsSheet_();
+  const rows = oldSheet.getDataRange().getValues();
+  const stdRate = Number(getSetting_('תעריף_רגיל_' + OPEN_YEAR_NEW_)) || 0;
+  const cornerRate = Number(getSetting_('תעריף_פינה_' + OPEN_YEAR_NEW_)) || 0;
+  const plan = { stdRate: stdRate, cornerRate: cornerRate, missingRate: !stdRate || !cornerRate, tenants: [] };
+  for (var i = 1; i < rows.length; i++) {
+    var name = String(rows[i][0] || '').trim();
+    var building = String(rows[i][1] || '').trim();
+    if (!name || !building) continue; // same "real tenant row" filter used elsewhere (skips "אחר"/totals)
+    if (rows[i][21]) continue; // V set = a closed historical row from a past tenant turnover, not the current occupant
+    plan.tenants.push({
+      name: name, building: building, apt: String(rows[i][2] || '').trim(), aptType: rows[i][19],
+      endingDebt: Number(oldSheet.getRange(i + 1, 18).getValue()) || 0 // R, live formula value
+    });
+  }
+  return plan;
+}
+
+function previewOpenYear2027_() {
+  const plan = _openYearPlan_();
+  if (plan.missingRate) {
+    var m = 'חסרים תעריפי ' + OPEN_YEAR_NEW_ + ' ב"הגדרות" (תעריף_רגיל_' + OPEN_YEAR_NEW_ + ' / תעריף_פינה_' + OPEN_YEAR_NEW_ + ') — לא ניתן להמשיך';
+    log_('previewOpenYear2027_: ' + m);
+    return m;
+  }
+  var lines = ['תעריפים ' + OPEN_YEAR_NEW_ + ': רגיל=' + plan.stdRate + ', פינתי=' + plan.cornerRate, ''];
+  plan.tenants.forEach(function (t) {
+    lines.push(t.name + ' | בניין ' + t.building + ' דירה ' + t.apt + ' | ' + t.aptType +
+      ' | חוב סוף ' + OPEN_YEAR_OLD_ + ': ₪' + t.endingDebt.toFixed(2));
+  });
+  lines.push('', 'סה"כ ' + plan.tenants.length + ' דיירים יועברו ל"תקבולי דיירים ' + OPEN_YEAR_NEW_ + '"');
+  const msg = lines.join('\n');
+  log_('previewOpenYear2027_:\n' + msg);
+  return msg;
+}
+
+function applyOpenYear2027_() {
+  const plan = _openYearPlan_();
+  if (plan.missingRate) throw new Error('תעריפי ' + OPEN_YEAR_NEW_ + ' לא הוגדרו — הרץ previewOpenYear2027_ קודם');
+
+  const finance = SpreadsheetApp.openById(FINANCE_SHEET_ID);
+  const newTabName = 'תקבולי דיירים ' + OPEN_YEAR_NEW_;
+  if (finance.getSheetByName(newTabName)) {
+    throw new Error('הטאב "' + newTabName + '" כבר קיים — לא רץ שוב (מגן מפני הרצה כפולה)');
+  }
+
+  // Duplicating the old sheet keeps the exact header row/column widths/formatting for free —
+  // then rows 2+ are wiped and rebuilt clean from the plan, rather than trying to edit 2026's
+  // names/formulas/payments in place (they reference the OLD rate and have a year of D:O data
+  // that doesn't belong in a fresh year).
+  const oldSheet = tenantPaymentsSheet_();
+  const newSheet = oldSheet.copyTo(finance).setName(newTabName);
+  finance.setActiveSheet(newSheet);
+  finance.moveActiveSheet(finance.getSheets().length);
+  const lastRow = newSheet.getLastRow();
+  if (lastRow > 1) newSheet.getRange(2, 1, lastRow - 1, newSheet.getLastColumn()).clear();
+
+  const carrySheet = carryoverSheet_();
+  const carryRows = carrySheet.getDataRange().getValues();
+
+  plan.tenants.forEach(function (t, idx) {
+    const row = idx + 2;
+    const rate = (String(t.aptType).trim() === 'פינתי') ? plan.cornerRate : plan.stdRate;
+    newSheet.getRange(row, 1, 1, 3).setValues([[t.name, t.building, t.apt]]); // A:C
+    newSheet.getRange(row, 20).setValue(t.aptType); // T
+    newSheet.getRange(row, 21).setValue(1); // U — active from January
+    newSheet.getRange(row, 22).setValue(''); // V — active, no end yet
+    newSheet.getRange(row, 16).setFormula('=SUM(D' + row + ':O' + row + ')'); // P
+    newSheet.getRange(row, 17).setFormula(
+      '=MAX(0,(' + rate + '*(MIN(MONTH(TODAY()),IF(V' + row + '="",12,V' + row + '))-U' + row + '+1))-P' + row + ')'
+    ); // Q
+    newSheet.getRange(row, 18).setFormula(
+      '=(' + rate + '*(IF(V' + row + '="",12,V' + row + ')-U' + row + '+1))-P' + row
+    ); // R
+
+    // Carry forward: ADDS 2026's ending debt onto whatever is already in חוב מועבר — per Oren
+    // (2026-09-16), unpaid debt must never silently reset at a year boundary. Creates a new
+    // row only if this tenant never had one before (e.g. first time they end a year in debt).
+    if (t.endingDebt > 0.5) {
+      var matched = false;
+      for (var ci = 1; ci < carryRows.length; ci++) {
+        if (fuzzyNameMatch_(t.name, String(carryRows[ci][0] || ''))) {
+          carrySheet.getRange(ci + 1, 2).setValue((Number(carryRows[ci][1]) || 0) + t.endingDebt);
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) carrySheet.appendRow([t.name, t.endingDebt]);
+    }
+  });
+
+  const msg = 'בוצע: נוצר טאב "' + newTabName + '" עם ' + plan.tenants.length + ' דיירים';
+  log_('applyOpenYear2027_: ' + msg);
+  return msg;
+}
+
 // Checked by the admin panel BEFORE submitting a new tenant card, so the admin — not the
 // script — decides what happens when building+apt already has a card. Returns the existing
 // card (with rowNum + displayName) or null.
