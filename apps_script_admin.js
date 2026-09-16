@@ -869,7 +869,6 @@ function generateDebtClearanceCertificate(building, apt, tenantName, certType, o
   function p(text) { return body.appendParagraph('‏' + text).setAlignment(RIGHT); }
 
   p(dateStr);
-  p('ועד הבית');
   p(BUILDING_NAME);
   p('יוקנעם עילית');
   p('');
