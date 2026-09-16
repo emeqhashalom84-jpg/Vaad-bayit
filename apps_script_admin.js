@@ -917,7 +917,29 @@ function generateDebtClearanceCertificate(building, apt, tenantName, certType, o
   subjectPar.setFontSize(14).setBold(true).setUnderline(true);
   doc.saveAndClose();
 
-  const docFile = DriveApp.getFileById(doc.getId());
+  // True RTL paragraph direction — DocumentApp's basic API has no way to set this at all;
+  // setAlignment(RIGHT) only positions the paragraph block against the right margin, it does
+  // NOT fix the bidi EMBEDDING direction that decides where "weak" characters (periods, commas)
+  // land — confirmed still broken by Oren even after per-paragraph RIGHT alignment AND a
+  // leading U+200F RTL-mark attempt. This needs the Advanced "Google Docs API" service (one
+  // batchUpdate call, applied to the whole body range) — enable via Apps Script editor:
+  // Services (+) → Google Docs API → Add (same kind of one-time setup as Drive API, enabled
+  // earlier for the bank-PDF OCR feature).
+  const docId = doc.getId();
+  const docStruct = Docs.Documents.get(docId);
+  const bodyContent = docStruct.body.content;
+  const bodyEndIndex = bodyContent[bodyContent.length - 1].endIndex;
+  Docs.Documents.batchUpdate({
+    requests: [{
+      updateParagraphStyle: {
+        range: { startIndex: 1, endIndex: bodyEndIndex - 1 },
+        paragraphStyle: { direction: 'RIGHT_TO_LEFT' },
+        fields: 'direction'
+      }
+    }]
+  }, docId);
+
+  const docFile = DriveApp.getFileById(docId);
   const pdfBlob = docFile.getAs('application/pdf');
   const base64 = Utilities.base64Encode(pdfBlob.getBytes());
   docFile.setTrashed(true);
