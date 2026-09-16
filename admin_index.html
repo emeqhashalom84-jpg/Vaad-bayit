@@ -921,6 +921,7 @@ function tenantCardHtml_(t) {
   return '<div class="card" data-tsearch="' + esc(searchBlob) + '">' +
     '<div class="row"><div><span class="name">' + esc(t.lastName) + '</span> <span class="muted">בניין ' + esc(t.building) + ' דירה ' + esc(t.apt) + '</span></div>' +
     (t.rented ? '<span class="badge badge-orange">שכורה</span>' : '') + '</div>' +
+    '<div class="section-divider"></div>' +
     contactLine_('איש קשר 1', t.contact1) +
     contactLine_('איש קשר 2', t.contact2) +
     (t.rented ? contactLine_('בעל הדירה', t.owner) : '') +
