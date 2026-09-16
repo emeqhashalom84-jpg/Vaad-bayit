@@ -62,6 +62,8 @@
   .section-divider{border-top:1px solid var(--border);margin:8px 0}
   .supplier-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:stretch}
   .supplier-grid .card{margin-bottom:0;display:flex;flex-direction:column}
+  .tenant-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:stretch}
+  .tenant-grid .card{margin-bottom:0;display:flex;flex-direction:column}
   .card-actions{margin-top:auto;padding-top:8px}
   .qd-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
   .qd-chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:13px;display:flex;gap:6px;align-items:center}
@@ -898,22 +900,48 @@ function rejectTenantSub(rowNum) {
   run_(renderPendingTenants).rejectTenantSubmission(rowNum);
 }
 
+// Grid layout + bottom-aligned action row + search — brought over from כרטיסי ספקים
+// (supplierCardHtml_/renderSuppliers) per Oren's request (2026-09-16), same visual language
+// across both card tabs instead of suppliers looking more polished than tenants.
 function renderTenants(tenants) {
   currentTenants = tenants;
   var html = '<div class="card"><button onclick="showNewTenantForm()">+ כרטיס דייר</button><div id="new-tenant-form"></div></div>';
   if (!tenants.length) { html += '<div class="empty">אין כרטיסי דיירים</div>'; document.getElementById('tenant-cards-list').innerHTML = html; return; }
-  html += tenants.map(function(t){
-    return '<div class="card"><div class="row"><div><span class="name">'+esc(t.lastName)+'</span> <span class="muted">בניין '+esc(t.building)+' דירה '+esc(t.apt)+'</span></div>' +
-      (t.rented ? '<span class="badge badge-orange">שכורה</span>' : '') + '</div>' +
-      contactLine_('איש קשר 1', t.contact1) +
-      contactLine_('איש קשר 2', t.contact2) +
-      (t.rented ? contactLine_('בעל הדירה', t.owner) : '') +
-      '<div class="row" style="margin-top:8px"><button class="small secondary" onclick="showEditTenantForm('+t.rowNum+')">ערוך</button>' +
-      '<button class="small secondary" onclick="showReplaceTenantModal_('+t.rowNum+')">🔁 החלפת דייר</button>' +
-      '<button class="small secondary" onclick="showDebtClearanceModal_('+t.rowNum+')">📄 אישור היעדר חוב</button></div>' +
-      '<div id="edit-tenant-form-'+t.rowNum+'"></div></div>';
-  }).join('');
+  html += '<div class="row" style="gap:10px;margin-bottom:12px">' +
+    '<input id="tenant-search" placeholder="חיפוש לפי שם, בניין, דירה או איש קשר…" oninput="filterTenants_()" style="flex:1">' +
+    '</div>';
+  html += '<div class="tenant-grid">' + tenants.map(tenantCardHtml_).join('') + '</div>';
   document.getElementById('tenant-cards-list').innerHTML = html;
+  document.getElementById('tenant-search').value = tenantFilterState.q;
+  applyTenantFilter_();
+}
+function tenantCardHtml_(t) {
+  var searchBlob = [t.lastName, t.building, t.apt, t.contact1 && t.contact1.name, t.contact1 && t.contact1.phone,
+    t.contact2 && t.contact2.name, t.contact2 && t.contact2.phone].filter(Boolean).join(' ').toLowerCase();
+  return '<div class="card" data-tsearch="' + esc(searchBlob) + '">' +
+    '<div class="row"><div><span class="name">' + esc(t.lastName) + '</span> <span class="muted">בניין ' + esc(t.building) + ' דירה ' + esc(t.apt) + '</span></div>' +
+    (t.rented ? '<span class="badge badge-orange">שכורה</span>' : '') + '</div>' +
+    contactLine_('איש קשר 1', t.contact1) +
+    contactLine_('איש קשר 2', t.contact2) +
+    (t.rented ? contactLine_('בעל הדירה', t.owner) : '') +
+    '<div class="row card-actions"><button class="small secondary" onclick="showEditTenantForm(' + t.rowNum + ')">ערוך</button>' +
+    '<button class="small secondary" onclick="showReplaceTenantModal_(' + t.rowNum + ')">🔁 החלפת דייר</button>' +
+    '<button class="small secondary" onclick="showDebtClearanceModal_(' + t.rowNum + ')">📄 אישור היעדר חוב</button></div>' +
+    '<div id="edit-tenant-form-' + t.rowNum + '"></div></div>';
+}
+// Same "state lives outside the DOM" reasoning as supplierFilterState — a save re-renders the
+// whole tab, and the search box shouldn't silently clear itself after every action.
+var tenantFilterState = { q: '' };
+function filterTenants_() {
+  tenantFilterState.q = (document.getElementById('tenant-search').value || '').trim().toLowerCase();
+  applyTenantFilter_();
+}
+function applyTenantFilter_() {
+  var q = tenantFilterState.q;
+  document.querySelectorAll('#tenant-cards-list .tenant-grid .card').forEach(function (card) {
+    var blob = card.getAttribute('data-tsearch') || '';
+    card.style.display = (!q || blob.indexOf(q) !== -1) ? '' : 'none';
+  });
 }
 
 function tenantFormHtml_(id, t) {
