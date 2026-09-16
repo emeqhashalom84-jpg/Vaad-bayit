@@ -928,8 +928,8 @@ function tenantCardHtml_(t) {
     contactLine_('איש קשר 2', t.contact2) +
     (t.rented ? contactLine_('בעל הדירה', t.owner) : '') +
     '<div class="row card-actions"><button class="small secondary" onclick="showEditTenantForm(' + t.rowNum + ')">ערוך</button>' +
-    '<button class="small secondary" onclick="showReplaceTenantModal_(' + t.rowNum + ')">החלפת דייר</button>' +
-    '<button class="small secondary" onclick="showDebtClearanceModal_(' + t.rowNum + ')">אישור היעדר חוב</button></div></div>';
+    '<button class="small secondary" onclick="showReplaceTenantModal_(' + t.rowNum + ')">🔁 החלפת דייר</button>' +
+    '<button class="small secondary" onclick="showDebtClearanceModal_(' + t.rowNum + ')">📄 אישור היעדר חוב</button></div></div>';
 }
 // Same "state lives outside the DOM" reasoning as supplierFilterState — a save re-renders the
 // whole tab, and the search box shouldn't silently clear itself after every action.
