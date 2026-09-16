@@ -860,12 +860,14 @@ function loadTenants() {
   run_(renderTenants).getTenantCards();
 }
 
+// One field per line (name / 📞 phone / ✉️ email), matching supplierCardHtml_'s layout exactly
+// — per Oren (2026-09-16), clearer than cramming everything onto one line separated by "·".
 function contactLine_(label, c) {
   if (!c || !c.name) return '';
-  var parts = [esc(c.name)];
-  if (c.phone) parts.push('<a href="tel:' + esc(c.phone.replace(/[^0-9+]/g, '')) + '">' + esc(c.phone) + '</a>');
-  if (c.email) parts.push('<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>');
-  return '<div class="muted">' + label + ': ' + parts.join(' · ') + '</div>';
+  var h = '<div class="muted">' + label + ': ' + esc(c.name) + '</div>';
+  if (c.phone) h += '<div class="muted">📞 <a href="tel:' + esc(c.phone.replace(/[^0-9+]/g, '')) + '">' + esc(c.phone) + '</a></div>';
+  if (c.email) h += '<div class="muted">✉️ <a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a></div>';
+  return h;
 }
 
 function loadPendingTenants() {
