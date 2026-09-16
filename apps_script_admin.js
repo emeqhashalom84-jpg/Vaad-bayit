@@ -924,19 +924,47 @@ function generateDebtClearanceCertificate(building, apt, tenantName, certType, o
   // batchUpdate call, applied to the whole body range) — enable via Apps Script editor:
   // Services (+) → Google Docs API → Add (same kind of one-time setup as Drive API, enabled
   // earlier for the bank-PDF OCR feature).
+  //
+  // Real follow-up bug (2026-09-16): setting ONLY direction here flipped every RIGHT-aligned
+  // paragraph to render flush-LEFT. Cause: DocumentApp.HorizontalAlignment.RIGHT is stored as
+  // the LOGICAL value END (not a physical side) — while the doc was still LTR at the moment
+  // setAlignment(RIGHT) ran, END meant "right", but once direction flips to RTL, END means
+  // "left" instead, since END always follows reading direction. CENTER is unaffected (it has
+  // no direction-relative meaning either way), which is why הנדון stayed correctly centered
+  // while every other line flipped. Fix: explicitly set alignment=START (which now means
+  // "right" under the RTL direction this SAME request establishes) for the whole body, then a
+  // second request re-centers just the הנדון paragraph (found by matching its text), since the
+  // blanket alignment=START would otherwise un-center it too.
   const docId = doc.getId();
   const docStruct = Docs.Documents.get(docId);
   const bodyContent = docStruct.body.content;
   const bodyEndIndex = bodyContent[bodyContent.length - 1].endIndex;
-  Docs.Documents.batchUpdate({
-    requests: [{
+  var subjectRange = null;
+  for (var ci = 0; ci < bodyContent.length; ci++) {
+    var el = bodyContent[ci];
+    var run = el.paragraph && el.paragraph.elements && el.paragraph.elements[0] && el.paragraph.elements[0].textRun;
+    if (run && run.content.indexOf('הנדון:') !== -1) {
+      subjectRange = { startIndex: el.startIndex, endIndex: el.endIndex };
+      break;
+    }
+  }
+  var requests = [{
+    updateParagraphStyle: {
+      range: { startIndex: 1, endIndex: bodyEndIndex - 1 },
+      paragraphStyle: { direction: 'RIGHT_TO_LEFT', alignment: 'START' },
+      fields: 'direction,alignment'
+    }
+  }];
+  if (subjectRange) {
+    requests.push({
       updateParagraphStyle: {
-        range: { startIndex: 1, endIndex: bodyEndIndex - 1 },
-        paragraphStyle: { direction: 'RIGHT_TO_LEFT' },
-        fields: 'direction'
+        range: subjectRange,
+        paragraphStyle: { alignment: 'CENTER' },
+        fields: 'alignment'
       }
-    }]
-  }, docId);
+    });
+  }
+  Docs.Documents.batchUpdate({ requests: requests }, docId);
 
   const docFile = DriveApp.getFileById(docId);
   const pdfBlob = docFile.getAs('application/pdf');
