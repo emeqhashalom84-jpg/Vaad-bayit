@@ -587,17 +587,36 @@ def _ann_priority(v):
     return 2
 
 # Lightweight WhatsApp-style formatting for announcement content — per Oren (2026-09-17):
-# *bold*, _italic_, __underline__ (double underscore, WhatsApp has no native underline).
-# Escapes FIRST, then wraps already-escaped text in literal <strong>/<em>/<u> tags — the
-# markers themselves are never treated as HTML, so this can't be used to inject real markup.
-# Order matters: __underline__ (double) before _italic_ (single), so a double-underscore run
-# is never partially consumed by the single-underscore pattern first.
+# *bold*, _italic_, __underline__ (double underscore, WhatsApp has no native underline), and
+# "- " at the start of a line for a bullet point. Escapes FIRST, then wraps already-escaped
+# text in literal tags — the markers themselves are never treated as HTML, so this can't be
+# used to inject real markup. Order matters: __underline__ (double) before _italic_ (single),
+# so a double-underscore run is never partially consumed by the single-underscore pattern first.
+# Builds explicit <br>/<ul><li> HTML rather than relying on CSS white-space — needed once real
+# block elements (lists) are in the mix, not just line breaks.
+def _format_ann_inline(escaped_text):
+    escaped_text = _re.sub(r'__(.+?)__', r'<u>\1</u>', escaped_text)
+    escaped_text = _re.sub(r'_(.+?)_', r'<em>\1</em>', escaped_text)
+    escaped_text = _re.sub(r'\*(.+?)\*', r'<strong>\1</strong>', escaped_text)
+    return escaped_text
+
 def _format_ann_content(text):
-    escaped = he(text or '')
-    escaped = _re.sub(r'__(.+?)__', r'<u>\1</u>', escaped)
-    escaped = _re.sub(r'_(.+?)_', r'<em>\1</em>', escaped)
-    escaped = _re.sub(r'\*(.+?)\*', r'<strong>\1</strong>', escaped)
-    return escaped
+    parts = []
+    in_list = False
+    for line in (text or '').split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('- '):
+            if not in_list:
+                parts.append('<ul>'); in_list = True
+            parts.append('<li>' + _format_ann_inline(he(stripped[2:])) + '</li>')
+        else:
+            if in_list:
+                parts.append('</ul>'); in_list = False
+            parts.append(_format_ann_inline(he(line)) + '<br>')
+    if in_list:
+        parts.append('</ul>')
+    html = ''.join(parts)
+    return html[:-4] if html.endswith('<br>') else html
 
 def _ann_norm_date(v):
     m = _re.match(r'^(\d{4})-(\d{2})-(\d{2})', v)
@@ -1254,7 +1273,9 @@ a{color:var(--accent)}
 .ann-card.info{border-right-color:#3b82f6}
 .ann-cat{font-size:10px;font-weight:600;text-transform:uppercase;margin-bottom:4px;color:var(--muted)}
 .ann-title{font-weight:600;margin-bottom:4px}
-.ann-content{font-size:12px;color:var(--muted);white-space:pre-line}
+.ann-content{font-size:12px;color:var(--muted)}
+.ann-content ul{margin:4px 0;padding-inline-start:18px}
+.ann-content li{margin-bottom:2px}
 .ann-date{font-size:10px;color:var(--muted);margin-top:6px}
 /* Charts */
 .chart-row{display:grid;grid-template-columns:3fr 2fr;gap:20px;align-items:start}
@@ -1481,14 +1502,32 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
 <script>
 (function(){{
   function esc(s){{return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}}
-  // Mirrors _format_ann_content in vaad_bayit_generator.py — WhatsApp-style *bold*/_italic_/
-  // __underline__, applied to already-escaped text only, so the markers can't inject real tags.
+  // Mirrors _format_ann_content/_format_ann_inline in vaad_bayit_generator.py — WhatsApp-style
+  // *bold*/_italic_/__underline__ plus "- " at line-start for a bullet, applied to already-
+  // escaped text only, so the markers can't inject real tags. Builds explicit <br>/<ul><li>
+  // HTML rather than relying on CSS white-space, since real block elements are now involved.
+  function annInline(t){{
+    t=esc(t);
+    t=t.replace(/__(.+?)__/g,'<u>$1</u>');
+    t=t.replace(/_(.+?)_/g,'<em>$1</em>');
+    t=t.replace(/\\*(.+?)\\*/g,'<strong>$1</strong>');
+    return t;
+  }}
   function formatAnnContent(s){{
-    var e=esc(s||'');
-    e=e.replace(/__(.+?)__/g,'<u>$1</u>');
-    e=e.replace(/_(.+?)_/g,'<em>$1</em>');
-    e=e.replace(/\\*(.+?)\\*/g,'<strong>$1</strong>');
-    return e;
+    var lines=(s||'').split('\n'), parts=[], inList=false;
+    for(var i=0;i<lines.length;i++){{
+      var line=lines[i], stripped=line.replace(/^\\s+/,'');
+      if(stripped.indexOf('- ')===0){{
+        if(!inList){{parts.push('<ul>');inList=true;}}
+        parts.push('<li>'+annInline(stripped.slice(2))+'</li>');
+      }} else {{
+        if(inList){{parts.push('</ul>');inList=false;}}
+        parts.push(annInline(line)+'<br>');
+      }}
+    }}
+    if(inList)parts.push('</ul>');
+    var html=parts.join('');
+    return html.slice(-4)==='<br>'?html.slice(0,-4):html;
   }}
   function catCls(c){{return c.indexOf('דחוף')>-1?'urgent':(c.indexOf('תחזוקה')>-1?'maintenance':(c.indexOf('כספי')>-1?'financial':(c.indexOf('כינוסים')>-1?'meeting':(c.indexOf('בטיחות')>-1?'safety':'info'))));}}
   function buildHTML(anns){{

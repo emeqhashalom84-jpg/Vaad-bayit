@@ -754,9 +754,22 @@ function loadAnns() {
   run_(renderAnns).getAnnouncements();
 }
 
+// Per Oren (2026-09-17): "אני חייב שתשים לי אינדקס בדף הודעות כדי שאוכל לזכור את זה" —
+// a standing reference card so the formatting syntax doesn't need to be remembered from memory.
+var ANN_SYNTAX_HELP_HTML =
+  '<div class="card"><h3>עיצוב טקסט בתוכן ההודעה</h3>' +
+  '<div class="muted" style="font-size:13px;line-height:1.8">' +
+  '<code>*מודגש*</code> ← <strong>מודגש</strong><br>' +
+  '<code>_נטוי_</code> ← <em>נטוי</em><br>' +
+  '<code>__קו תחתון__</code> ← <u>קו תחתון</u><br>' +
+  '<code>*_גם וגם_*</code> ← <strong><em>גם וגם</em></strong><br>' +
+  '<code>- טקסט</code> (מקף+רווח בתחילת שורה) ← בולט •' +
+  '</div></div>';
+
 function renderAnns(anns) {
   currentAnns = anns;
-  var html = '<div class="card"><button onclick="showNewAnnForm()">+ הודעה חדשה</button><div id="new-ann-form"></div></div>';
+  var html = ANN_SYNTAX_HELP_HTML +
+    '<div class="card"><button onclick="showNewAnnForm()">+ הודעה חדשה</button><div id="new-ann-form"></div></div>';
   if (!anns.length) { html += '<div class="empty">אין הודעות</div>'; document.getElementById('tab-anns').innerHTML = html; return; }
   html += anns.map(function(a){
     return '<div class="card"><div class="row"><div><span class="name">'+esc(a.title)+'</span> <span class="muted">('+esc(a.category)+')</span></div>' +
