@@ -586,6 +586,19 @@ def _ann_priority(v):
     if 'נמוכה' in v: return 3
     return 2
 
+# Lightweight WhatsApp-style formatting for announcement content — per Oren (2026-09-17):
+# *bold*, _italic_, __underline__ (double underscore, WhatsApp has no native underline).
+# Escapes FIRST, then wraps already-escaped text in literal <strong>/<em>/<u> tags — the
+# markers themselves are never treated as HTML, so this can't be used to inject real markup.
+# Order matters: __underline__ (double) before _italic_ (single), so a double-underscore run
+# is never partially consumed by the single-underscore pattern first.
+def _format_ann_content(text):
+    escaped = he(text or '')
+    escaped = _re.sub(r'__(.+?)__', r'<u>\1</u>', escaped)
+    escaped = _re.sub(r'_(.+?)_', r'<em>\1</em>', escaped)
+    escaped = _re.sub(r'\*(.+?)\*', r'<strong>\1</strong>', escaped)
+    return escaped
+
 def _ann_norm_date(v):
     m = _re.match(r'^(\d{4})-(\d{2})-(\d{2})', v)
     return f'{m.group(3)}/{m.group(2)}/{m.group(1)}' if m else v.split(' ')[0]
@@ -1450,7 +1463,7 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
             cards += (f'<div class="ann-card {_ann_cat_cls(cat)}">'
                       f'<div class="ann-cat">{he(cat)}</div>'
                       f'<div class="ann-title">{he(a.get("title",""))}</div>'
-                      f'<div class="ann-content">{he(a.get("content",""))}</div>'
+                      f'<div class="ann-content">{_format_ann_content(a.get("content",""))}</div>'
                       f'<div class="ann-date">{he(a.get("date",""))}</div></div>')
         return cards
 
@@ -1468,6 +1481,15 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
 <script>
 (function(){{
   function esc(s){{return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}}
+  // Mirrors _format_ann_content in vaad_bayit_generator.py — WhatsApp-style *bold*/_italic_/
+  // __underline__, applied to already-escaped text only, so the markers can't inject real tags.
+  function formatAnnContent(s){{
+    var e=esc(s||'');
+    e=e.replace(/__(.+?)__/g,'<u>$1</u>');
+    e=e.replace(/_(.+?)_/g,'<em>$1</em>');
+    e=e.replace(/\\*(.+?)\\*/g,'<strong>$1</strong>');
+    return e;
+  }}
   function catCls(c){{return c.indexOf('דחוף')>-1?'urgent':(c.indexOf('תחזוקה')>-1?'maintenance':(c.indexOf('כספי')>-1?'financial':(c.indexOf('כינוסים')>-1?'meeting':(c.indexOf('בטיחות')>-1?'safety':'info'))));}}
   function buildHTML(anns){{
     if(!anns.length)return'<p style="color:var(--muted);font-size:13px;padding:8px 0">אין הודעות פעילות</p>';
@@ -1476,7 +1498,7 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
     for(var j=0;j<sorted.length;j++){{
       var a=sorted[j],cat=a.category||'מידע';
       h+='<div class="ann-card '+catCls(cat)+'"><div class="ann-cat">'+esc(cat)+'</div>'+
-         '<div class="ann-title">'+esc(a.title)+'</div><div class="ann-content">'+esc(a.content)+'</div>'+
+         '<div class="ann-title">'+esc(a.title)+'</div><div class="ann-content">'+formatAnnContent(a.content)+'</div>'+
          '<div class="ann-date">'+esc(a.date)+'</div></div>';
     }}
     return h+'</div>';
