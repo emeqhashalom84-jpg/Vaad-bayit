@@ -89,7 +89,7 @@ PIE_CATEGORY_NAMES = set(PIE_COLORS.keys())
 # the Excel file). Shared by the Excel reader and the live-Sheet fetcher so both match
 # actuals against the same (name, target, keywords-or-category) rows.
 BUDGET_2026 = [
-    ('בדיקת מעליות דו שנתי',  1412,  ['בדיקת מעליות'], None),
+    ('בדיקת מעליות חצי שנתי',  1412,  ['בדיקת מעליות'], None),
     ('עלות חודשית 2 מעליות',  17160, ['קונה'],          None),
     ('מעיינות העמקים',         400,   ['מעיינות'],       None),
     ('חשמל מדרגות',           2700,  ['מונה', 'חשמל'],  None),
