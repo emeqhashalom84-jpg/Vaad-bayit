@@ -8,6 +8,14 @@ Reads Excel + Google Sheets → generates static HTML dashboard → Git push
 
 import configparser, openpyxl, requests, csv, io, os, sys, math, shutil, subprocess, logging, time, threading
 from datetime import datetime
+try:
+    from zoneinfo import ZoneInfo
+    _IL_TZ = ZoneInfo('Asia/Jerusalem')
+except Exception:
+    _IL_TZ = None
+
+def _now_il():
+    return datetime.now(_IL_TZ) if _IL_TZ else datetime.now()
 from pathlib import Path
 from html import escape as he
 
@@ -2291,7 +2299,7 @@ def run_once():
         log.info(f'Excel comments: enriched {enriched}/{len(data["tenants"])} tenants')
     log.info(f'Tenants (from Sheet): {len(data["tenants"])}')
 
-    updated_at = datetime.now().strftime('%d/%m/%Y %H:%M')
+    updated_at = _now_il().strftime('%d/%m/%Y %H:%M')
     log.info('Generating HTML...')
     html = generate_html(data, issues, anns, cfg, updated_at, charge, charge_payments)
 
