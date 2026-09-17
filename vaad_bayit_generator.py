@@ -1333,6 +1333,7 @@ tr:hover td{background:var(--surface2)}
 .link-btn:hover{opacity:.85}
 .link-btn-red{background:#fee2e2;color:#b91c1c}
 .link-btn-blue{background:#dbeafe;color:#1d4ed8}
+.link-btn-green{background:#dcfce7;color:#15803d}
 /* FAB */
 .fab{position:fixed;bottom:24px;left:20px;background:var(--accent);color:#fff;border:none;border-radius:50px;padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:100;text-decoration:none;display:flex;align-items:center;gap:6px}
 .fab:hover{opacity:.9}
@@ -2035,7 +2036,7 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
 
     # ── Links section ─────────────────────────────────────────────────────────
     links_html = ''
-    _link_items = []
+    _link_items = ['<a href="tenant_guide.html" target="_blank" class="link-btn link-btn-green">📘 מדריך שימוש בדשבורד</a>']
     if fault_form  and 'PASTE' not in fault_form:
         _link_items.append(f'<a href="{he(fault_form)}"  target="_blank" class="link-btn link-btn-red">🔧 פתיחת קריאת שירות</a>')
     if tenant_form and 'PASTE' not in tenant_form:
