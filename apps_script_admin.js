@@ -1321,6 +1321,16 @@ function toggleAnnouncementActive(rowNum, active) {
   return getAnnouncements();
 }
 
+// Real permanent delete — per Oren (2026-09-17), toggling inactive only hides an announcement
+// from the public dashboard, the row stays in the sheet forever; there was no way to actually
+// remove one. Same "find by rowNum, deleteRow" pattern as deleteCharge.
+function deleteAnnouncement(rowNum) {
+  const sheet = SpreadsheetApp.openById(ANNOUNCEMENTS_SHEET_ID).getSheets()[0];
+  sheet.deleteRow(rowNum);
+  triggerDashboardRefresh_();
+  return getAnnouncements();
+}
+
 // ── Charges ───────────────────────────────────────────────────────────────
 function chargesSheet_() { return SpreadsheetApp.openById(CHARGES_SHEET_ID).getSheetByName('גביות'); }
 function paymentsSheet_() { return SpreadsheetApp.openById(CHARGES_SHEET_ID).getSheetByName('תשלומים'); }

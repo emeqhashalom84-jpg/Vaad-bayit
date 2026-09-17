@@ -762,7 +762,8 @@ function renderAnns(anns) {
     return '<div class="card"><div class="row"><div><span class="name">'+esc(a.title)+'</span> <span class="muted">('+esc(a.category)+')</span></div>' +
       '<label class="switch"><input type="checkbox" '+(a.active==='כן'?'checked':'')+' onchange="toggleAnn('+a.rowNum+', this.checked)"><span class="slider"></span></label>' +
       '</div><div class="muted">'+esc(a.content)+'</div>' +
-      '<div class="row" style="margin-top:8px"><button class="small secondary" onclick="showEditAnnForm('+a.rowNum+')">ערוך</button></div>' +
+      '<div class="row" style="margin-top:8px"><button class="small secondary" onclick="showEditAnnForm('+a.rowNum+')">ערוך</button>' +
+      '<button class="small secondary" onclick="deleteAnn_('+a.rowNum+')">🗑 מחק</button></div>' +
       '<div id="edit-ann-form-'+a.rowNum+'"></div></div>';
   }).join('');
   document.getElementById('tab-anns').innerHTML = html;
@@ -770,6 +771,16 @@ function renderAnns(anns) {
 
 function toggleAnn(rowNum, active) {
   run_(renderAnns).toggleAnnouncementActive(rowNum, active);
+}
+
+// Real permanent delete — per Oren (2026-09-17), the existing on/off toggle only hides an
+// announcement from the public dashboard, it never actually removed the row. Same confirm+
+// delete pattern as deleteCharge_.
+function deleteAnn_(rowNum) {
+  var a = currentAnns.find(function(x){ return x.rowNum === rowNum; });
+  var title = a ? a.title : '';
+  if (!confirm('למחוק לצמיתות את ההודעה "' + title + '"? הפעולה לא ניתנת לביטול.')) return;
+  run_(renderAnns).deleteAnnouncement(rowNum);
 }
 
 var ANN_VALID_DAYS_OPTIONS = ['10','15','30','60','90'];
