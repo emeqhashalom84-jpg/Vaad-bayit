@@ -1420,8 +1420,8 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
   <div class="kpi {col_cls}">
     <div class="kpi-label">אחוז גבייה</div>
     <div class="kpi-val">{col_pct:.0f}%</div>
-    <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{min(col_pct,100):.0f}%;background:{'#22c55e' if col_pct>=col_green else ('#f59e0b' if col_pct>=col_orange else '#ef4444')}"></div></div>
     <div class="kpi-sub">מתוך צפוי עד {_col_month_name} 2026</div>
+    <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{min(col_pct,100):.0f}%;background:{'#22c55e' if col_pct>=col_green else ('#f59e0b' if col_pct>=col_orange else '#ef4444')}"></div></div>
   </div>"""
 
     if show_res:
