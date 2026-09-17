@@ -730,11 +730,16 @@ function submitNewCall() {
   run_(renderCalls).createCall(v.name, v.building, v.apt, v.desc, v.location, v.urgency, v.notes);
 }
 
+// Toggle, not just open — per Oren (2026-09-17): clicking "ערוך" a second time on an already-
+// open form should collapse it again, instead of it staying stuck open with no way to close it
+// short of saving. Same fix applied to showEditAnnForm below.
 function showEditCallForm(rowNum) {
+  var el = document.getElementById('edit-call-form-'+rowNum);
+  if (el.innerHTML) { el.innerHTML = ''; return; }
   var c = currentCalls.find(function(x){ return x.rowNum === rowNum; }) || {};
   var html = callFormHtml_('ecall'+rowNum, c) +
     '<button style="margin-top:10px" onclick="submitEditCall('+rowNum+')">שמור שינויים</button>';
-  document.getElementById('edit-call-form-'+rowNum).innerHTML = html;
+  el.innerHTML = html;
 }
 
 function submitEditCall(rowNum) {
@@ -863,10 +868,12 @@ function submitNewAnn() {
 }
 
 function showEditAnnForm(rowNum) {
+  var el = document.getElementById('edit-ann-form-'+rowNum);
+  if (el.innerHTML) { el.innerHTML = ''; return; }
   var a = currentAnns.find(function(x){ return x.rowNum === rowNum; }) || {};
   var html = annFormHtml_('eann'+rowNum, a) +
     '<button style="margin-top:10px" onclick="submitEditAnn('+rowNum+')">שמור שינויים</button>';
-  document.getElementById('edit-ann-form-'+rowNum).innerHTML = html;
+  el.innerHTML = html;
 }
 function submitEditAnn(rowNum) {
   var v = annFormValues_('eann'+rowNum);
