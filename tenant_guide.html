@@ -8,6 +8,7 @@
   --text:#1e293b; --muted:#64748b; --primary:#1a3a5c; --accent:#2563eb;
   --green:#15803d; --orange:#b45309; --red:#b91c1c;
   --green-bg:#dcfce7; --orange-bg:#fef3c7; --red-bg:#fee2e2; --blue-bg:#dbeafe;
+  --dot-paid:#22c55e; --dot-partial:#f59e0b; --dot-empty:#e2e8f0; --dot-approved:#2563eb;
   --serif:'Frank Ruhl Libre',Georgia,'Times New Roman',serif;
   --sans:'IBM Plex Sans Hebrew','Segoe UI','Arial Hebrew',Arial,sans-serif;
 }
@@ -52,10 +53,10 @@ p{margin:0 0 10px; max-width:64ch}
 .legend{display:flex; flex-direction:column; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 18px}
 .legend-row{display:flex; align-items:center; gap:12px; font-size:14px}
 .dot{width:16px; height:16px; border-radius:50%; flex-shrink:0; display:inline-block}
-.dot-paid{background:var(--green)}
-.dot-partial{background:linear-gradient(90deg, var(--border) 50%, var(--orange) 50%)}
-.dot-empty{background:var(--border)}
-.dot-approved{background:var(--accent)}
+.dot-paid{background:var(--dot-paid)}
+.dot-partial{background:linear-gradient(90deg, var(--dot-empty) 50%, var(--dot-partial) 50%)}
+.dot-empty{background:var(--dot-empty)}
+.dot-approved{background:var(--dot-approved)}
 .badge{display:inline-block; padding:2px 10px; border-radius:20px; font-size:12.5px; font-weight:700; flex-shrink:0}
 .b-green{background:var(--green-bg); color:var(--green)}
 .b-orange{background:var(--orange-bg); color:var(--orange)}
