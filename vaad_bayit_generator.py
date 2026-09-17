@@ -1241,7 +1241,7 @@ a{color:var(--accent)}
 .ann-card.info{border-right-color:#3b82f6}
 .ann-cat{font-size:10px;font-weight:600;text-transform:uppercase;margin-bottom:4px;color:var(--muted)}
 .ann-title{font-weight:600;margin-bottom:4px}
-.ann-content{font-size:12px;color:var(--muted)}
+.ann-content{font-size:12px;color:var(--muted);white-space:pre-line}
 .ann-date{font-size:10px;color:var(--muted);margin-top:6px}
 /* Charts */
 .chart-row{display:grid;grid-template-columns:3fr 2fr;gap:20px;align-items:start}
