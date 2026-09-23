@@ -29,4 +29,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add issues.json announcements.json charges.json contacts.json
-          git diff --staged --quiet || (git commit -m "Update issues/announcements/charges/contacts $(date -u +'%Y-%m-%d %H:%M UTC')" && git push)
+          git diff --staged --quiet && exit 0
+          git commit -m "Update issues/announcements/charges/contacts $(date -u +'%Y-%m-%d %H:%M UTC')"
+          for i in 1 2 3 4 5; do
+            git push && exit 0
+            echo "Push rejected (attempt $i) - resyncing with origin and retrying"
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort; git reset --hard origin/main; git add issues.json announcements.json charges.json contacts.json; git commit -m "Update issues/announcements/charges/contacts $(date -u +'%Y-%m-%d %H:%M UTC') (retry $i)"; }
+            sleep $((RANDOM % 4 + 1))
+          done
+          echo "::error::Failed to push after 5 retries"
+          exit 1
