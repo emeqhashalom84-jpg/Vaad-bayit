@@ -1,4 +1,4 @@
-import urllib.request, csv, io, json, time
+import urllib.request, csv, io, json, time, datetime
 
 # עדכון פרטים אישיים (Responses) — the single source of truth for tenant/contact data.
 # Publish that sheet to web as CSV (File > Share > Publish to web > CSV, "Automatically
@@ -54,6 +54,20 @@ def get(row, col_map, key):
         return ''
     return (row[i] or '').strip()
 
+# Blank/unparseable Timestamp (an admin-created placeholder row, e.g. a pending-tenant
+# stub) sorts as 0 - oldest - never allowed to beat a real submission. Mirrors the same
+# rule in apps_script_admin.js's getTenantCards().
+def parse_timestamp(s):
+    s = (s or '').strip()
+    if not s:
+        return 0
+    for fmt in ('%m/%d/%Y %H:%M:%S', '%Y-%m-%d %H:%M:%S', '%m/%d/%Y %H:%M'):
+        try:
+            return datetime.datetime.strptime(s, fmt).timestamp()
+        except ValueError:
+            continue
+    return 0
+
 def contact(name, phone, email):
     if not name:
         return None
@@ -76,11 +90,12 @@ if CONTACTS_CSV_URL and 'PASTE' not in CONTACTS_CSV_URL:
     headers, data_rows = rows[0], rows[1:]
     col_map = build_col_map(headers)
 
-    # Collapse every row to the LATEST non-dismissed submission per building+apt — a
-    # household that updated its details more than once never shows as duplicate cards.
-    # Rows marked 'בוטל' are excluded entirely. Mirrors getTenantCards() in
-    # apps_script_admin.js exactly.
-    winners, order = {}, []
+    # Collapse every row to the LATEST non-dismissed submission per building+apt, by
+    # Timestamp - not by sheet position - so a placeholder row added after a real
+    # submission never overwrites it. A household that updated its details more than
+    # once never shows as duplicate cards. Rows marked 'בוטל' are excluded entirely.
+    # Mirrors getTenantCards() in apps_script_admin.js exactly.
+    winners, winner_ts, order = {}, {}, []
     for row in data_rows:
         building, apt = get(row, col_map, 'building'), get(row, col_map, 'apt')
         if not building and not apt:
@@ -88,9 +103,14 @@ if CONTACTS_CSV_URL and 'PASTE' not in CONTACTS_CSV_URL:
         if get(row, col_map, 'status') == 'בוטל':
             continue
         addr = f'{building}|{apt}'
+        ts = parse_timestamp(row[0] if row else '')
         if addr not in winners:
             order.append(addr)
-        winners[addr] = row  # later row always overwrites — latest wins
+            winners[addr] = row
+            winner_ts[addr] = ts
+        elif ts >= winner_ts[addr]:
+            winners[addr] = row
+            winner_ts[addr] = ts
 
     # Display order: by building then apartment number, not submission order.
     def addr_key(addr):
