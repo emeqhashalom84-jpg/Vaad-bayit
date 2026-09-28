@@ -2024,7 +2024,7 @@ def generate_html(data, issues, anns, cfg, updated_at, charge=None, charge_payme
 <div class="section" id="contacts">
   <div class="section-title">📞 אנשי קשר</div>
   <div class="contact-grid">{bank_card}<div id="tenant-contacts-live" style="display:contents"></div></div>
-  <div style="font-size:11px;color:var(--muted);margin-top:14px;line-height:1.5">
+  <div style="font-size:11px;color:var(--muted);margin-top:14px;line-height:1.5;font-weight:700">
     מידע זה מיועד לשימוש דיירי עמק השלום 84-88 בלבד, לצורך תקשורת קהילתית, עדכונים ותיאום פעילות הבניין.
     אין לעשות שימוש במידע למטרות מסחריות או להעבירו לצד שלישי.
   </div>
