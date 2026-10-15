@@ -61,7 +61,8 @@ PIE_MAP = [
     ('חשמל',    ['מונה חשמל', 'חשמל']),
     ('בנק',     ['בנק']),
     ('ביטוח',   ['ביטוח']),
-    ('חריגות',  ['בדיקה', 'לא צפוי', 'חוב', 'ניקיון', 'אילן']),
+    ('ניקיון',  ['קלין', 'ניקיון']),  # 2026-10-15: קלין ווש = the cleaning supplier (own slice, not חריגות)
+    ('חריגות',  ['בדיקה', 'לא צפוי', 'חוב', 'אילן']),
 ]
 # Note (2026-09-10): 'קונה' and the broadened 'בנק' (was 'עמלות בנק' only) were added because
 # the bank-import automation writes קטגוריה as the raw supplier name chosen in the Admin app
@@ -81,6 +82,7 @@ PIE_COLORS = {
     'חריגות':  '#4BACC6',
     'בנק':     '#C2247A',
     'ביטוח':   '#1F3864',
+    'ניקיון':  '#8E6BBF',
     'אחר':     '#94a3b8',
 }
 PIE_CATEGORY_NAMES = set(PIE_COLORS.keys())
@@ -94,7 +96,7 @@ BUDGET_2026 = [
     ('מעיינות העמקים',         400,   ['מעיינות'],       None),
     ('חשמל מדרגות',           2700,  ['מונה', 'חשמל'],  None),
     ('ביטוח מבנה',            2700,  ['ביטוח'],         None),
-    ('נקיון',                 9600,  ['ניקיון'],        None),
+    ('נקיון',                 9600,  ['ניקיון', 'קלין'], None),
     ('נקיון גג',              1200,  ['גג'],             None),
     ('בזק מעליות',            600,   ['בזק'],           None),
     ('עמלות בנק',             240,   ['בנק'],           None),
@@ -870,12 +872,18 @@ def fetch_finance(receipts_url, expenses_url, bank_url, settings_url=None):
                                 else:
                                     cats['אחר'] = cats.get('אחר', 0.0) + v
                             row_type = row[type_col].strip() if len(row) > type_col and row[type_col] else ''
+                            # A row that matches a specific budget line (e.g. קלין ווש → נקיון) counts
+                            # THERE only, even if its סוג says "לא צפויה" — it is not also an
+                            # "unplanned" expense (2026-10-15, per Oren).
+                            _kw_hit = False
                             for _bnm, _btot, _bkws, _bcat in BUDGET_2026:
-                                if _bcat:
-                                    if _bcat == 'הוצאות לא צפויות' and 'לא צפויה' in row_type:
-                                        budget_actuals[_bnm] += v
-                                elif _bkws and any(kw in cat_name for kw in _bkws):
+                                if not _bcat and _bkws and any(kw in cat_name for kw in _bkws):
                                     budget_actuals[_bnm] += v
+                                    _kw_hit = True
+                            if not _kw_hit and 'לא צפויה' in row_type:
+                                for _bnm, _btot, _bkws, _bcat in BUDGET_2026:
+                                    if _bcat == 'הוצאות לא צפויות':
+                                        budget_actuals[_bnm] += v
             if found:
                 result['expense_total'] = total
                 result['monthly_expenses'] = monthly
